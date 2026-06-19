@@ -22,11 +22,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install pyinstaller
-          pip install pyserial bleak psutil GPUtil keyboard mouse websockets
+          pip install pyserial psutil GPUtil keyboard mouse websockets
           pip install pywin32 comtypes pycaw WMI
-
-      - name: Copy gui.html next to backend
-        run: copy gui.html gui.html
 
       - name: Build EXE with PyInstaller
         run: |
@@ -42,7 +39,6 @@ jobs:
             --hidden-import pycaw.pycaw `
             --hidden-import comtypes `
             --hidden-import wmi `
-            --hidden-import bleak `
             --hidden-import GPUtil `
             --hidden-import serial `
             --hidden-import serial.tools.list_ports `
@@ -65,13 +61,14 @@ jobs:
           name: MacroDeck ${{ github.ref_name }}
           body: |
             ## MacroDeck ${{ github.ref_name }}
-            
+
             ### Installation
             1. Télécharge `MacroDeck.exe`
-            2. Place-le dans un dossier dédié
-            3. Double-clique pour lancer — le navigateur s'ouvre automatiquement
-            
-            ### Dépendances externes
-            - [OpenHardwareMonitor](https://openhardwaremonitor.org/) (optionnel, pour les températures CPU/GPU)
+            2. Place-le dans un dossier dédié (le `gui.html` est intégré dans l'exe)
+            3. Double-clique pour lancer le backend (aucune fenêtre ne s'ouvre)
+            4. Ouvre manuellement `http://127.0.0.1:8766/gui.html` dans ton navigateur
+
+            ### Dépendances externes (optionnel)
+            - [OpenHardwareMonitor](https://openhardwaremonitor.org/) pour les températures CPU/GPU
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
