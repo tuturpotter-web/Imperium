@@ -7,7 +7,7 @@ MacroDeck Backend v15.1
 - Serveur HTTP silencieux sur 8766
 - WebSocket sur 8765
 """
-import sys, os, ctypes, threading, time, asyncio, json, subprocess
+import sys, os, ctypes, threading, time, asyncio, json, subprocess, re
 import webbrowser, shutil, glob, logging, datetime
 from pathlib import Path
 from typing import Optional
@@ -250,8 +250,40 @@ DEFAULT_CONFIG = {
     "active_profile": "default",
     "led_strips": {str(i):{"metric":["cpu","ram","gpu_usage","ssd_usage"][i]} for i in range(4)},
     "serial_port": "AUTO",
-    "theme": "dark"
+    "theme": "dark",
+    # ── PROTOCOLE ESP32 ──────────────────────────────────────────────────────
+    # Patrons texte définissant le format des trames série échangées avec
+    # l'ESP32. {i} = index du bouton/potard (0-7 ou 0-3), {v} = valeur (0-100).
+    # Le format par défaut reste le JSON historique pour ne rien casser, mais
+    # tout est personnalisable depuis les Paramètres sans toucher au code.
+    "protocol": {
+        "in_press":        "{\"t\":\"press\",\"i\":{i}}",
+        "in_long_press":   "{\"t\":\"long_press\",\"i\":{i}}",
+        "in_double_click": "{\"t\":\"double_click\",\"i\":{i}}",
+        "in_release":      "{\"t\":\"release\",\"i\":{i}}",
+        "in_pot":          "{\"t\":\"pot\",\"i\":{i},\"v\":{v}}",
+        "out_led":         "{\"t\":\"led\",\"s\":{i},\"v\":{v}}",
+    }
 }
+
+def pattern_to_regex(pattern: str) -> "re.Pattern":
+    """Convertit un patron du type 'BTN{i}:PRESS' en regex capturant {i} et {v}
+    comme groupes nommés, pour parser les trames brutes reçues de l'ESP32
+    quel que soit le format texte choisi par l'utilisateur (pas que du JSON)."""
+    # Échappe tout le texte du patron sauf nos placeholders, qu'on remplace
+    # ensuite par des groupes de capture numériques.
+    escaped = re.escape(pattern)
+    escaped = escaped.replace(re.escape("{i}"), r"(?P<i>-?\d+)")
+    escaped = escaped.replace(re.escape("{v}"), r"(?P<v>-?\d+)")
+    return re.compile("^"+escaped+"$")
+
+def pattern_format(pattern: str, i=None, v=None) -> str:
+    """Remplace {i} et {v} dans un patron de trame sortante (LED) par leurs
+    valeurs réelles, pour générer la ligne exacte à envoyer à l'ESP32."""
+    out = pattern
+    if i is not None: out = out.replace("{i}", str(i))
+    if v is not None: out = out.replace("{v}", str(v))
+    return out
 
 class ConfigManager:
     def __init__(self):
@@ -684,6 +716,114 @@ class Metrics:
         except: pass
         return None
 
+# ── OVERLAY SYSTÈME (mini-streamdeck au changement de profil) ────────────────
+# Une popup DOM dans le navigateur ne peut jamais s'afficher au-dessus
+# d'autres applications Windows (jeu en plein écran, Discord, etc.). On utilise
+# donc une vraie fenêtre native Tkinter, sans bordure, toujours au premier
+# plan, qui tourne dans son propre thread avec sa propre boucle d'événements
+# (Tk doit avoir sa boucle dédiée, on ne peut pas la mélanger avec asyncio).
+class ProfileOverlayWindow:
+    def __init__(self):
+        self._queue = None
+        self._root = None
+        self._ready = threading.Event()
+        threading.Thread(target=self._run, daemon=True).start()
+        self._ready.wait(timeout=5)
+
+    def _run(self):
+        try:
+            import tkinter as tk
+            import queue as _queue
+        except Exception as e:
+            log.warning(f"Tkinter indisponible, overlay système désactivé: {e}")
+            self._ready.set()
+            return
+
+        self._queue = _queue.Queue()
+        try:
+            root = tk.Tk()
+            root.withdraw()  # pas de fenêtre principale visible, juste le moteur Tk
+        except Exception as e:
+            log.warning(f"Impossible d'initialiser Tkinter, overlay système désactivé: {e}")
+            self._queue = None
+            self._ready.set()
+            return
+        self._root = root
+        self._ready.set()
+
+        def poll():
+            try:
+                while True:
+                    profile = self._queue.get_nowait()
+                    try:
+                        self._show(profile)
+                    except Exception as e:
+                        log.warning(f"Overlay _show: {e}")
+            except _queue.Empty:
+                pass
+            root.after(100, poll)
+
+        root.after(100, poll)
+        root.mainloop()
+
+    def _show(self, profile: dict):
+        import tkinter as tk
+        root = self._root
+        if not root: return
+
+        # Ferme une éventuelle popup déjà affichée avant d'en ouvrir une neuve
+        if getattr(self, "_popup", None):
+            try: self._popup.destroy()
+            except: pass
+
+        win = tk.Toplevel(root)
+        self._popup = win
+        win.overrideredirect(True)       # pas de barre de titre/bordure
+        win.attributes("-topmost", True) # toujours au-dessus de TOUTES les fenêtres, y compris jeux/plein écran
+        try: win.attributes("-alpha", 0.96)
+        except: pass
+
+        bg = "#14151b"; fg = "#f1f5f9"; sub = "#7a8194"; card = "#1c1f29"; accent = "#6366f1"
+        win.configure(bg=bg)
+
+        sw = win.winfo_screenwidth(); sh = win.winfo_screenheight()
+        width, height = 230, 200
+        x = sw - width - 24
+        y = sh - height - 60  # au-dessus de la barre des tâches
+        win.geometry(f"{width}x{height}+{x}+{y}")
+
+        header = tk.Frame(win, bg=bg)
+        header.pack(fill="x", padx=12, pady=(10,6))
+        tk.Label(header, text="●", fg=accent, bg=bg, font=("Segoe UI",8)).pack(side="left")
+        tk.Label(header, text=profile.get("name","Profil"), fg=fg, bg=bg,
+                 font=("Segoe UI",10,"bold")).pack(side="left", padx=(5,0))
+
+        grid = tk.Frame(win, bg=bg)
+        grid.pack(padx=10, pady=(0,10))
+
+        buttons = profile.get("buttons", {})
+        for i in range(8):
+            b = buttons.get(str(i), {})
+            r, c = divmod(i, 4)
+            cell = tk.Frame(grid, bg=card, width=48, height=48, highlightthickness=1,
+                             highlightbackground="#ffffff15")
+            cell.grid(row=r, column=c, padx=3, pady=3)
+            cell.grid_propagate(False)
+            icon = b.get("icon","⭐")
+            tk.Label(cell, text=icon, fg=fg, bg=card, font=("Segoe UI Emoji",13)).pack(pady=(6,0))
+            label = (b.get("label") or "")[:9]
+            tk.Label(cell, text=label, fg=sub, bg=card, font=("Segoe UI",6)).pack()
+
+        # Disparaît automatiquement après 3.5s, comme l'overlay web
+        win.after(3500, lambda: win.destroy() if win.winfo_exists() else None)
+
+    def show_profile(self, profile: dict):
+        """Affiche l'overlay pour ce profil. Thread-safe : peut être appelé
+        depuis n'importe quel thread (asyncio, ESP32 watcher, etc.)."""
+        if self._queue is not None:
+            try: self._queue.put_nowait(profile)
+            except Exception as e: log.warning(f"Overlay queue: {e}")
+
 # ── APP WATCHER ──────────────────────────────────────────────────────────────
 class AppWatcher:
     def __init__(self, on_change):
@@ -737,6 +877,14 @@ class Transport:
     def send(self, obj):
         if self.ser and self.ser.is_open:
             try: self.ser.write((json.dumps(obj,separators=(",",":"))+"\n").encode())
+            except: pass
+
+    def send_raw(self, line: str):
+        """Envoie une ligne texte brute déjà formatée (utilisé pour le
+        protocole LED configurable, qui peut être du JSON ou tout autre
+        format texte selon ce que le firmware ESP32 attend)."""
+        if self.ser and self.ser.is_open:
+            try: self.ser.write((line+"\n").encode())
             except: pass
 
 # ── MACRODECK CORE ────────────────────────────────────────────────────────────
@@ -873,8 +1021,18 @@ class MacroDeck:
         self.metrics   = Metrics()
         self.transport = Transport(self._on_esp32)
         self.watcher   = AppWatcher(self._on_app)
+        self.overlay   = ProfileOverlayWindow()
 
     def _broadcast(self, obj):
+        # Déclenche l'overlay système au-dessus de toutes les fenêtres pour
+        # CHAQUE changement de profil, peu importe la source (bouton dédié,
+        # détection auto par app active, sélection manuelle dans la GUI...) :
+        # on centralise ici plutôt que de dupliquer l'appel à 5 endroits.
+        if obj.get("type") == "profile_changed":
+            key = obj.get("profile")
+            profile = self.cfg.data.get("profiles", {}).get(key)
+            if profile and self.overlay:
+                self.overlay.show_profile(profile)
         raw=json.dumps(obj)
         for ws in list(self.ws_clients):
             asyncio.ensure_future(ws.send(raw))
@@ -888,8 +1046,51 @@ class MacroDeck:
                     self._broadcast({"type":"profile_changed","profile":name})
                 return
 
-    def _on_esp32(self, raw):
-        try: msg=json.loads(raw)
+    def _on_esp32(self, raw: str):
+        raw = raw.strip()
+        if not raw: return
+        proto = self.cfg.data.get("protocol", {})
+
+        # Essaie chaque patron configuré dans l'ordre, et route vers le bon
+        # traitement dès qu'un patron correspond à la ligne brute reçue.
+        # Garde aussi un fallback JSON historique pour ne jamais casser un
+        # firmware déjà en place tant que l'utilisateur n'a rien reconfiguré.
+        for ev_key, ev_name in [("in_press","press"),("in_long_press","long_press"),
+                                  ("in_double_click","double_click"),("in_release","release")]:
+            pat = proto.get(ev_key, "")
+            if not pat: continue
+            try:
+                m = pattern_to_regex(pat).match(raw)
+            except Exception as e:
+                log.error(f"Patron '{ev_key}' invalide: {e}"); continue
+            if m:
+                idx = int(m.group("i"))
+                if ev_name == "release":
+                    self._broadcast({"type":"button_event","button":idx,"event":"release"})
+                    return
+                profile=self.cfg.active()
+                actions=profile["buttons"].get(str(idx),{}).get(ev_name,[])
+                threading.Thread(target=self.engine.run,args=(actions,),daemon=True).start()
+                self._broadcast({"type":"button_event","button":idx,"event":ev_name})
+                return
+
+        pat = proto.get("in_pot","")
+        if pat:
+            try:
+                m = pattern_to_regex(pat).match(raw)
+                if m:
+                    idx=int(m.group("i")); val=int(m.group("v"))
+                    pot_cfg=self.cfg.active()["pots"].get(str(idx),{})
+                    self.engine.run_pot(pot_cfg, val)
+                    self._broadcast({"type":"pot_event","pot":idx,"value":val})
+                    return
+            except Exception as e:
+                log.error(f"Patron 'in_pot' invalide: {e}")
+
+        # Fallback JSON historique (rétrocompatibilité avec un firmware déjà
+        # flashé sur l'ancien protocole, même si "protocol" a été modifié).
+        try:
+            msg=json.loads(raw)
         except: return
         t=msg.get("t")
         if t in ("press","long_press","double_click"):
@@ -910,12 +1111,15 @@ class MacroDeck:
             await asyncio.sleep(1)
             m=self.metrics.collect()
             self._broadcast({"type":"metrics","data":m})
-            # Envoi LED → ESP32
+            # Envoi LED → ESP32, au format défini dans protocol.out_led
+            # (ex: '{"t":"led","s":0,"v":42}' ou tout autre format texte
+            # comme 'LED0:42%' selon ce que le firmware attend).
             keys=["cpu","ram","gpu_usage","ssd_usage"]
+            out_pat = self.cfg.data.get("protocol",{}).get("out_led", '{"t":"led","s":{i},"v":{v}}')
             for i in range(4):
                 k=self.cfg.data.get("led_strips",{}).get(str(i),{}).get("metric",keys[i])
                 v=min(100,int(float(m.get(k,0) or 0)))
-                self.transport.send({"t":"led","s":i,"v":v})
+                self.transport.send_raw(pattern_format(out_pat, i=i, v=v))
 
     async def _ws_handler(self, ws: WebSocketServerProtocol):
         self.ws_clients.add(ws)
@@ -1040,6 +1244,42 @@ class MacroDeck:
         elif t=="get_serial_status":
             await ws.send(json.dumps({"type":"serial_status",
                 "connected":self.transport.is_connected(), "port":self.transport.port_name}))
+
+        elif t=="save_protocol":
+            # Valide chaque patron avant de sauvegarder : un regex invalide
+            # ne doit jamais planter le parsing des trames série en live.
+            proto = msg.get("protocol", {})
+            errors = {}
+            for key, pat in proto.items():
+                try: pattern_to_regex(pat) if key.startswith("in_") else pattern_format(pat, i=0, v=0)
+                except Exception as e: errors[key] = str(e)
+            if errors:
+                await ws.send(json.dumps({"type":"protocol_saved","ok":False,"errors":errors}))
+            else:
+                self.cfg.data["protocol"] = proto
+                self.cfg.save()
+                await ws.send(json.dumps({"type":"protocol_saved","ok":True}))
+
+        elif t=="test_protocol_pattern":
+            # Permet de tester un patron entrant en simulant une trame brute
+            # sans avoir besoin de l'ESP32 physiquement connecté.
+            pattern = msg.get("pattern","")
+            sample = msg.get("sample","")
+            try:
+                m = pattern_to_regex(pattern).match(sample.strip())
+                if m:
+                    await ws.send(json.dumps({"type":"protocol_test_result","ok":True,
+                        "groups":{k:v for k,v in m.groupdict().items()}}))
+                else:
+                    await ws.send(json.dumps({"type":"protocol_test_result","ok":False,"error":"La trame d'exemple ne correspond pas au patron"}))
+            except Exception as e:
+                await ws.send(json.dumps({"type":"protocol_test_result","ok":False,"error":str(e)}))
+
+        elif t=="simulate_esp32_frame":
+            # Injecte une trame brute comme si elle venait réellement de
+            # l'ESP32, pour tester boutons/potards sans matériel connecté.
+            raw = msg.get("raw","")
+            self._on_esp32(raw)
 
         elif t=="update_button":
             pid=msg.get("profile","default"); bid=str(msg.get("button",0))
