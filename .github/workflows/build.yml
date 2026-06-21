@@ -48,6 +48,8 @@ jobs:
             --hidden-import websockets `
             --hidden-import keyboard `
             --hidden-import mouse `
+            --hidden-import tkinter `
+            --hidden-import queue `
             backend.py
 
       - name: Upload EXE as artifact
