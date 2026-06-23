@@ -553,7 +553,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
           <div id="protoTestResult" style="font-size:10px;margin-top:6px;color:var(--text3)"></div>
 
           <div class="sep"></div>
-          <div style="font-size:11px;color:var(--text3)">MacroDeck v15.1 — Console invisible — WebSocket :8765 — HTTP :8766</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div style="font-size:11px;color:var(--text3)">MacroDeck <span id="appVersionLbl">v15.2</span> — Console invisible — WebSocket :8765 — HTTP :8766</div>
+            <button class="tbtn" onclick="wsSend({type:'check_update'})" title="Vérifier si une mise à jour est disponible">🔄 Chercher une MAJ</button>
+          </div>
         </div>
       </div>
     </div>
@@ -596,6 +599,42 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
     <div class="modal-foot">
       <button class="tbtn" onclick="closeModal()">Annuler</button>
       <button class="tbtn pr" onclick="confirmAction()">✓ Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL MISE À JOUR ── -->
+<div class="modal-ov" id="updateModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hdr">
+      <span style="font-size:18px">🚀</span>
+      <span class="modal-t">Mise à jour disponible</span>
+      <button class="modal-x" onclick="closeUpdateModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;background:var(--accent-dim);border:1px solid var(--accent-glow);border-radius:8px;padding:10px 14px">
+        <span style="font-size:20px">📦</span>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text)">
+            <span id="upd-current" style="color:var(--text3)"></span>
+            <span style="margin:0 6px;color:var(--text3)">→</span>
+            <span id="upd-latest" style="color:var(--accent)"></span>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">Nouvelle version disponible sur GitHub</div>
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Notes de version</div>
+      <div id="upd-changelog" style="font-size:11px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:10px;max-height:200px;overflow-y:auto;line-height:1.6;white-space:pre-wrap;font-family:'JetBrains Mono',monospace"></div>
+      <div id="upd-progress" style="display:none;margin-top:12px;text-align:center">
+        <div style="font-size:12px;color:var(--text2)" id="upd-progress-lbl">⏳ Téléchargement en cours...</div>
+        <div style="height:4px;background:var(--bg3);border-radius:2px;margin-top:8px;overflow:hidden">
+          <div id="upd-progress-bar" style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .4s"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="tbtn" onclick="closeUpdateModal()">Plus tard</button>
+      <button class="tbtn pr" id="upd-btn" onclick="confirmUpdate()">⬇ Mettre à jour maintenant</button>
     </div>
   </div>
 </div>
@@ -896,6 +935,8 @@ function connectWS() {
       if(m.type==="serial_status") { serialConnected = m.connected; serialPortName = m.port; updateUsbStatus(); if(document.getElementById("usbInfoModal")?.classList.contains("open")){ const slot=0; openUsbInfo(slot); } }
       if(m.type==="protocol_saved") { handleProtocolSaved(m); }
       if(m.type==="protocol_test_result") { handleProtocolTestResult(m); }
+      if(m.type==="update_available") { handleUpdateAvailable(m); }
+      if(m.type==="update_progress")  { handleUpdateProgress(m); }
     };
     ws.onerror = () => {};
   } catch(e) {}
@@ -1910,6 +1951,53 @@ function handleProtocolTestResult(m){
   } else {
     res.innerHTML = `<span style="color:var(--red)">✗ ${m.error||"Aucun patron ne correspond"}</span>`;
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUTO-UPDATER
+// ═══════════════════════════════════════════════════════════════
+let _pendingInstallerUrl = null;
+
+function handleUpdateAvailable(m) {
+  _pendingInstallerUrl = m.installer_url;
+  document.getElementById("upd-current").textContent = m.current || "actuelle";
+  document.getElementById("upd-latest").textContent  = m.latest  || "nouvelle";
+  document.getElementById("upd-changelog").textContent = m.changelog || "Pas de notes de version.";
+  document.getElementById("upd-progress").style.display = "none";
+  document.getElementById("upd-btn").disabled = false;
+  document.getElementById("upd-btn").textContent = "⬇ Mettre à jour maintenant";
+  document.getElementById("updateModal").classList.add("open");
+}
+
+function handleUpdateProgress(m) {
+  const prog = document.getElementById("upd-progress");
+  const lbl  = document.getElementById("upd-progress-lbl");
+  const bar  = document.getElementById("upd-progress-bar");
+  prog.style.display = "block";
+  if(m.status === "downloading") {
+    lbl.textContent = "⏳ Téléchargement en cours...";
+    bar.style.width = "40%";
+  } else if(m.status === "installing") {
+    lbl.textContent = "⚙ Installation en cours — MacroDeck va redémarrer...";
+    bar.style.width = "90%";
+  } else if(m.status === "error") {
+    lbl.style.color = "var(--red)";
+    lbl.textContent = "⚠ Erreur : " + (m.message || "inconnue");
+    document.getElementById("upd-btn").disabled = false;
+    document.getElementById("upd-btn").textContent = "⬇ Réessayer";
+  }
+}
+
+function confirmUpdate() {
+  if(!_pendingInstallerUrl) return;
+  document.getElementById("upd-btn").disabled = true;
+  document.getElementById("upd-btn").textContent = "⏳ En cours...";
+  document.getElementById("upd-progress").style.display = "block";
+  wsSend({ type: "install_update", installer_url: _pendingInstallerUrl });
+}
+
+function closeUpdateModal() {
+  document.getElementById("updateModal").classList.remove("open");
 }
 
 // ═══════════════════════════════════════════════════════════════
