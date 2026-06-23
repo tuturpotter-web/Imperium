@@ -1,16 +1,23 @@
 """
-MacroDeck Backend v15.1
+MacroDeck Backend v15.2
 - Console 100% cachée (SW_HIDE + FreeConsole)
 - Pas d'ouverture automatique du navigateur au démarrage
 - Profils indépendants avec création/suppression/renommage
 - Action switch_profile
 - Serveur HTTP silencieux sur 8766
 - WebSocket sur 8765
+- Auto-updater via GitHub Releases
 """
 import sys, os, ctypes, threading, time, asyncio, json, subprocess, re
 import webbrowser, shutil, glob, logging, datetime
 from pathlib import Path
 from typing import Optional
+
+# ── VERSION ──────────────────────────────────────────────────────────────────
+# Injectée automatiquement par le CI lors du build (voir build.yml).
+# En dev local, reste "dev" pour ne jamais déclencher de mise à jour.
+APP_VERSION = "dev"
+GITHUB_REPO = "tuturpotter-web/MacroDeck"  # owner/repo
 
 # ── CACHER CONSOLE ──────────────────────────────────────────────────────────
 if sys.platform == "win32":
@@ -1133,6 +1140,96 @@ class PluginManager:
         except Exception as e:
             log.error(f"Plugin run '{action_type}': {e}")
 
+# ── AUTO-UPDATER ──────────────────────────────────────────────────────────────
+class AutoUpdater:
+    """Vérifie si une nouvelle version est disponible sur GitHub Releases et,
+    si l'utilisateur confirme via la GUI, télécharge puis lance le nouvel
+    installeur Inno Setup de façon silencieuse avant de fermer MacroDeck."""
+
+    def __init__(self, broadcast_fn):
+        self.broadcast = broadcast_fn
+
+    def _parse_version(self, tag: str):
+        """Convertit 'v1.2.3' ou '1.2.3' en tuple (1, 2, 3) pour comparaison."""
+        tag = tag.lstrip("v").strip()
+        try:
+            return tuple(int(x) for x in tag.split("."))
+        except Exception:
+            return (0,)
+
+    def check(self):
+        """Appelle l'API GitHub Releases (sans token, limite 60 req/h largement
+        suffisant) et envoie un message WebSocket si une MAJ est dispo."""
+        if APP_VERSION == "dev":
+            return  # jamais en mode développement local
+
+        import urllib.request, urllib.error
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "MacroDeck-Updater"})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                data = json.loads(r.read())
+        except Exception as e:
+            log.warning(f"AutoUpdater check: {e}")
+            return
+
+        latest_tag  = data.get("tag_name", "")
+        latest_body = data.get("body", "")
+        # Cherche le premier asset .exe (l'installeur Inno Setup)
+        assets = data.get("assets", [])
+        installer_url = next(
+            (a["browser_download_url"] for a in assets if a["name"].endswith(".exe")),
+            None
+        )
+        if not installer_url:
+            log.warning("AutoUpdater: aucun .exe trouvé dans la release")
+            return
+
+        current = self._parse_version(APP_VERSION)
+        latest  = self._parse_version(latest_tag)
+        if latest <= current:
+            return  # déjà à jour
+
+        log.info(f"MAJ disponible : {APP_VERSION} → {latest_tag}")
+        self.broadcast({
+            "type":          "update_available",
+            "current":       APP_VERSION,
+            "latest":        latest_tag,
+            "changelog":     latest_body,
+            "installer_url": installer_url,
+        })
+
+    def download_and_install(self, installer_url: str):
+        """Télécharge l'installeur dans %TEMP%, le lance, puis quitte MacroDeck.
+        Tourne dans un thread séparé pour ne pas bloquer la boucle asyncio."""
+        import urllib.request, tempfile
+        try:
+            self.broadcast({"type": "update_progress", "status": "downloading"})
+            tmp = os.path.join(tempfile.gettempdir(), "MacroDeck_Update.exe")
+            urllib.request.urlretrieve(installer_url, tmp)
+            self.broadcast({"type": "update_progress", "status": "installing"})
+            # /SILENT = wizard visible mais sans clics requis
+            # /CLOSEAPPLICATIONS = ferme les processus MacroDeck existants
+            subprocess.Popen(
+                [tmp, "/SILENT", "/CLOSEAPPLICATIONS"],
+                creationflags=CREATE_NO_WINDOW
+            )
+            # Laisse 2 s à l'installeur pour démarrer, puis on se ferme
+            time.sleep(2)
+            os.kill(os.getpid(), 9)
+        except Exception as e:
+            log.error(f"AutoUpdater install: {e}")
+            self.broadcast({"type": "update_progress", "status": "error", "message": str(e)})
+
+    def start_background_check(self):
+        """Lance la vérification dans un thread daemon, 10 s après le démarrage
+        pour ne pas ralentir l'init et laisser le WebSocket s'ouvrir d'abord."""
+        def _run():
+            time.sleep(10)
+            self.check()
+        threading.Thread(target=_run, daemon=True).start()
+
+
 class MacroDeck:
     def __init__(self):
         self.cfg       = ConfigManager()
@@ -1143,6 +1240,7 @@ class MacroDeck:
         self.transport = Transport(self._on_esp32)
         self.watcher   = AppWatcher(self._on_app)
         self.overlay   = ProfileOverlayWindow()
+        self.updater   = AutoUpdater(self._broadcast)
 
     def _broadcast(self, obj):
         # Déclenche l'overlay système au-dessus de toutes les fenêtres pour
@@ -1444,6 +1542,21 @@ class MacroDeck:
                 self.cfg.data["profiles"][pid]["buttons"][bid]=data
                 self.cfg.save()
 
+        elif t=="install_update":
+            # L'utilisateur a confirmé la MAJ dans la popup — on télécharge
+            # et installe dans un thread pour ne pas bloquer la boucle asyncio.
+            url = msg.get("installer_url","")
+            if url:
+                threading.Thread(
+                    target=self.updater.download_and_install,
+                    args=(url,), daemon=True
+                ).start()
+
+        elif t=="check_update":
+            # Bouton "Vérifier les mises à jour" dans les Paramètres
+            threading.Thread(target=self.updater.check, daemon=True).start()
+            await ws.send(json.dumps({"type":"toast","message":"🔍 Vérification des mises à jour..."}))
+
     def _native_picker(self, folder: bool) -> str:
         """Ouvre une boîte de dialogue Windows native pour choisir un dossier ou fichier.
         Tourne dans un script PowerShell séparé (bloquant) pour ne jamais geler
@@ -1472,6 +1585,7 @@ class MacroDeck:
 
     async def run(self):
         self.transport.start(self.cfg.data.get("serial_port","AUTO"))
+        self.updater.start_background_check()
         # max_size augmenté : la config peut contenir des icônes de boutons
         # personnalisées encodées en base64 (plusieurs dizaines de Ko chacune,
         # potentiellement nombreuses avec plusieurs profils/pages). La limite
