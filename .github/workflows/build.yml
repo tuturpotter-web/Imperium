@@ -29,6 +29,27 @@ jobs:
           pip install pyserial psutil keyboard mouse websockets
           pip install pywin32 comtypes pycaw WMI
 
+      # Détermine la version : tag git (v1.2.3) si disponible, sinon build-N
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            VERSION="0.0.${{ github.run_number }}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $VERSION"
+
+      # Injecte la version dans backend.py (remplace la ligne APP_VERSION = "dev")
+      - name: Inject version into backend.py
+        shell: pwsh
+        run: |
+          $v = "${{ steps.version.outputs.version }}"
+          (Get-Content backend.py) -replace '^APP_VERSION = "dev"', "APP_VERSION = `"$v`"" | Set-Content backend.py
+          Write-Host "APP_VERSION injected: $v"
+
       - name: Build with PyInstaller (onedir)
         run: |
           pyinstaller `
@@ -51,6 +72,13 @@ jobs:
             --hidden-import tkinter `
             --hidden-import queue `
             backend.py
+
+      # Met à jour la version dans le script Inno Setup
+      - name: Inject version into installer.iss
+        shell: pwsh
+        run: |
+          $v = "${{ steps.version.outputs.version }}"
+          (Get-Content installer.iss) -replace '#define MyAppVersion\s+"[^"]+"', "#define MyAppVersion `"$v`"" | Set-Content installer.iss
 
       # Inno Setup est pré-installé sur windows-latest dans C:\Program Files (x86)\Inno Setup 6
       - name: Build installer with Inno Setup
@@ -75,17 +103,12 @@ jobs:
           name: MacroDeck-Setup
           path: installer_output/MacroDeck_Setup.exe
 
-      - name: Generate build tag
-        id: tag
-        shell: bash
-        run: echo "name=build-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.tag.outputs.name }}
+          tag_name: v${{ steps.version.outputs.version }}
           files: installer_output/MacroDeck_Setup.exe
-          name: MacroDeck build #${{ github.run_number }}
+          name: MacroDeck v${{ steps.version.outputs.version }}
           body: |
             ## MacroDeck — build automatique #${{ github.run_number }}
 
