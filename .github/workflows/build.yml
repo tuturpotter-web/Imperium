@@ -1,4 +1,4 @@
-name: Build MacroDeck EXE
+name: Build MacroDeck
 
 on:
   push:
@@ -16,23 +16,23 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           pip install pyinstaller
           pip install pyserial psutil keyboard mouse websockets
           pip install pywin32 comtypes pycaw WMI
 
-      - name: Build EXE with PyInstaller
+      - name: Build with PyInstaller (onedir)
         run: |
           pyinstaller `
-            --onefile `
+            --onedir `
             --noconsole `
             --name MacroDeck `
             --add-data "gui.html;." `
@@ -52,11 +52,28 @@ jobs:
             --hidden-import queue `
             backend.py
 
-      - name: Upload EXE as artifact
+      # Inno Setup est pré-installé sur windows-latest dans C:\Program Files (x86)\Inno Setup 6
+      - name: Build installer with Inno Setup
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (!(Test-Path $iscc)) {
+            # Fallback : chercher dans d'autres emplacements courants
+            $iscc = Get-ChildItem "C:\Program Files*\Inno Setup*\ISCC.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+          }
+          if (!$iscc) {
+            Write-Error "Inno Setup introuvable sur le runner"
+            exit 1
+          }
+          Write-Host "Inno Setup trouvé : $iscc"
+          & $iscc installer.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload installer as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MacroDeck-EXE
-          path: dist/MacroDeck.exe
+          name: MacroDeck-Setup
+          path: installer_output/MacroDeck_Setup.exe
 
       - name: Generate build tag
         id: tag
@@ -67,7 +84,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.name }}
-          files: dist/MacroDeck.exe
+          files: installer_output/MacroDeck_Setup.exe
           name: MacroDeck build #${{ github.run_number }}
           body: |
             ## MacroDeck — build automatique #${{ github.run_number }}
@@ -75,17 +92,22 @@ jobs:
             Compilé depuis le commit ${{ github.sha }}
 
             ### Installation
-            1. Télécharge `MacroDeck.exe`
-            2. Place-le dans un dossier dédié
-            3. Double-clique pour lancer — le navigateur s'ouvre automatiquement sur l'interface
-            4. Aucune fenêtre console ne doit apparaître (même brièvement)
+            1. Télécharge `MacroDeck_Setup.exe`
+            2. Lance-le et suis le wizard (1 minute)
+            3. MacroDeck s'installe dans `Program Files`, avec raccourci Menu Démarrer
+            4. Désinstallation propre depuis **Paramètres Windows → Applications**
 
-            Si une instance tourne déjà, un message d'information s'affiche au lieu d'en relancer une seconde.
+            ### Ce que l'installeur configure
+            - Installation dans `Program Files\MacroDeck`
+            - Raccourci Menu Démarrer (par défaut)
+            - Raccourci Bureau (optionnel)
+            - Lancement au démarrage Windows (optionnel)
+            - Désinstalleur enregistré dans Paramètres Windows
 
             ### Plugins (sans recompiler)
-            Un dossier `plugins/` est créé automatiquement à côté de `MacroDeck.exe`. Pose-y des fichiers `.json`
-            pour ajouter de nouvelles actions (Discord, Home Assistant, n8n, webhooks...), puis clique sur
-            "🔄 Recharger les plugins" dans l'onglet Plugins de l'interface.
+            Un dossier `plugins\` est créé automatiquement à côté de `MacroDeck.exe`.
+            Pose-y des fichiers `.json` pour ajouter de nouvelles actions, puis clique sur
+            "🔄 Recharger les plugins" dans l'onglet Plugins.
 
             ### Dépendances externes (optionnel)
             - [OpenHardwareMonitor](https://openhardwaremonitor.org/) pour les températures CPU/GPU
