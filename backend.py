@@ -838,28 +838,17 @@ class ProfileOverlayWindow:
             except: pass
             self._popup = None
 
-        # ── Couleurs identiques au GUI web ────────────────────────────────
-        BG    = "#0d0e12"   # --bg1
-        BG2   = "#12141a"   # --bg2
-        BG3   = "#181b22"   # --bg3
-        BG4   = "#1e212b"   # --bg4
-        CARD  = "#1c1f29"   # card base
-        ACC   = "#6366f1"   # --accent
-        ACC2  = "#6366f145" # --accent-glow (simulé)
-        FG    = "#f1f5f9"   # --text
-        FG2   = "#cbd5e1"   # --text2
-        FG3   = "#94a3b8"   # --text3
-        BDR   = "#ffffff14" # --border
-        BDR2  = "#ffffff20" # --border2
+        BG   = "#0d0e12"; CARD = "#1c1f29"; ACC  = "#6366f1"
+        FG   = "#f1f5f9"; FG3  = "#94a3b8"; BG3  = "#181b22"
+        BDR  = "#ffffff18"; BG4  = "#1e212b"
 
-        # ── Layout ────────────────────────────────────────────────────────
         CELL=56; PAD=10; GAP=4; COLS=4
-        W = COLS*CELL + (COLS-1)*GAP + PAD*2   # 258
-        # header(34) + sep(1) + gap(8) + boutons(56*2+gap*1) + gap(8) + sep(1) + gap(8) + potards(56) + bottom(12)
-        H = 34 + 1 + 8 + (CELL*2 + GAP) + 8 + 1 + 8 + CELL + 12
+        # Hauteur fixe calculée : header(38) + sep(1) + boutons(56*2+4) + sep(1) + potards(56) + marges
+        W = COLS*CELL + (COLS-1)*GAP + PAD*2
+        H = 38 + 1 + 8 + (CELL*2+GAP) + 8 + 1 + 8 + CELL + 12
 
         sw = root.winfo_screenwidth(); sh = root.winfo_screenheight()
-        X = sw - W - 20; Y = sh - H - 60
+        X = sw - W - 20;  Y = sh - H - 60
 
         win = tk.Toplevel(root)
         self._popup = win
@@ -870,86 +859,86 @@ class ProfileOverlayWindow:
         win.configure(bg=BG)
         win.geometry(f"{W}x{H}+{X}+{Y}")
 
-        # Bordure accent simulée via un Frame englobant
-        outer = tk.Frame(win, bg=ACC, padx=1, pady=1)
-        outer.place(x=0, y=0, width=W, height=H)
-        inner = tk.Frame(outer, bg=BG)
-        inner.pack(fill="both", expand=True)
+        # ── Bordure 1px accent via Canvas plein fond ───────────────────────
+        cv_border = tk.Canvas(win, width=W, height=H, highlightthickness=0, bg=ACC)
+        cv_border.place(x=0, y=0)
+        cv_border.create_rectangle(1, 1, W-1, H-1, fill=BG, outline="")
 
-        def row(parent, **kw):
-            f = tk.Frame(parent, bg=BG, **kw)
-            f.pack(fill="x")
-            return f
+        # Frame principale par-dessus le canvas
+        main = tk.Frame(win, bg=BG)
+        main.place(x=1, y=1, width=W-2, height=H-2)
 
         # ── Header ────────────────────────────────────────────────────────
-        hdr = row(inner)
-        # Logo carré accent comme dans la topbar
-        logo = tk.Frame(hdr, bg=ACC, width=18, height=18)
-        logo.pack(side="left", padx=(PAD, 6), pady=8)
-        logo.pack_propagate(False)
-        tk.Label(logo, text="⚡", fg=FG, bg=ACC, font=("Segoe UI Emoji", 8)).place(relx=.5, rely=.5, anchor="center")
-
-        tk.Label(hdr, text=profile.get("name", "Profil"), fg=FG, bg=BG,
-                 font=("Segoe UI", 10, "bold")).pack(side="left")
+        hdr = tk.Frame(main, bg=BG)
+        hdr.pack(fill="x", padx=PAD, pady=(8,4))
+        # Pastille accent
+        dot = tk.Canvas(hdr, width=8, height=8, bg=BG, highlightthickness=0)
+        dot.pack(side="left", pady=2)
+        dot.create_oval(0,0,8,8, fill=ACC, outline="")
+        tk.Label(hdr, text=profile.get("name","Profil"), fg=FG, bg=BG,
+                 font=("Segoe UI",10,"bold")).pack(side="left", padx=(6,0))
         tk.Label(hdr, text="PROFIL", fg=ACC, bg=BG,
-                 font=("Segoe UI", 7, "bold")).pack(side="right", padx=PAD)
-
-        # Séparateur header
-        tk.Frame(inner, bg=BDR, height=1).pack(fill="x")
+                 font=("Segoe UI",7,"bold")).pack(side="right")
+        # Séparateur
+        tk.Frame(main, bg=ACC, height=1).pack(fill="x")
 
         # ── Grille boutons 4×2 ────────────────────────────────────────────
-        bf = tk.Frame(inner, bg=BG)
-        bf.pack(padx=PAD, pady=(8, 0))
+        bf = tk.Frame(main, bg=BG)
+        bf.pack(padx=PAD, pady=(8,0))
         buttons = profile.get("buttons", {})
         for i in range(8):
             b   = buttons.get(str(i), {})
             r,c = divmod(i, COLS)
-            # Fond de cellule avec dégradé simulé via deux frames imbriquées
-            outer_c = tk.Frame(bf, bg=BDR2, padx=1, pady=1)
-            outer_c.grid(row=r, column=c, padx=GAP//2, pady=GAP//2)
-            cell = tk.Frame(outer_c, bg=CARD, width=CELL-2, height=CELL-2)
-            cell.pack()
+            # Bordure simulée : frame BDR de 1px, frame CARD dedans
+            border = tk.Frame(bf, bg=BDR)
+            border.grid(row=r, column=c, padx=GAP//2, pady=GAP//2)
+            cell = tk.Frame(border, bg=CARD, width=CELL-2, height=CELL-2)
+            cell.pack(padx=1, pady=1)
             cell.pack_propagate(False)
-            icon  = b.get("icon", "") or "●"
+            icon  = b.get("icon","") or "●"
             label = (b.get("label") or f"Btn {i+1}")[:9]
-            tk.Label(cell, text=icon,  fg=FG,  bg=CARD, font=("Segoe UI Emoji", 15)).place(relx=.5, rely=.36, anchor="center")
-            tk.Label(cell, text=label, fg=FG3, bg=CARD, font=("Segoe UI", 6)).place(relx=.5, rely=.78, anchor="center")
+            tk.Label(cell, text=icon,  fg=FG,  bg=CARD,
+                     font=("Segoe UI Emoji",15)).place(relx=.5, rely=.36, anchor="center")
+            tk.Label(cell, text=label, fg=FG3, bg=CARD,
+                     font=("Segoe UI",6)).place(relx=.5, rely=.78, anchor="center")
 
-        # Séparateur boutons/potards
-        tk.Frame(inner, bg=BDR, height=1).pack(fill="x", padx=PAD, pady=(8, 0))
+        # ── Séparateur ────────────────────────────────────────────────────
+        tk.Frame(main, bg=BDR, height=1).pack(fill="x", padx=PAD, pady=(8,0))
 
-        # ── Rangée potards ────────────────────────────────────────────────
+        # ── Potards ───────────────────────────────────────────────────────
         POT_LABELS = {
-            "volume_system":"Vol. sys","volume_app":"Vol. app","brightness":"Luminosité",
+            "volume_system":"Vol.sys","volume_app":"Vol.app","brightness":"Luminosité",
             "scroll":"Scroll","zoom_level":"Zoom","media_seek":"Seek",
             "discord_volume":"Discord","spotify_volume":"Spotify","game_volume":"Jeu",
             "mic_volume":"Micro","obs_volume":"OBS","led_strip_color":"LED","custom":"Custom",
         }
-        pf = tk.Frame(inner, bg=BG)
-        pf.pack(padx=PAD, pady=(8, 12))
+        pf = tk.Frame(main, bg=BG)
+        pf.pack(padx=PAD, pady=(8,12))
         pots = profile.get("pots", {})
         for i in range(COLS):
             p      = pots.get(str(i), {})
             name   = (p.get("name") or f"Pot {i+1}")[:8]
             action = POT_LABELS.get(p.get("action",""), (p.get("action","") or "—")[:8])
 
-            outer_c = tk.Frame(pf, bg=BDR2, padx=1, pady=1)
-            outer_c.grid(row=0, column=i, padx=GAP//2)
-            cell = tk.Frame(outer_c, bg=BG3, width=CELL-2, height=CELL-2)
-            cell.pack()
+            border = tk.Frame(pf, bg=BDR)
+            border.grid(row=0, column=i, padx=GAP//2)
+            cell = tk.Frame(border, bg=BG3, width=CELL-2, height=CELL-2)
+            cell.pack(padx=1, pady=1)
             cell.pack_propagate(False)
 
             # Potard dessiné sur Canvas
-            cv = tk.Canvas(cell, width=24, height=24, bg=BG3, highlightthickness=0)
-            cv.place(relx=.5, rely=.28, anchor="center")
-            cv.create_oval(2, 2, 22, 22, outline=FG3, width=1, fill=BG4)   # cercle extérieur
-            cv.create_oval(6, 6, 18, 18, outline=ACC, width=1.5, fill=BG)   # cercle intérieur accent
-            cv.create_oval(10, 10, 14, 14, fill=ACC, outline="")             # point central
+            cv = tk.Canvas(cell, width=26, height=26, bg=BG3, highlightthickness=0)
+            cv.place(relx=.5, rely=.26, anchor="center")
+            cv.create_oval(1, 1, 25, 25, outline=FG3, width=1,   fill=BG4)
+            cv.create_oval(5, 5, 21, 21, outline=ACC, width=1.5, fill=BG)
+            cv.create_oval(10,10,16,16, fill=ACC, outline="")
 
-            tk.Label(cell, text=name,   fg=FG,  bg=BG3, font=("Segoe UI", 6, "bold")).place(relx=.5, rely=.66, anchor="center")
-            tk.Label(cell, text=action, fg=FG3, bg=BG3, font=("Segoe UI", 5)).place(relx=.5, rely=.84, anchor="center")
+            tk.Label(cell, text=name,   fg=FG,  bg=BG3,
+                     font=("Segoe UI",6,"bold")).place(relx=.5, rely=.65, anchor="center")
+            tk.Label(cell, text=action, fg=FG3, bg=BG3,
+                     font=("Segoe UI",5)).place(relx=.5, rely=.83, anchor="center")
 
-        # ── Fermeture après 3 s ───────────────────────────────────────────
+        # ── Fermeture après 3s ────────────────────────────────────────────
         def _close():
             self._close_timer = None
             try:
@@ -1171,11 +1160,13 @@ class AutoUpdater:
         except Exception:
             return (0,)
 
-    def check(self):
-        """Appelle l'API GitHub Releases (sans token, limite 60 req/h largement
-        suffisant) et envoie un message WebSocket si une MAJ est dispo."""
+    def check(self, silent=True):
+        """Appelle l'API GitHub Releases et envoie un message WebSocket si une MAJ est dispo.
+        silent=True : pas de toast si déjà à jour (vérification auto au démarrage)
+        silent=False : toast explicite si déjà à jour (bouton manuel)"""
         if APP_VERSION == "dev":
-            return  # jamais en mode développement local
+            self.broadcast({"type":"toast","message":"⚠ Version dev — vérification MAJ désactivée"})
+            return
 
         import urllib.request, urllib.error
         url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
@@ -1185,11 +1176,12 @@ class AutoUpdater:
                 data = json.loads(r.read())
         except Exception as e:
             log.warning(f"AutoUpdater check: {e}")
+            if not silent:
+                self.broadcast({"type":"toast","message":f"⚠ Impossible de vérifier les MAJ : {e}"})
             return
 
         latest_tag  = data.get("tag_name", "")
         latest_body = data.get("body", "")
-        # Cherche le premier asset .exe (l'installeur Inno Setup)
         assets = data.get("assets", [])
         installer_url = next(
             (a["browser_download_url"] for a in assets if a["name"].endswith(".exe")),
@@ -1197,12 +1189,16 @@ class AutoUpdater:
         )
         if not installer_url:
             log.warning("AutoUpdater: aucun .exe trouvé dans la release")
+            if not silent:
+                self.broadcast({"type":"toast","message":"⚠ Aucun installeur trouvé dans la dernière release"})
             return
 
         current = self._parse_version(APP_VERSION)
         latest  = self._parse_version(latest_tag)
         if latest <= current:
-            return  # déjà à jour
+            if not silent:
+                self.broadcast({"type":"toast","message":f"✅ Imperium {APP_VERSION} est à jour"})
+            return
 
         log.info(f"MAJ disponible : {APP_VERSION} → {latest_tag}")
         self.broadcast({
@@ -1568,7 +1564,7 @@ class Imperium:
 
         elif t=="check_update":
             # Bouton "Vérifier les mises à jour" dans les Paramètres
-            threading.Thread(target=self.updater.check, daemon=True).start()
+            threading.Thread(target=self.updater.check, kwargs={"silent":False}, daemon=True).start()
             await ws.send(json.dumps({"type":"toast","message":"🔍 Vérification des mises à jour..."}))
 
     def _native_picker(self, folder: bool) -> str:
