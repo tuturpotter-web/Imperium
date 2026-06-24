@@ -1,4 +1,4 @@
-name: Build MacroDeck
+name: Build Imperium
 
 on:
   push:
@@ -55,7 +55,7 @@ jobs:
           pyinstaller `
             --onedir `
             --noconsole `
-            --name MacroDeck `
+            --name Imperium `
             --add-data "gui.html;." `
             --hidden-import win32gui `
             --hidden-import win32process `
@@ -100,35 +100,35 @@ jobs:
       - name: Upload installer as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MacroDeck-Setup
-          path: installer_output/MacroDeck_Setup.exe
+          name: Imperium-Setup
+          path: installer_output/Imperium_Setup.exe
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          files: installer_output/MacroDeck_Setup.exe
-          name: MacroDeck v${{ steps.version.outputs.version }}
+          files: installer_output/Imperium_Setup.exe
+          name: Imperium v${{ steps.version.outputs.version }}
           body: |
-            ## MacroDeck — build automatique #${{ github.run_number }}
+            ## Imperium — build automatique #${{ github.run_number }}
 
             Compilé depuis le commit ${{ github.sha }}
 
             ### Installation
-            1. Télécharge `MacroDeck_Setup.exe`
+            1. Télécharge `Imperium_Setup.exe`
             2. Lance-le et suis le wizard (1 minute)
-            3. MacroDeck s'installe dans `Program Files`, avec raccourci Menu Démarrer
+            3. Imperium s'installe dans `Program Files`, avec raccourci Menu Démarrer
             4. Désinstallation propre depuis **Paramètres Windows → Applications**
 
             ### Ce que l'installeur configure
-            - Installation dans `Program Files\MacroDeck`
+            - Installation dans `Program Files\Imperium`
             - Raccourci Menu Démarrer (par défaut)
             - Raccourci Bureau (optionnel)
             - Lancement au démarrage Windows (optionnel)
             - Désinstalleur enregistré dans Paramètres Windows
 
             ### Plugins (sans recompiler)
-            Un dossier `plugins\` est créé automatiquement à côté de `MacroDeck.exe`.
+            Un dossier `plugins\` est créé automatiquement à côté de `Imperium.exe`.
             Pose-y des fichiers `.json` pour ajouter de nouvelles actions, puis clique sur
             "🔄 Recharger les plugins" dans l'onglet Plugins.
 
