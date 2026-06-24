@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Imperium</title>
+<title>MacroDeck</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -339,7 +339,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 <div class="topbar">
   <div class="logo">
     <div class="logo-ic">🎛</div>
-    <span class="logo-t">Imperium</span>
+    <span class="logo-t">MacroDeck</span>
     <span class="logo-v">V15</span>
   </div>
   <div class="vdiv"></div>
@@ -359,6 +359,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
     <button class="sb-btn" title="Métriques" onclick="switchView('metrics',null);sbActive(this)">📊</button>
     <button class="sb-btn" title="Profils" onclick="switchView('profiles',null);sbActive(this)">◈</button>
     <button class="sb-btn" title="Plugins" onclick="switchView('plugins',null);sbActive(this)">🧩</button>
+    <button class="sb-btn" title="Overlay" onclick="switchView('overlay',null);sbActive(this)">🪟</button>
     <div class="sb-sep"></div>
     <button class="sb-btn" title="Serial" onclick="switchView('serial',null);sbActive(this)">⌨</button>
     <button class="sb-btn" title="Paramètres" onclick="switchView('settings',null);sbActive(this)">⚙</button>
@@ -370,7 +371,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
       <div class="device-view">
         <div class="device" id="deviceCard">
           <div class="dev-hdr">
-            <div class="dev-name">Imperium — ESP32-S3</div>
+            <div class="dev-name">MacroDeck — ESP32-S3</div>
             <div class="dev-conn"><div class="dev-conn-dot" id="devDot"></div><span id="devLbl" style="font-size:10px;color:var(--text3)">—</span></div>
           </div>
           <!-- Profil switcher -->
@@ -555,7 +556,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
           <div class="sep"></div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
             <div style="font-size:11px;color:var(--text3)">Imperium v15.2 — WebSocket :8765 — HTTP :8766</div>
-            <button class="tbtn" onclick="checkUpdate()" title="Vérifier les mises à jour">🔄 Vérifier les MAJ</button>
+            <button class="tbtn" onclick="checkUpdate()">🔄 Vérifier les MAJ</button>
           </div>
         </div>
       </div>
@@ -599,6 +600,46 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
     <div class="modal-foot">
       <button class="tbtn" onclick="closeModal()">Annuler</button>
       <button class="tbtn pr" onclick="confirmAction()">✓ Ajouter</button>
+    </div>
+  <!-- ── VIEW OVERLAY ── -->
+    <div class="view" id="v-overlay">
+      <div class="settings-view">
+        <div class="settings-inner">
+          <div class="settings-title">🪟 Overlay — Popup changement de profil</div>
+          <div class="grp">
+            <div class="grp-lbl">Taille des cellules (px)</div>
+            <input class="inp" type="number" id="ov_cell_size" value="56" min="32" max="100" style="width:80px">
+          </div>
+          <div class="grp">
+            <div class="grp-lbl">Durée d'affichage (secondes)</div>
+            <input class="inp" type="number" id="ov_delay" value="3" min="1" max="15" style="width:80px">
+          </div>
+          <div class="grp">
+            <div class="grp-lbl">Position</div>
+            <select class="sel" id="ov_position">
+              <option value="br">Bas droite (défaut)</option>
+              <option value="bl">Bas gauche</option>
+              <option value="tr">Haut droite</option>
+              <option value="tl">Haut gauche</option>
+            </select>
+          </div>
+          <div class="grp">
+            <div class="grp-lbl">Opacité (%)</div>
+            <input class="inp" type="number" id="ov_alpha" value="97" min="20" max="100" style="width:80px">
+          </div>
+          <div class="sep"></div>
+          <div class="grp-lbl" style="font-size:13px;font-weight:600;color:var(--text)">Zone potards</div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:10px">
+            Remplace l'affichage automatique (nom + action) par une image ou un texte libre pour chaque potard.
+          </div>
+          <div id="ov_pots_cfg"></div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <button class="tbtn pr" onclick="saveOverlayCfg()">💾 Enregistrer</button>
+            <button class="tbtn" onclick="previewOverlay()">👁 Prévisualiser</button>
+          </div>
+          <div id="ovSaveMsg" style="font-size:10px;margin-top:6px;color:var(--accent)"></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -942,7 +983,7 @@ function renderPlugins(){
         <div style="font-size:12px;margin-bottom:6px">Aucun plugin installé</div>
         <div style="font-size:11px;max-width:420px;margin:0 auto;line-height:1.6">
           Pose un fichier <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">.json</code> dans le dossier
-          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">plugins/</code> à côté de Imperium.exe, puis clique sur "Recharger".
+          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">plugins/</code> à côté de MacroDeck.exe, puis clique sur "Recharger".
         </div>
       </div>
     `:`
@@ -964,7 +1005,7 @@ function renderPlugins(){
     <div class="grp-lbl" style="margin-bottom:8px">📖 Créer un plugin</div>
     <div style="font-size:11px;color:var(--text2);line-height:1.7;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px">
       Un plugin est un simple fichier <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">.json</code> qui déclare une ou plusieurs actions.
-      Pas besoin de recompiler Imperium : pose le fichier dans <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">plugins/</code> et clique sur "Recharger".
+      Pas besoin de recompiler MacroDeck : pose le fichier dans <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">plugins/</code> et clique sur "Recharger".
       <br><br>
       <b>3 types d'exécution possibles :</b><br>
       • <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">shell</code> — commande Windows (fenêtre toujours cachée)<br>
@@ -1004,7 +1045,7 @@ function downloadPluginExample(){
 
 // ═══════════════════════════════════════════════════════════════
 // AUTOSAVE — sauvegarde automatiquement la config côté backend
-// (et donc sur disque ~/.imperium/config.json) à chaque modif,
+// (et donc sur disque ~/.macrodeck/config.json) à chaque modif,
 // avec un debounce pour ne pas spammer le serveur à chaque frappe.
 // Ainsi, tout reste en mémoire après un reboot sans devoir cliquer
 // manuellement sur "Enregistrer".
@@ -1795,16 +1836,17 @@ function clearLog(){logs=[];renderLog();}
 function exportLog(){
   const a=document.createElement("a");
   a.href="data:text/plain;charset=utf-8,"+encodeURIComponent(logs.map(l=>`${l.ts}\t${l.dir}\t${l.type}\t${l.frm}`).join("\n"));
-  a.download="imperium_"+Date.now()+".log";a.click();
+  a.download="macrodeck_"+Date.now()+".log";a.click();
 }
 
 // ═══════════════════════════════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════════════════════════════
 function switchView(id,btnEl) {
+  if(id==="overlay") setTimeout(initOverlayTab, 0);
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   const v=document.getElementById("v-"+id); if(v) v.classList.add("active");
-  const titles={device:"Device",metrics:"Métriques",profiles:"Profils",plugins:"Plugins",serial:"Serial Monitor",settings:"Paramètres"};
+  const titles={device:"Device",metrics:"Métriques",profiles:"Profils",plugins:"Plugins",serial:"Serial Monitor",settings:"Paramètres",overlay:"Overlay"};
   const t=document.getElementById("viewTitle"); if(t) t.textContent=titles[id]||id;
   if(id==="profiles") renderProfiles();
   if(id==="plugins") renderPlugins();
@@ -1917,24 +1959,99 @@ function handleProtocolTestResult(m){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// AUTO-UPDATER
+// OVERLAY CONFIG
 // ═══════════════════════════════════════════════════════════════
-function checkUpdate() {
-  wsSend({type:"check_update"});
+function getOverlayCfg() {
+  return (config && config.overlay) ? config.overlay : {cell_size:56,delay:3,position:"br",alpha:97,pots:{}};
 }
+function initOverlayTab() {
+  const cfg = getOverlayCfg();
+  document.getElementById("ov_cell_size").value = cfg.cell_size||56;
+  document.getElementById("ov_delay").value     = cfg.delay||3;
+  document.getElementById("ov_position").value  = cfg.position||"br";
+  document.getElementById("ov_alpha").value     = cfg.alpha||97;
+  renderOverlayPotsEditor();
+}
+function renderOverlayPotsEditor() {
+  const cfg = getOverlayCfg();
+  const profile = config&&config.profiles&&config.profiles[config.active_profile];
+  const pots = (profile&&profile.pots)||{};
+  let html = "";
+  for (let i=0;i<4;i++) {
+    const pot = pots[i]||{};
+    const potCfg = (cfg.pots&&cfg.pots[i])||{};
+    const name = pot.name||`Pot ${i+1}`;
+    const hasImg = !!potCfg.image;
+    html += `<div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:8px">Pot ${i+1} — ${name}</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:10px;color:var(--text3);width:55px">Image</span>
+        ${hasImg
+          ? `<img src="${potCfg.image}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">`
+          : `<div style="width:36px;height:36px;border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px">◎</div>`}
+        <input type="file" accept="image/*" id="ov_pot_img_${i}" style="display:none" onchange="onOvPotImgChosen(${i},this)">
+        <button class="tbtn" onclick="document.getElementById('ov_pot_img_${i}').click()">🖼 Importer</button>
+        ${hasImg?`<button class="tbtn" onclick="clearOvPotImg(${i})">✕ Supprimer</button>`:""}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+        <span style="font-size:10px;color:var(--text3);width:55px">Texte</span>
+        <input class="inp" id="ov_pot_text_${i}" value="${potCfg.text||""}" placeholder="Vide = auto (nom + action)" style="flex:1">
+      </div>
+    </div>`;
+  }
+  document.getElementById("ov_pots_cfg").innerHTML = html;
+}
+function onOvPotImgChosen(i, input) {
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas"); c.width=64; c.height=64;
+      c.getContext("2d").drawImage(img,0,0,64,64);
+      if(!config.overlay) config.overlay={cell_size:56,delay:3,position:"br",alpha:97,pots:{}};
+      if(!config.overlay.pots) config.overlay.pots={};
+      if(!config.overlay.pots[i]) config.overlay.pots[i]={};
+      config.overlay.pots[i].image = c.toDataURL("image/png",0.85);
+      renderOverlayPotsEditor();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function clearOvPotImg(i) {
+  if(config.overlay&&config.overlay.pots&&config.overlay.pots[i]) {
+    delete config.overlay.pots[i].image;
+    renderOverlayPotsEditor();
+  }
+}
+function saveOverlayCfg() {
+  if(!config.overlay) config.overlay={};
+  config.overlay.cell_size = parseInt(document.getElementById("ov_cell_size").value)||56;
+  config.overlay.delay     = parseInt(document.getElementById("ov_delay").value)||3;
+  config.overlay.position  = document.getElementById("ov_position").value;
+  config.overlay.alpha     = parseInt(document.getElementById("ov_alpha").value)||97;
+  if(!config.overlay.pots) config.overlay.pots={};
+  for(let i=0;i<4;i++) {
+    if(!config.overlay.pots[i]) config.overlay.pots[i]={};
+    const t = document.getElementById(`ov_pot_text_${i}`);
+    if(t) config.overlay.pots[i].text = t.value;
+  }
+  wsSend({type:"save_config",data:config});
+  const msg = document.getElementById("ovSaveMsg");
+  msg.textContent="✓ Enregistré"; setTimeout(()=>msg.textContent="",2000);
+}
+function previewOverlay() { wsSend({type:"preview_overlay"}); }
 
+// ── MAJ disponible → toast cliquable ─────────────────────────────────────
 function handleUpdateAvailable(m) {
-  // Toast cliquable qui ouvre la release GitHub
   const t = document.getElementById("toast");
-  t.innerHTML = `🚀 Mise à jour disponible : <b>${m.current}</b> → <b>${m.latest}</b> &nbsp;
-    <a href="https://github.com/tuturpotter-web/Imperium/releases/latest"
-       target="_blank"
-       style="color:#fff;text-decoration:underline;font-weight:600">Télécharger</a>`;
-  t.className = "show update";
+  t.innerHTML = `🚀 MAJ disponible : <b>${m.current}</b> → <b>${m.latest}</b> &nbsp;<a href="https://github.com/tuturpotter-web/Imperium/releases/latest" target="_blank" style="color:#fff;text-decoration:underline;font-weight:600">Télécharger</a>`;
+  t.className = "show";
   clearTimeout(window._toastTimer);
-  // Reste visible 8s (plus long que les toasts normaux)
-  window._toastTimer = setTimeout(() => { t.className = ""; t.innerHTML = ""; }, 8000);
+  window._toastTimer = setTimeout(()=>{t.className="";t.innerHTML="";}, 8000);
 }
+function checkUpdate() { wsSend({type:"check_update"}); }
 
 // ═══════════════════════════════════════════════════════════════
 // TOAST
@@ -1961,7 +2078,7 @@ buildPots();
 buildLeds();
 updateMetrics();
 renderProfiles();
-sysLog("Imperium v15.1 — ws://localhost:8765");
+sysLog("MacroDeck v15.1 — ws://localhost:8765");
 </script>
 </body>
 </html>
