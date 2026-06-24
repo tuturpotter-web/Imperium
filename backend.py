@@ -1,5 +1,5 @@
 """
-MacroDeck Backend v15.2
+Imperium Backend v15.2
 - Console 100% cachée (SW_HIDE + FreeConsole)
 - Pas d'ouverture automatique du navigateur au démarrage
 - Profils indépendants avec création/suppression/renommage
@@ -17,7 +17,7 @@ from typing import Optional
 # Injectée automatiquement par le CI lors du build (voir build.yml).
 # En dev local, reste "dev" pour ne jamais déclencher de mise à jour.
 APP_VERSION = "dev"
-GITHUB_REPO = "tuturpotter-web/MacroDeck"  # owner/repo
+GITHUB_REPO = "tuturpotter-web/Imperium"  # owner/repo
 
 # ── CACHER CONSOLE ──────────────────────────────────────────────────────────
 if sys.platform == "win32":
@@ -146,7 +146,7 @@ log = logging.getLogger("MD")
 
 WS_PORT   = 8765
 HTTP_PORT = 8766
-CONFIG_PATH = Path(os.path.expanduser("~")) / ".macrodeck" / "config.json"
+CONFIG_PATH = Path(os.path.expanduser("~")) / ".imperium" / "config.json"
 CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 # ── VOLUME ───────────────────────────────────────────────────────────────────
@@ -317,14 +317,19 @@ DEFAULT_CONFIG = {
 }
 
 def pattern_to_regex(pattern: str) -> "re.Pattern":
-    """Convertit un patron du type 'BTN{i}:PRESS' en regex capturant {i} et {v}
-    comme groupes nommés, pour parser les trames brutes reçues de l'ESP32
-    quel que soit le format texte choisi par l'utilisateur (pas que du JSON)."""
-    # Échappe tout le texte du patron sauf nos placeholders, qu'on remplace
-    # ensuite par des groupes de capture numériques.
-    escaped = re.escape(pattern)
-    escaped = escaped.replace(re.escape("{i}"), r"(?P<i>-?\d+)")
-    escaped = escaped.replace(re.escape("{v}"), r"(?P<v>-?\d+)")
+    """Convertit un patron du type 'BTN{i}:PRESS' ou '{"t":"press","i":{i}}'
+    en regex capturant {i} et {v} comme groupes nommés.
+    On découpe sur les placeholders AVANT d'escaper, pour que les accolades
+    JSON du patron ne soient jamais confondues avec les placeholders."""
+    PLACEHOLDER_I = "\x00I\x00"
+    PLACEHOLDER_V = "\x00V\x00"
+    # Remplace les placeholders par des tokens neutres hors re.escape
+    tmp = pattern.replace("{i}", PLACEHOLDER_I).replace("{v}", PLACEHOLDER_V)
+    # Échappe tout le reste (accolades JSON, guillemets, points, etc.)
+    escaped = re.escape(tmp)
+    # Remet les groupes de capture à la place des tokens
+    escaped = escaped.replace(re.escape(PLACEHOLDER_I), r"(?P<i>-?\d+)")
+    escaped = escaped.replace(re.escape(PLACEHOLDER_V), r"(?P<v>-?\d+)")
     return re.compile("^"+escaped+"$")
 
 def pattern_format(pattern: str, i=None, v=None) -> str:
@@ -676,7 +681,7 @@ class ActionEngine:
 
 def _timer(s, lbl):
     time.sleep(s)
-    try: ctypes.windll.user32.MessageBoxW(0,lbl,"MacroDeck ⏱",0x40|0x1000)
+    try: ctypes.windll.user32.MessageBoxW(0,lbl,"Imperium ⏱",0x40|0x1000)
     except: pass
 
 # ── MÉTRIQUES ────────────────────────────────────────────────────────────────
@@ -1015,7 +1020,7 @@ class Transport:
             try: self.ser.write((line+"\n").encode())
             except: pass
 
-# ── MACRODECK CORE ────────────────────────────────────────────────────────────
+# ── IMPERIUM CORE ────────────────────────────────────────────────────────────
 # ── PLUGINS ────────────────────────────────────────────────────────────────────
 # Système de plugins sans recompilation : chaque plugin est un simple fichier
 # .json posé dans le dossier "plugins" (à côté de l'exe ou du .py). Il déclare
@@ -1144,7 +1149,7 @@ class PluginManager:
 class AutoUpdater:
     """Vérifie si une nouvelle version est disponible sur GitHub Releases et,
     si l'utilisateur confirme via la GUI, télécharge puis lance le nouvel
-    installeur Inno Setup de façon silencieuse avant de fermer MacroDeck."""
+    installeur Inno Setup de façon silencieuse avant de fermer Imperium."""
 
     def __init__(self, broadcast_fn):
         self.broadcast = broadcast_fn
@@ -1166,7 +1171,7 @@ class AutoUpdater:
         import urllib.request, urllib.error
         url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "MacroDeck-Updater"})
+            req = urllib.request.Request(url, headers={"User-Agent": "Imperium-Updater"})
             with urllib.request.urlopen(req, timeout=10) as r:
                 data = json.loads(r.read())
         except Exception as e:
@@ -1200,16 +1205,16 @@ class AutoUpdater:
         })
 
     def download_and_install(self, installer_url: str):
-        """Télécharge l'installeur dans %TEMP%, le lance, puis quitte MacroDeck.
+        """Télécharge l'installeur dans %TEMP%, le lance, puis quitte Imperium.
         Tourne dans un thread séparé pour ne pas bloquer la boucle asyncio."""
         import urllib.request, tempfile
         try:
             self.broadcast({"type": "update_progress", "status": "downloading"})
-            tmp = os.path.join(tempfile.gettempdir(), "MacroDeck_Update.exe")
+            tmp = os.path.join(tempfile.gettempdir(), "Imperium_Update.exe")
             urllib.request.urlretrieve(installer_url, tmp)
             self.broadcast({"type": "update_progress", "status": "installing"})
             # /SILENT = wizard visible mais sans clics requis
-            # /CLOSEAPPLICATIONS = ferme les processus MacroDeck existants
+            # /CLOSEAPPLICATIONS = ferme les processus Imperium existants
             subprocess.Popen(
                 [tmp, "/SILENT", "/CLOSEAPPLICATIONS"],
                 creationflags=CREATE_NO_WINDOW
@@ -1230,7 +1235,7 @@ class AutoUpdater:
         threading.Thread(target=_run, daemon=True).start()
 
 
-class MacroDeck:
+class Imperium:
     def __init__(self):
         self.cfg       = ConfigManager()
         self.ws_clients= set()
@@ -1610,7 +1615,7 @@ def _app_dir_persistent() -> str:
     par opposition à _app_dir() qui pointe vers un dossier temporaire en
     mode .exe compilé. À utiliser pour tout ce qui doit survivre entre deux
     lancements : dossier plugins/, etc. (la config elle-même est dans
-    ~/.macrodeck/, donc indépendante de l'emplacement de l'exe)."""
+    ~/.imperium/, donc indépendante de l'emplacement de l'exe)."""
     if getattr(sys, "frozen", False):
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
@@ -1655,11 +1660,11 @@ def _notify_already_running():
         try:
             ctypes.windll.user32.MessageBoxW(
                 0,
-                "MacroDeck est déjà lancé en arrière-plan.\n\n"
+                "Imperium est déjà lancé en arrière-plan.\n\n"
                 "Ouvre http://127.0.0.1:8766/gui.html dans ton navigateur pour l'utiliser.\n\n"
                 "Si ce n'est pas le cas, ouvre le Gestionnaire des tâches et termine\n"
-                "le processus MacroDeck.exe existant avant de relancer.",
-                "MacroDeck — déjà en cours",
+                "le processus Imperium.exe existant avant de relancer.",
+                "Imperium — déjà en cours",
                 0x40 | 0x1000  # MB_ICONINFORMATION | MB_TOPMOST
             )
         except: pass
@@ -1687,7 +1692,7 @@ if __name__=="__main__":
     threading.Thread(target=_http_server, daemon=True).start()
     threading.Thread(target=_open_browser_when_ready, daemon=True).start()
 
-    deck=MacroDeck()
+    deck=Imperium()
     try:
         asyncio.run(deck.run())
     except KeyboardInterrupt:
