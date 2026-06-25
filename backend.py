@@ -1498,8 +1498,57 @@ class MacroDeck:
                     "error":"Aucun patron ne correspond à cette trame (trame envoyée quand même)"}))
 
         elif t=="open_update_url":
-            GITHUB_REPO = "tuturpotter-web/Imperium"
-            open_url_default(f"https://github.com/{GITHUB_REPO}/releases/latest")
+            download_url = msg.get("download_url","")
+            async def _do_download(dl_url):
+                import urllib.request, urllib.error, tempfile
+                GITHUB_REPO = "tuturpotter-web/Imperium"
+                try:
+                    # Récupère l'URL de téléchargement si pas fournie
+                    if not dl_url:
+                        api = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+                        req = urllib.request.Request(api, headers={"User-Agent":"Imperium-updater"})
+                        with urllib.request.urlopen(req, timeout=8) as r:
+                            release = json.loads(r.read())
+                        assets = release.get("assets", [])
+                        exe_asset = next((a for a in assets if a["name"].endswith(".exe")), None)
+                        if not exe_asset:
+                            await ws.send(json.dumps({"type":"update_progress","error":"Aucun .exe trouvé dans la release GitHub"}))
+                            return
+                        dl_url = exe_asset["browser_download_url"]
+                        filename = exe_asset["name"]
+                        total_size = exe_asset.get("size", 0)
+                    else:
+                        filename = dl_url.split("/")[-1]
+                        total_size = 0
+
+                    await ws.send(json.dumps({"type":"update_progress","status":"downloading","pct":0,"filename":filename}))
+
+                    tmp_path = os.path.join(tempfile.gettempdir(), filename)
+                    downloaded = 0
+                    last_pct = -1
+
+                    def _report(block_num, block_size, file_size):
+                        nonlocal downloaded, last_pct
+                        downloaded = block_num * block_size
+                        pct = min(100, int(downloaded / file_size * 100)) if file_size > 0 else 0
+                        if pct != last_pct:
+                            last_pct = pct
+                            asyncio.ensure_future(ws.send(json.dumps({"type":"update_progress","status":"downloading","pct":pct,"filename":filename})))
+
+                    loop = asyncio.get_event_loop()
+                    await loop.run_in_executor(None, lambda: urllib.request.urlretrieve(dl_url, tmp_path, _report))
+
+                    await ws.send(json.dumps({"type":"update_progress","status":"launching","pct":100,"filename":filename}))
+                    await asyncio.sleep(0.5)
+
+                    # Lance le setup et quitte
+                    subprocess.Popen([tmp_path], creationflags=subprocess.CREATE_NO_WINDOW)
+                    await asyncio.sleep(1)
+                    os._exit(0)
+
+                except Exception as e:
+                    await ws.send(json.dumps({"type":"update_progress","error":str(e)}))
+            asyncio.ensure_future(_do_download(download_url))
 
         elif t=="check_update":
             async def _do_check_update():
@@ -1512,8 +1561,11 @@ class MacroDeck:
                         data = json.loads(r.read())
                     latest = data.get("tag_name", "").lstrip("v")
                     current = APP_VERSION
+                    assets = data.get("assets", [])
+                    exe_asset = next((a for a in assets if a["name"].endswith(".exe")), None)
+                    download_url = exe_asset["browser_download_url"] if exe_asset else ""
                     if latest and latest != current:
-                        await ws.send(json.dumps({"type":"update_available","current":current,"latest":latest}))
+                        await ws.send(json.dumps({"type":"update_available","current":current,"latest":latest,"download_url":download_url}))
                     else:
                         await ws.send(json.dumps({"type":"toast","message":f"✓ Imperium {current} est à jour"}))
                 except urllib.error.URLError as e:
