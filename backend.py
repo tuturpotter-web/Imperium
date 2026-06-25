@@ -1497,6 +1497,10 @@ class MacroDeck:
                 await ws.send(json.dumps({"type":"protocol_test_result","ok":False,
                     "error":"Aucun patron ne correspond à cette trame (trame envoyée quand même)"}))
 
+        elif t=="open_update_url":
+            GITHUB_REPO = "tuturpotter-web/Imperium"
+            open_url_default(f"https://github.com/{GITHUB_REPO}/releases/latest")
+
         elif t=="check_update":
             async def _do_check_update():
                 import urllib.request, urllib.error
