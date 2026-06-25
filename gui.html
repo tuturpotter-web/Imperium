@@ -2010,10 +2010,10 @@ function previewOverlay() { wsSend({type:"preview_overlay"}); }
 // ── MAJ disponible → toast cliquable ─────────────────────────────────────
 function handleUpdateAvailable(m) {
   const t = document.getElementById("toast");
-  t.innerHTML = `🚀 MAJ disponible : <b>${m.current}</b> → <b>${m.latest}</b> &nbsp;<a href="https://github.com/tuturpotter-web/Imperium/releases/latest" target="_blank" style="color:#fff;text-decoration:underline;font-weight:600">Télécharger</a>`;
+  t.innerHTML = `🚀 MAJ disponible : <b>${m.current}</b> → <b>${m.latest}</b> &nbsp;<button onclick="wsSend({type:'open_update_url'});this.textContent='✓ Ouverture...';this.disabled=true" style="background:var(--accent);color:#fff;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;font-weight:600">⬇ Télécharger</button> <button onclick="document.getElementById('toast').className='';document.getElementById('toast').innerHTML=''" style="background:none;color:#aaa;border:none;cursor:pointer;font-size:14px;margin-left:4px">✕</button>`;
   t.className = "show";
   clearTimeout(window._toastTimer);
-  window._toastTimer = setTimeout(()=>{t.className="";t.innerHTML="";}, 8000);
+  // Pas de fermeture auto — l'utilisateur ferme manuellement
 }
 function checkUpdate() { wsSend({type:"check_update"}); }
 
