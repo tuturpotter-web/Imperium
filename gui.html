@@ -1242,7 +1242,6 @@ function buildPots() {
   for(let i=0;i<4;i++) {
     const p=getPotData(i);
     const d=document.createElement("div"); d.className="hw-pot";
-    const potImg = p.image || null;
     d.innerHTML=`<div style="position:relative;width:54px;height:54px">
       <svg viewBox="0 0 54 54" width="54" height="54" style="overflow:visible;cursor:ns-resize;position:absolute;top:0;left:0">
         <defs><radialGradient id="kg${i}" cx="38%" cy="32%"><stop offset="0%" stop-color="#252837"/><stop offset="100%" stop-color="#0c0d10"/></radialGradient></defs>
@@ -1255,7 +1254,6 @@ function buildPots() {
         <line id="kl${i}" x1="27" y1="27" x2="27" y2="7" stroke="#818cf8" stroke-width="2" stroke-linecap="round" transform="rotate(0,27,27)"/>
         <circle cx="27" cy="27" r="2.5" fill="var(--accent)"/>
       </svg>
-      ${potImg ? `<img src="${potImg}" style="position:absolute;top:8px;left:8px;width:38px;height:38px;border-radius:50%;object-fit:cover;pointer-events:none;opacity:.85">` : ""}
     </div>
     <div class="pot-lbl">${p.name||"Pot "+(i+1)}</div>
     <div class="pot-val" id="pv${i}">0%</div>`;
@@ -2170,14 +2168,20 @@ function previewOverlay() { wsSend({type:"preview_overlay"}); }
 
 // ── MAJ disponible → toast cliquable ─────────────────────────────────────
 let _updateDownloadUrl = "";
+let _updateInProgress = false;
 function handleUpdateAvailable(m) {
   _updateDownloadUrl = m.download_url || "";
+  _updateInProgress = false;
   const t = document.getElementById("toast");
-  t.innerHTML = `🚀 MAJ disponible : <b>${m.current}</b> → <b>${m.latest}</b> &nbsp;<button id="dlUpdateBtn" onclick="startUpdate()" style="background:var(--accent);color:#fff;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;font-weight:600">⬇ Télécharger &amp; installer</button> <button onclick="document.getElementById('toast').className='';document.getElementById('toast').innerHTML=''" style="background:none;color:#aaa;border:none;cursor:pointer;font-size:14px;margin-left:4px">✕</button>`;
+  t.innerHTML = `🚀 MAJ disponible : <b>${m.current}</b> → <b>${m.latest}</b> &nbsp;<button id="dlUpdateBtn" onclick="startUpdate()" style="background:var(--accent);color:#fff;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;font-weight:600">⬇ Télécharger &amp; installer</button> <button onclick="document.getElementById('toast').className='';document.getElementById('toast').innerHTML='';_updateInProgress=false;" style="background:none;color:#aaa;border:none;cursor:pointer;font-size:14px;margin-left:4px">✕</button>`;
   t.className = "show";
   clearTimeout(window._toastTimer);
 }
 function startUpdate() {
+  if(_updateInProgress) return;
+  _updateInProgress = true;
+  const btn = document.getElementById("dlUpdateBtn");
+  if(btn) { btn.disabled = true; btn.textContent = "⏳ En cours…"; }
   const t = document.getElementById("toast");
   t.innerHTML = `⬇ Téléchargement… <span id="updatePct">0%</span> <div style="display:inline-block;width:120px;height:6px;background:var(--bg3);border-radius:3px;vertical-align:middle;margin-left:6px"><div id="updateBar" style="height:6px;background:var(--accent);border-radius:3px;width:0%;transition:width .2s"></div></div>`;
   t.className = "show";
@@ -2185,6 +2189,7 @@ function startUpdate() {
 }
 function handleUpdateProgress(m) {
   if(m.error) {
+    _updateInProgress = false;
     toast("⚠ Erreur MAJ : " + m.error, 6000);
     return;
   }
@@ -2200,7 +2205,10 @@ function handleUpdateProgress(m) {
   if(pctEl) pctEl.textContent = pct + "%";
   if(barEl) barEl.style.width = pct + "%";
 }
-function checkUpdate() { wsSend({type:"check_update"}); }
+function checkUpdate() {
+  if(_updateInProgress) { toast("⏳ Téléchargement en cours…"); return; }
+  wsSend({type:"check_update"});
+}
 
 // ═══════════════════════════════════════════════════════════════
 // TOAST
