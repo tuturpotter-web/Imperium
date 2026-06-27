@@ -28,6 +28,7 @@ jobs:
           pip install pyinstaller
           pip install pyserial psutil keyboard mouse websockets
           pip install pywin32 comtypes pycaw WMI
+          pip install pywebview
 
       # Détermine la version : tag git (v1.2.3) si disponible, sinon build-N
       - name: Resolve version
@@ -71,6 +72,9 @@ jobs:
             --hidden-import mouse `
             --hidden-import tkinter `
             --hidden-import queue `
+            --hidden-import webview `
+            --hidden-import webview.platforms.winforms `
+            --collect-all webview `
             backend.py
 
       # Met à jour la version dans le script Inno Setup
