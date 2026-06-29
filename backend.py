@@ -56,7 +56,11 @@ import psutil, keyboard, mouse, websockets
 try:
     from websockets.server import WebSocketServerProtocol
 except ImportError:
-    from websockets.legacy.server import WebSocketServerProtocol
+    try:
+        from websockets.legacy.server import WebSocketServerProtocol
+    except ImportError:
+        # websockets v14+ — pas de WebSocketServerProtocol à importer séparément
+        WebSocketServerProtocol = object
 
 try:
     from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
