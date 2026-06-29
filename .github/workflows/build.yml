@@ -26,6 +26,7 @@ jobs:
           pip install pyinstaller
           pip install pyserial psutil keyboard mouse
           pip install pywin32 comtypes pycaw WMI
+          pip install pywebview
 
       - name: Resolve version
         id: version
@@ -43,7 +44,7 @@ jobs:
         shell: pwsh
         run: |
           $v = "${{ steps.version.outputs.version }}"
-          (Get-Content imperium_app.py) -replace '^APP_VERSION = "dev"', "APP_VERSION = `"$v`"" | Set-Content imperium_app.py
+          (Get-Content backend.py) -replace '^APP_VERSION = "dev"', "APP_VERSION = `"$v`"" | Set-Content backend.py
           Write-Host "APP_VERSION injected: $v"
 
       - name: Build with PyInstaller
@@ -64,7 +65,7 @@ jobs:
             --hidden-import keyboard `
             --hidden-import mouse `
             --hidden-import tkinter `
-            imperium_app.py
+            backend.py
 
       - name: Inject version into installer.iss
         shell: pwsh
