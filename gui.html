@@ -877,8 +877,10 @@ let metrics = {};
 let logs = [], logFilter = "all";
 let ws = null, theme = "dark";
 let serialConnected = false, serialPortName = null;
-let serialConnected2 = false, serialPortName2 = null;
 let _lastUsbSlot = 0;
+// Slots 1 & 2 — USB passifs (clés USB, hubs)
+let usb1Info = {connected:false,port:null,description:"",speed:""};
+let usb2Info = {connected:false,port:null,description:"",speed:""};
 let installedApps = [], appsLoaded = false;
 let modalBtnIdx = null, selActType = null, selActObj = null, activeCat = "Tous";
 let pluginCatalog = [], pluginMeta = [];
@@ -1017,9 +1019,10 @@ function connectWS() {
       if(m.type==="toast") { toast(m.message); }
       if(m.type==="serial_status") {
         serialConnected = m.connected; serialPortName = m.port;
-        serialConnected2 = m.connected2||false; serialPortName2 = m.port2||null;
+        if(m.usb1) usb1Info = m.usb1;
+        if(m.usb2) usb2Info = m.usb2;
         updateUsbStatus();
-        if(document.getElementById("usbInfoModal")?.classList.contains("open")){ openUsbInfo(_lastUsbSlot||0); }
+        if(document.getElementById("usbInfoModal")?.classList.contains("open")){ openUsbInfo(_lastUsbSlot||1); }
       }
       if(m.type==="protocol_saved") { handleProtocolSaved(m); }
       if(m.type==="protocol_test_result") { handleProtocolTestResult(m); }
@@ -1242,6 +1245,7 @@ function buildPots() {
   for(let i=0;i<4;i++) {
     const p=getPotData(i);
     const d=document.createElement("div"); d.className="hw-pot";
+    const potImg = p.image || null;
     d.innerHTML=`<div style="position:relative;width:54px;height:54px">
       <svg viewBox="0 0 54 54" width="54" height="54" style="overflow:visible;cursor:ns-resize;position:absolute;top:0;left:0">
         <defs><radialGradient id="kg${i}" cx="38%" cy="32%"><stop offset="0%" stop-color="#252837"/><stop offset="100%" stop-color="#0c0d10"/></radialGradient></defs>
@@ -1254,6 +1258,7 @@ function buildPots() {
         <line id="kl${i}" x1="27" y1="27" x2="27" y2="7" stroke="#818cf8" stroke-width="2" stroke-linecap="round" transform="rotate(0,27,27)"/>
         <circle cx="27" cy="27" r="2.5" fill="var(--accent)"/>
       </svg>
+      ${potImg ? `<img src="${potImg}" style="position:absolute;top:8px;left:8px;width:38px;height:38px;border-radius:50%;object-fit:cover;pointer-events:none;opacity:.85">` : ""}
     </div>
     <div class="pot-lbl">${p.name||"Pot "+(i+1)}</div>
     <div class="pot-val" id="pv${i}">0%</div>`;
@@ -1584,8 +1589,8 @@ function buildLeds(){
   };
   zone.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:5px">${col(0)}${col(1)}</div>
-    <div class="usb-c" id="usb-0" onclick="openUsbInfo(0)" title="Port USB 1"><div class="usb-status"></div><i></i></div>
-    <div class="usb-c" id="usb-1" onclick="openUsbInfo(1)" title="Port USB 2"><div class="usb-status"></div><i></i></div>
+    <div class="usb-c" id="usb-1" onclick="openUsbInfo(1)" title="Port USB 1"><div class="usb-status"></div><i></i></div>
+    <div class="usb-c" id="usb-2" onclick="openUsbInfo(2)" title="Port USB 2"><div class="usb-status"></div><i></i></div>
     <div style="display:flex;flex-direction:column;gap:5px">${col(2)}${col(3)}</div>`;
   updateLeds();
   updateUsbStatus();
@@ -1658,10 +1663,10 @@ function pickLedMetric(i,key){
 // PORTS USB — infos de connexion au clic
 // ═══════════════════════════════════════════════════════════════
 function updateUsbStatus(){
-  const u0 = document.getElementById("usb-0");
-  if(u0) u0.classList.toggle("active", !!serialConnected);
   const u1 = document.getElementById("usb-1");
-  if(u1) u1.classList.toggle("active", !!serialConnected2);
+  if(u1) u1.classList.toggle("active", !!usb1Info.connected);
+  const u2 = document.getElementById("usb-2");
+  if(u2) u2.classList.toggle("active", !!usb2Info.connected);
 }
 function openUsbInfo(slot){
   _lastUsbSlot = slot;
@@ -1677,19 +1682,23 @@ function openUsbInfo(slot){
     document.body.appendChild(modal);
     modal.addEventListener("click",e=>{if(e.target===modal) closeUsbInfo();});
   }
-  document.getElementById("usbInfoTitle").textContent = "Port USB "+(slot+1);
-  const connected = slot===0 ? (ws && ws.readyState===1 && serialConnected) : (ws && ws.readyState===1 && serialConnected2);
-  const portName = slot===0 ? (serialPortName||"—") : (serialPortName2||"—");
+  document.getElementById("usbInfoTitle").textContent = "Port USB "+slot;
+  // Slots 1 & 2 = ports USB physiques passifs (clés USB, hubs…)
+  const info = slot===1 ? usb1Info : usb2Info;
+  const connected   = info.connected;
+  const portName    = info.port || "—";
+  const speed       = info.speed || (connected ? "Détecté" : "—");
+  const description = info.description || (connected ? "Périphérique USB" : "Aucun périphérique");
   document.getElementById("usbInfoBody").innerHTML = `
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
       <div class="p-row"><div class="p-lbl">État</div><div style="flex:1;font-weight:600;color:${connected?'var(--green)':'var(--text3)'}">${connected?'● Connecté':'○ Non connecté'}</div></div>
-      <div class="p-row"><div class="p-lbl">Port COM</div><div style="flex:1;font-family:'JetBrains Mono',monospace">${portName}</div></div>
-      <div class="p-row"><div class="p-lbl">Vitesse</div><div style="flex:1;font-family:'JetBrains Mono',monospace">${connected?"115200 bauds":"—"}</div></div>
+      <div class="p-row"><div class="p-lbl">Port</div><div style="flex:1;font-family:'JetBrains Mono',monospace">${portName}</div></div>
+      <div class="p-row"><div class="p-lbl">Vitesse USB</div><div style="flex:1;font-family:'JetBrains Mono',monospace">${speed}</div></div>
+      <div class="p-row"><div class="p-lbl">Périphérique</div><div style="flex:1;color:var(--text2)">${description}</div></div>
     </div>
     <div class="sep" style="margin:12px 0"></div>
     <div style="display:flex;gap:6px">
-      <button class="tbtn" style="flex:1" onclick="refreshPorts()">🔄 Détecter</button>
-      <button class="tbtn pr" style="flex:1" onclick="switchView('settings',null);switchSettingsTab('serial');closeUsbInfo()">⚙ Configurer</button>
+      <button class="tbtn" style="flex:1" onclick="refreshPorts()">🔄 Actualiser</button>
     </div>
     <div id="usbPortsList" style="margin-top:10px;font-size:10px;color:var(--text3)"></div>`;
   modal.classList.add("open");
@@ -2168,20 +2177,14 @@ function previewOverlay() { wsSend({type:"preview_overlay"}); }
 
 // ── MAJ disponible → toast cliquable ─────────────────────────────────────
 let _updateDownloadUrl = "";
-let _updateInProgress = false;
 function handleUpdateAvailable(m) {
   _updateDownloadUrl = m.download_url || "";
-  _updateInProgress = false;
   const t = document.getElementById("toast");
-  t.innerHTML = `🚀 MAJ disponible : <b>${m.current}</b> → <b>${m.latest}</b> &nbsp;<button id="dlUpdateBtn" onclick="startUpdate()" style="background:var(--accent);color:#fff;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;font-weight:600">⬇ Télécharger &amp; installer</button> <button onclick="document.getElementById('toast').className='';document.getElementById('toast').innerHTML='';_updateInProgress=false;" style="background:none;color:#aaa;border:none;cursor:pointer;font-size:14px;margin-left:4px">✕</button>`;
+  t.innerHTML = `🚀 MAJ disponible : <b>${m.current}</b> → <b>${m.latest}</b> &nbsp;<button id="dlUpdateBtn" onclick="startUpdate()" style="background:var(--accent);color:#fff;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;font-weight:600">⬇ Télécharger &amp; installer</button> <button onclick="document.getElementById('toast').className='';document.getElementById('toast').innerHTML=''" style="background:none;color:#aaa;border:none;cursor:pointer;font-size:14px;margin-left:4px">✕</button>`;
   t.className = "show";
   clearTimeout(window._toastTimer);
 }
 function startUpdate() {
-  if(_updateInProgress) return;
-  _updateInProgress = true;
-  const btn = document.getElementById("dlUpdateBtn");
-  if(btn) { btn.disabled = true; btn.textContent = "⏳ En cours…"; }
   const t = document.getElementById("toast");
   t.innerHTML = `⬇ Téléchargement… <span id="updatePct">0%</span> <div style="display:inline-block;width:120px;height:6px;background:var(--bg3);border-radius:3px;vertical-align:middle;margin-left:6px"><div id="updateBar" style="height:6px;background:var(--accent);border-radius:3px;width:0%;transition:width .2s"></div></div>`;
   t.className = "show";
@@ -2189,7 +2192,6 @@ function startUpdate() {
 }
 function handleUpdateProgress(m) {
   if(m.error) {
-    _updateInProgress = false;
     toast("⚠ Erreur MAJ : " + m.error, 6000);
     return;
   }
@@ -2205,10 +2207,7 @@ function handleUpdateProgress(m) {
   if(pctEl) pctEl.textContent = pct + "%";
   if(barEl) barEl.style.width = pct + "%";
 }
-function checkUpdate() {
-  if(_updateInProgress) { toast("⏳ Téléchargement en cours…"); return; }
-  wsSend({type:"check_update"});
-}
+function checkUpdate() { wsSend({type:"check_update"}); }
 
 // ═══════════════════════════════════════════════════════════════
 // TOAST
