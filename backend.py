@@ -7,7 +7,7 @@ Imperium Backend
 """
 APP_VERSION = "dev"
 import sys, os, ctypes, threading, time, asyncio, json, subprocess, re
-import webbrowser, shutil, glob, logging, datetime
+import webbrowser, shutil, glob, logging, datetime, tempfile, base64
 from pathlib import Path
 
 # ── CACHER CONSOLE ──────────────────────────────────────────────────────────
@@ -136,6 +136,139 @@ def list_audio_sessions():
     except: pass
     return sorted(out)
 
+# ── ACTIONS SUPPLÉMENTAIRES ──────────────────────────────────────────────────
+# Raccourcis clavier prédéfinis : type d'action -> touches envoyées
+SHORTCUTS = {
+    "win_maximize": "win+up",
+    "win_restore": "win+down",
+    "win_snap_left": "win+left",
+    "win_snap_right": "win+right",
+    "win_switch": "alt+tab",
+    "win_task_view": "win+tab",
+    "win_close": "alt+f4",
+    "desktop_next": "ctrl+win+right",
+    "desktop_prev": "ctrl+win+left",
+    "desktop_new": "ctrl+win+d",
+    "desktop_close": "ctrl+win+f4",
+    "win_explorer": "win+e",
+    "win_run": "win+r",
+    "win_settings": "win+i",
+    "win_search": "win+s",
+    "win_task_manager": "ctrl+shift+esc",
+    "win_emoji": "win+.",
+    "win_clipboard": "win+v",
+    "win_notifications": "win+n",
+    "win_quick_settings": "win+a",
+    "win_widgets": "win+w",
+    "win_project": "win+p",
+    "win_voice_typing": "win+h",
+    "game_bar": "win+g",
+    "game_record_toggle": "win+alt+r",
+    "game_record_last": "win+alt+g",
+    "game_screenshot": "win+alt+print screen",
+    "nvidia_overlay": "alt+z",
+    "nvidia_replay_save": "alt+f10",
+    "steam_overlay": "shift+tab",
+    "browser_new_tab": "ctrl+t",
+    "browser_close_tab": "ctrl+w",
+    "browser_reopen_tab": "ctrl+shift+t",
+    "browser_next_tab": "ctrl+tab",
+    "browser_prev_tab": "ctrl+shift+tab",
+    "browser_refresh": "f5",
+    "browser_hard_refresh": "ctrl+f5",
+    "browser_back": "alt+left",
+    "browser_forward": "alt+right",
+    "browser_private": "ctrl+shift+n",
+    "browser_devtools": "f12",
+    "browser_fullscreen": "f11",
+    "browser_address": "ctrl+l",
+    "browser_bookmark": "ctrl+d",
+    "browser_find": "ctrl+f",
+    "edit_copy": "ctrl+c",
+    "edit_cut": "ctrl+x",
+    "edit_paste": "ctrl+v",
+    "edit_paste_plain": "ctrl+shift+v",
+    "edit_undo": "ctrl+z",
+    "edit_redo": "ctrl+y",
+    "edit_select_all": "ctrl+a",
+    "edit_save": "ctrl+s",
+    "edit_new": "ctrl+n",
+    "edit_open": "ctrl+o",
+    "edit_print": "ctrl+p",
+    "edit_enter": "enter",
+    "edit_escape": "esc",
+    "edit_delete": "delete",
+    "edit_tab": "tab",
+    "video_play": "k",
+    "video_mute": "m",
+    "video_fullscreen": "f",
+    "video_captions": "c",
+    "video_seek_back": "j",
+    "video_seek_fwd": "l",
+    "video_next": "shift+n"
+}
+
+# Requêtes OBS (obs-websocket v4, port 4444)
+OBS_SIMPLE = {
+    "obs_stream_toggle": "StartStopStreaming", "obs_record_toggle": "StartStopRecording",
+    "obs_record_pause": "PauseRecording", "obs_record_resume": "ResumeRecording",
+    "obs_replay_save": "SaveReplayBuffer", "obs_replay_toggle": "StartStopReplayBuffer",
+    "obs_studio_mode": "ToggleStudioMode", "obs_transition": "TransitionToProgram",
+    "obs_virtualcam_toggle": "StartStopVirtualCam",
+}
+
+def _ps(code: str):
+    return run_hidden(["powershell", "-NoProfile", "-Command", code], creationflags=CREATE_NO_WINDOW)
+
+def _ps_text(template: str, text: str):
+    """Exécute du PowerShell avec un texte arbitraire passé en base64 (accents, guillemets, etc.)."""
+    b64 = base64.b64encode((text or "").encode("utf-8")).decode()
+    code = "$t=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('" + b64 + "'));" + template
+    return subprocess.run(["powershell", "-NoProfile", "-Command", code],
+                          creationflags=CREATE_NO_WINDOW, startupinfo=_SI, timeout=30)
+
+def set_clipboard(text: str):
+    _ps_text("Set-Clipboard -Value $t", text)
+
+def speak_text(text: str):
+    if text:
+        _ps_text("Add-Type -AssemblyName System.Speech;"
+                 "(New-Object System.Speech.Synthesis.SpeechSynthesizer).Speak($t)", text)
+
+def toggle_dark_mode():
+    import winreg
+    k = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+        r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", 0,
+        winreg.KEY_READ | winreg.KEY_SET_VALUE)
+    cur, _ = winreg.QueryValueEx(k, "AppsUseLightTheme")
+    new = 0 if cur else 1
+    for name in ("AppsUseLightTheme", "SystemUsesLightTheme"):
+        winreg.SetValueEx(k, name, 0, winreg.REG_DWORD, new)
+    winreg.CloseKey(k)
+    ctypes.windll.user32.SendMessageTimeoutW(0xFFFF, 0x001A, 0, "ImmersiveColorSet", 2, 1000, None)
+
+def kill_active_app():
+    """Ferme de force l'application au premier plan (sauf l'explorateur et Imperium)."""
+    if not WIN32_OK: return
+    hwnd = win32gui.GetForegroundWindow()
+    _, pid = win32process.GetWindowThreadProcessId(hwnd)
+    if not pid or pid == os.getpid(): return
+    proc = psutil.Process(pid)
+    if (proc.name() or "").lower() in ("explorer.exe", "imperium.exe"): return
+    proc.kill()
+
+def toggle_app_mute(process_name: str):
+    if not PYCAW_OK or not process_name: return
+    try:
+        from pycaw.pycaw import ISimpleAudioVolume
+        target = process_name.lower().replace(".exe", "")
+        vols = [s._ctl.QueryInterface(ISimpleAudioVolume) for s in AudioUtilities.GetAllSessions()
+                if s.Process and s.Process.name().lower().replace(".exe", "") == target]
+        if not vols: return
+        new = not bool(vols[0].GetMute())
+        for v in vols: v.SetMute(new, None)
+    except Exception as e: log.error(f"toggle_app_mute: {e}")
+
 # ── APPS ─────────────────────────────────────────────────────────────────────
 def get_installed_apps():
     apps, seen = [], set()
@@ -203,24 +336,28 @@ DEFAULT_CONFIG = {
     "active_profile": "default",
     "led_strips": {str(i):{"metric":["cpu","ram","gpu_usage","ssd_usage"][i]} for i in range(4)},
     "serial_port": "AUTO", "theme": "dark",
-    "protocol": {
-        "in_press": "btn{i}:on", "in_long_press": "", "in_double_click": "",
-        "in_release": "btn{i}:off", "in_pot": "pot{i}:{v}", "out_led": "led{i}:{v}",
-    },
     "serial_port2": "", "baud_rate": 115200, "baud_rate2": 115200
 }
 
-def pattern_to_regex(pattern: str) -> "re.Pattern":
-    e = re.escape(pattern)
-    e = e.replace(re.escape("{i}"), r"(?P<i>-?\d+)")
-    e = e.replace(re.escape("{v}"), r"(?P<v>-?\d+)")
-    return re.compile("^"+e+"$")
+# ── TRAMES ESP32 ─────────────────────────────────────────────────────────────
+# Une trame = une ligne de texte. Format unique et fixe :
+#   ESP32 -> PC   B<n>:1        bouton n enfoncé       (n = 0..7)
+#                 B<n>:0        bouton n relâché
+#                 P<n>:<0-100>  potentiomètre n        (n = 0..3)
+#   PC -> ESP32   L<n>:<0-100>  niveau de la LED n     (n = 0..3)
+# Appui long et double clic sont détectés par l'application (pas par l'ESP32).
+# L'ancien format (btn0:on / btn0:off / pot0:50) reste accepté.
+_RX_BTN = re.compile(r"^(?:btn|b)(\d+)\s*[:=]\s*(1|0|on|off)$", re.I)
+_RX_POT = re.compile(r"^(?:pot|p)(\d+)\s*[:=]\s*(\d+)$", re.I)
 
-def pattern_format(pattern: str, i=None, v=None) -> str:
-    out = pattern
-    if i is not None: out = out.replace("{i}", str(i))
-    if v is not None: out = out.replace("{v}", str(v))
-    return out
+def parse_frame(raw: str):
+    """('btn', index, enfoncé: bool) | ('pot', index, valeur 0-100) | None"""
+    raw = (raw or "").strip()
+    m = _RX_BTN.match(raw)
+    if m: return ("btn", int(m.group(1)), m.group(2).lower() in ("1", "on"))
+    m = _RX_POT.match(raw)
+    if m: return ("pot", int(m.group(1)), max(0, min(100, int(m.group(2)))))
+    return None
 
 class ConfigManager:
     def __init__(self):
@@ -301,6 +438,13 @@ class ActionEngine:
         if isinstance(a.get("params"), dict):
             merged = dict(a); merged.update(a["params"]); a = merged
         t = a.get("type","")
+        # L'interface envoie tous les paramètres sous forme de texte : on convertit les nombres.
+        for k in ("step","value","seconds","ms","delta","x","y","delay","interval","minutes"):
+            v = a.get(k)
+            if isinstance(v, str):
+                v = v.strip()
+                try: a[k] = float(v) if "." in v else int(v)
+                except ValueError: a.pop(k, None)
 
         # Profils
         if t in ("switch_profile","next_profile","prev_profile"):
@@ -426,6 +570,44 @@ class ActionEngine:
             def _run():
                 for act in a.get("actions",[]): self._one(act); time.sleep(delay/1000.0) if delay else None
             threading.Thread(target=_run, daemon=True).start()
+
+        # Raccourcis prédéfinis (Fenêtres, Windows, Jeu, Navigateur, Édition, Vidéo)
+        elif t in SHORTCUTS:            keyboard.send(SHORTCUTS[t])
+        elif t == "browser_zoom_in":    keyboard.press("ctrl"); mouse.wheel(1);  keyboard.release("ctrl")
+        elif t == "browser_zoom_out":   keyboard.press("ctrl"); mouse.wheel(-1); keyboard.release("ctrl")
+        elif t == "browser_zoom_reset": keyboard.send("ctrl+0")
+
+        # Texte / presse-papiers
+        elif t == "paste_text":    set_clipboard(a.get("text","")); time.sleep(0.08); keyboard.send("ctrl+v")
+        elif t == "clipboard_set": set_clipboard(a.get("text",""))
+        elif t == "type_datetime": keyboard.write(datetime.datetime.now().strftime(a.get("format") or "%d/%m/%Y %H:%M"))
+        elif t == "say_text":      speak_text(a.get("text",""))
+
+        # Souris
+        elif t == "mouse_double_click": mouse.double_click("left")
+        elif t == "mouse_right_click":  mouse.click("right")
+        elif t == "mouse_middle_click": mouse.click("middle")
+
+        # Système
+        elif t == "open_uri":          os.startfile(a.get("uri",""))
+        elif t == "open_settings":     os.startfile("ms-settings:" + (a.get("page") or ""))
+        elif t == "toggle_dark_mode":  toggle_dark_mode()
+        elif t == "monitor_off":       ctypes.windll.user32.PostMessageW(0xFFFF, 0x0112, 0xF170, 2)
+        elif t == "empty_recycle_bin": _ps("Clear-RecycleBin -Force -ErrorAction SilentlyContinue")
+        elif t == "flush_dns":         run_silent("ipconfig /flushdns")
+        elif t == "restart_explorer":  run_silent("taskkill /f /im explorer.exe & start explorer.exe")
+        elif t == "kill_active_app":   kill_active_app()
+        elif t == "hibernate":         run_silent("shutdown /h")
+        elif t == "shutdown_timer":    run_silent(f"shutdown /s /t {int(a.get('minutes',30)*60)}")
+        elif t == "cancel_shutdown":   run_silent("shutdown /a")
+
+        # Audio
+        elif t == "mute_on":          set_mute(True)
+        elif t == "mute_off":         set_mute(False)
+        elif t == "app_mute_toggle":  toggle_app_mute(a.get("name",""))
+
+        # OBS (suite)
+        elif t in OBS_SIMPLE:         self._obs(OBS_SIMPLE[t], {})
 
         elif self.plugins and t in self.plugins.actions:
             self.plugins.run(t, {k:v for k,v in a.items() if k != "type"})
@@ -612,6 +794,55 @@ class Metrics:
         m["top_processes"] = procs
         return m
 
+# ── MISE À JOUR (GitHub Releases) ────────────────────────────────────────────
+GITHUB_REPO = "tuturpotter-web/Imperium"
+
+def _ver_tuple(v):
+    """'v0.0.96' -> (0, 0, 96). Une version non numérique ('dev') vaut (0,)."""
+    nums = re.findall(r"\d+", str(v or ""))
+    return tuple(int(n) for n in nums) if nums else (0,)
+
+def fetch_latest_release():
+    """Release publiée la plus récente qui contient un installateur .exe.
+    Retourne {version, url, filename, page}. Lève une Exception avec un message lisible."""
+    import urllib.request, urllib.error
+    api = f"https://api.github.com/repos/{GITHUB_REPO}/releases?per_page=15"
+    req = urllib.request.Request(api, headers={"User-Agent": "Imperium-updater",
+                                               "Accept": "application/vnd.github+json"})
+    try:
+        with urllib.request.urlopen(req, timeout=12) as r:
+            releases = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        if e.code == 404: raise Exception("dépôt GitHub introuvable ou privé")
+        if e.code == 403: raise Exception("limite GitHub atteinte, réessaie dans quelques minutes")
+        raise Exception(f"GitHub a répondu {e.code}")
+    except OSError as e:
+        raise Exception(f"pas de connexion à GitHub ({getattr(e, 'reason', e)})")
+    best = None
+    for rel in releases:
+        if rel.get("draft") or rel.get("prerelease"): continue
+        assets = [a for a in rel.get("assets", [])
+                  if a.get("name", "").lower().endswith(".exe") and a.get("state", "uploaded") == "uploaded"]
+        if not assets: continue
+        asset = next((a for a in assets if "setup" in a["name"].lower()), assets[0])
+        cand = {"version": (rel.get("tag_name") or "").lstrip("vV"),
+                "url": asset["browser_download_url"], "filename": asset["name"],
+                "page": rel.get("html_url") or f"https://github.com/{GITHUB_REPO}/releases"}
+        if best is None or _ver_tuple(cand["version"]) > _ver_tuple(best["version"]): best = cand
+    if not best: raise Exception("aucune version téléchargeable trouvée sur GitHub")
+    return best
+
+def launch_installer(path):
+    """Lance l'installateur Inno Setup en mode silencieux (ShellExecute gère l'élévation UAC)."""
+    args = "/SILENT /CLOSEAPPLICATIONS /NORESTART /SUPPRESSMSGBOXES"
+    if sys.platform == "win32":
+        sh = ctypes.windll.shell32.ShellExecuteW
+        sh.restype = ctypes.c_void_p
+        r = sh(None, "open", path, args, os.path.dirname(path), 1)
+        if (r or 0) <= 32: raise OSError(f"impossible de lancer l'installateur (code {r})")
+    else:
+        subprocess.Popen([path] + args.split())
+
 # ── OVERLAY (mini-streamdeck Tkinter, au-dessus de tout) ─────────────────────
 class ProfileOverlayWindow:
     def __init__(self):
@@ -705,42 +936,34 @@ class ProfileOverlayWindow:
                 return tkimg
             except: return None
 
-        # Boutons 4×2
+        # Boutons 4×2 — image seule, aucun nom
         bf=tk.Frame(main,bg=BG); bf.pack(padx=PAD,pady=(8,0))
         buttons=profile.get("buttons",{})
         for i in range(8):
             b=buttons.get(str(i),{}); r,c=divmod(i,COLS)
             outer=tk.Frame(bf,bg=BDR); outer.grid(row=r,column=c,padx=GAP//2,pady=GAP//2)
             cell=tk.Frame(outer,bg=CARD,width=CELL-2,height=CELL-2); cell.pack(padx=1,pady=1); cell.pack_propagate(False)
-            label=(b.get("label") or f"Btn {i+1}")[:9]; img_data=b.get("iconImage",""); placed=False
+            img_data=b.get("iconImage",""); placed=False
             if img_data and img_data.startswith("data:image"):
                 try:
-                    tkimg=_tk_img(img_data,max(CELL-16,18))
+                    tkimg=_tk_img(img_data,max(CELL-12,18))
                     if tkimg:
                         win._imgs.append(tkimg)
-                        tk.Label(cell,image=tkimg,bg=CARD).place(relx=.5,rely=.36,anchor="center")
-                        tk.Label(cell,text=label,fg=FG3,bg=CARD,font=("Segoe UI",6)).place(relx=.5,rely=.82,anchor="center")
+                        tk.Label(cell,image=tkimg,bg=CARD).place(relx=.5,rely=.5,anchor="center")
                         placed=True
                 except Exception as e: log.warning(f"Overlay btn{i} img: {e}")
             if not placed:
-                tk.Label(cell,text=b.get("icon","") or "●",fg=FG,bg=CARD,font=("Segoe UI Emoji",15)).place(relx=.5,rely=.36,anchor="center")
-                tk.Label(cell,text=label,fg=FG3,bg=CARD,font=("Segoe UI",6)).place(relx=.5,rely=.78,anchor="center")
+                tk.Label(cell,text=b.get("icon","") or "●",fg=FG,bg=CARD,
+                         font=("Segoe UI Emoji",max(14,int(CELL*0.36)))).place(relx=.5,rely=.5,anchor="center")
 
         tk.Frame(main,bg=BDR,height=1).pack(fill="x",padx=PAD,pady=(8,0))
 
-        # Potards
-        POT_LABELS={"volume_system":"Vol.sys","volume_app":"Vol.app","brightness":"Luminosité",
-            "scroll":"Scroll","zoom_level":"Zoom","media_seek":"Seek","discord_volume":"Discord",
-            "spotify_volume":"Spotify","game_volume":"Jeu","mic_volume":"Micro","obs_volume":"OBS",
-            "led_strip_color":"LED","custom":"Custom"}
+        # Potards — image seule, aucun nom
         pf=tk.Frame(main,bg=BG); pf.pack(padx=PAD,pady=(8,12))
         pots=profile.get("pots",{})
         for i in range(COLS):
             p=pots.get(str(i),{})
             pot_ov=OV_POTS.get(str(i),OV_POTS.get(i,{})) if isinstance(OV_POTS,dict) else {}
-            name=(p.get("name") or f"Pot {i+1}")[:8]
-            action=POT_LABELS.get(p.get("action",""), (p.get("action","") or "—")[:8])
-            custom_text=pot_ov.get("text","") if isinstance(pot_ov,dict) else ""
             img_data=p.get("image","") or (pot_ov.get("image","") if isinstance(pot_ov,dict) else "")
 
             outer=tk.Frame(pf,bg=BDR); outer.grid(row=0,column=i,padx=GAP//2)
@@ -748,21 +971,18 @@ class ProfileOverlayWindow:
             placed=False
             if img_data and img_data.startswith("data:image"):
                 try:
-                    tkimg=_tk_img(img_data,max(CELL-22,14))
+                    tkimg=_tk_img(img_data,max(CELL-12,18))
                     if tkimg:
                         win._imgs.append(tkimg)
-                        tk.Label(cell,image=tkimg,bg=BG3).place(relx=.5,rely=.28,anchor="center")
-                        tk.Label(cell,text=custom_text or name,fg=FG,bg=BG3,font=("Segoe UI",5,"bold")).place(relx=.5,rely=.80,anchor="center")
+                        tk.Label(cell,image=tkimg,bg=BG3).place(relx=.5,rely=.5,anchor="center")
                         placed=True
                 except Exception as e: log.warning(f"Overlay pot{i} img: {e}")
             if not placed:
-                cv=tk.Canvas(cell,width=26,height=26,bg=BG3,highlightthickness=0); cv.place(relx=.5,rely=.26,anchor="center")
-                cv.create_oval(1,1,25,25,outline=FG3,width=1,fill=BG4)
-                cv.create_oval(5,5,21,21,outline=ACC,width=1.5,fill=BG3)
-                cv.create_oval(10,10,16,16,fill=ACC,outline="")
-                tk.Label(cell,text=custom_text or name,fg=FG,bg=BG3,font=("Segoe UI",6,"bold")).place(relx=.5,rely=.65,anchor="center")
-                if not custom_text:
-                    tk.Label(cell,text=action,fg=FG3,bg=BG3,font=("Segoe UI",5)).place(relx=.5,rely=.83,anchor="center")
+                sz=max(24,int(CELL*0.6)); mid=sz//2
+                cv=tk.Canvas(cell,width=sz,height=sz,bg=BG3,highlightthickness=0); cv.place(relx=.5,rely=.5,anchor="center")
+                cv.create_oval(1,1,sz-1,sz-1,outline=FG3,width=1,fill=BG4)
+                cv.create_oval(int(sz*.2),int(sz*.2),int(sz*.8),int(sz*.8),outline=ACC,width=2,fill=BG3)
+                cv.create_oval(mid-3,mid-3,mid+3,mid+3,fill=ACC,outline="")
 
         def _close():
             self._close_timer=None
@@ -1004,61 +1224,23 @@ class MacroDeck:
                 self._broadcast({"type":"profile_changed","profile":name})
                 return
 
+    def _dispatch_button(self, idx, ev):
+        actions=self.cfg.active()["buttons"].get(str(idx),{}).get(ev,[])
+        if actions: threading.Thread(target=self.engine.run,args=(actions,),daemon=True).start()
+        self._broadcast({"type":"button_event","button":idx,"event":ev})
+
     def _on_esp32(self, raw: str, slot: int = 0):
-        raw=raw.strip()
-        if not raw: return
-        proto=self.cfg.data.get("protocol",{})
-
-        pat_pot=proto.get("in_pot","")
-        if pat_pot:
-            try:
-                m=pattern_to_regex(pat_pot).match(raw)
-                if m:
-                    idx=int(m.group("i")); val=int(m.group("v"))
-                    self.engine.run_pot(self.cfg.active()["pots"].get(str(idx),{}),val)
-                    self._broadcast({"type":"pot_event","pot":idx,"value":val}); return
-            except Exception as e: log.error(f"in_pot: {e}")
-
-        pat_on=proto.get("in_press","btn{i}:on"); pat_off=proto.get("in_release","btn{i}:off")
-        def _dispatch(idx,ev):
-            actions=self.cfg.active()["buttons"].get(str(idx),{}).get(ev,[])
-            if actions: threading.Thread(target=self.engine.run,args=(actions,),daemon=True).start()
-            self._broadcast({"type":"button_event","button":idx,"event":ev})
-
-        if pat_on:
-            try:
-                m=pattern_to_regex(pat_on).match(raw)
-                if m: self.transport._handle_timing(int(m.group("i")),"on",_dispatch); return
-            except Exception as e: log.error(f"in_press: {e}")
-        if pat_off:
-            try:
-                m=pattern_to_regex(pat_off).match(raw)
-                if m:
-                    self.transport._handle_timing(int(m.group("i")),"off",_dispatch)
-                    self._broadcast({"type":"button_event","button":int(m.group("i")),"event":"release"}); return
-            except Exception as e: log.error(f"in_release: {e}")
-
-        for ev_key,ev_name in [("in_long_press","long_press"),("in_double_click","double_click")]:
-            pat=proto.get(ev_key,"")
-            if not pat: continue
-            try:
-                m=pattern_to_regex(pat).match(raw)
-                if m: _dispatch(int(m.group("i")),ev_name); return
-            except Exception as e: log.error(f"{ev_key}: {e}")
-
-        # Fallback JSON rétrocompat
-        try:
-            msg=json.loads(raw); t=msg.get("t")
-            if t in ("press","long_press","double_click"):
-                idx=msg.get("i",0)
-                actions=self.cfg.active()["buttons"].get(str(idx),{}).get(t,[])
-                threading.Thread(target=self.engine.run,args=(actions,),daemon=True).start()
-                self._broadcast({"type":"button_event","button":idx,"event":t})
-            elif t=="pot":
-                idx=msg.get("i",0); val=msg.get("v",0)
-                self.engine.run_pot(self.cfg.active()["pots"].get(str(idx),{}),val)
-                self._broadcast({"type":"pot_event","pot":idx,"value":val})
-        except: pass
+        fr=parse_frame(raw)
+        if not fr: return
+        kind,idx,val=fr
+        if kind=="pot":
+            self.engine.run_pot(self.cfg.active()["pots"].get(str(idx),{}),val)
+            self._broadcast({"type":"pot_event","pot":idx,"value":val})
+        elif val:   # bouton enfoncé
+            self.transport._handle_timing(idx,"on",self._dispatch_button)
+        else:       # bouton relâché
+            self.transport._handle_timing(idx,"off",self._dispatch_button)
+            self._broadcast({"type":"button_event","button":idx,"event":"release"})
 
     async def _metrics_loop(self):
         self.metrics.collect()
@@ -1066,14 +1248,14 @@ class MacroDeck:
             await asyncio.sleep(1)
             m=self.metrics.collect(); self._broadcast({"type":"metrics","data":m})
             keys=["cpu","ram","gpu_usage","ssd_usage"]
-            out_pat=self.cfg.data.get("protocol",{}).get("out_led",'{"t":"led","s":{i},"v":{v}}')
             for i in range(4):
                 k=self.cfg.data.get("led_strips",{}).get(str(i),{}).get("metric",keys[i])
-                self.transport.send_raw(pattern_format(out_pat,i=i,v=min(100,int(float(m.get(k,0) or 0)))))
+                self.transport.send_raw(f"L{i}:{min(100,int(float(m.get(k,0) or 0)))}")
 
     async def _ws_handler(self, ws: WebSocketServerProtocol):
         self.ws_clients.add(ws)
         await ws.send(json.dumps({"type":"config","data":self.cfg.data}))
+        await ws.send(json.dumps({"type":"app_info","version":APP_VERSION}))
         try:
             async for raw in ws: await self._handle(json.loads(raw),ws)
         except: pass
@@ -1093,6 +1275,56 @@ class MacroDeck:
     def _plugins_msg(self):
         return {"type":"plugins","data":self.plugins.catalog(),
             "meta":[{"name":p.get("name"),"file":p.get("_file"),"version":p.get("version","")} for p in self.plugins.plugins]}
+
+    # ── Mise à jour ─────────────────────────────────────────────────────────
+    def _check_update(self, silent=False):
+        try:
+            rel = fetch_latest_release()
+        except Exception as e:
+            if not silent: self._broadcast({"type":"toast","message":f"⚠ MAJ impossible : {e}"})
+            return
+        if _ver_tuple(rel["version"]) > _ver_tuple(APP_VERSION):
+            self._broadcast({"type":"update_available","current":APP_VERSION,"latest":rel["version"],
+                             "download_url":rel["url"],"filename":rel["filename"],"page":rel["page"]})
+        elif not silent:
+            self._broadcast({"type":"toast","message":f"✓ Imperium {APP_VERSION} est à jour"})
+
+    def _install_update(self, url, filename, page):
+        if getattr(self, "_updating", False): return
+        self._updating = True
+        def prog(status, pct=0):
+            self._broadcast({"type":"update_progress","status":status,"pct":pct,"filename":filename})
+        try:
+            import urllib.request
+            if not url:
+                rel = fetch_latest_release(); url, filename, page = rel["url"], rel["filename"], rel["page"]
+            folder = os.path.join(tempfile.gettempdir(), "ImperiumUpdate"); os.makedirs(folder, exist_ok=True)
+            dest = os.path.join(folder, filename); part = dest + ".part"
+            for f in (dest, part):
+                try: os.remove(f)
+                except OSError: pass
+            prog("downloading", 0)
+            req = urllib.request.Request(url, headers={"User-Agent":"Imperium-updater","Accept":"application/octet-stream"})
+            with urllib.request.urlopen(req, timeout=30) as r, open(part, "wb") as out:
+                total = int(r.headers.get("Content-Length") or 0); done = 0; last = -1
+                while True:
+                    chunk = r.read(65536)
+                    if not chunk: break
+                    out.write(chunk); done += len(chunk)
+                    if total:
+                        pct = min(99, done * 100 // total)
+                        if pct != last: last = pct; prog("downloading", pct)
+            if total and done != total: raise IOError(f"téléchargement incomplet ({done}/{total} octets)")
+            with open(part, "rb") as f:
+                if f.read(2) != b"MZ": raise IOError("le fichier téléchargé n'est pas un installateur valide")
+            os.replace(part, dest)
+            prog("launching", 100)
+            launch_installer(dest)
+            time.sleep(1.5); os._exit(0)
+        except Exception as e:
+            log.error(f"Mise à jour: {e}")
+            self._updating = False
+            self._broadcast({"type":"update_progress","error":str(e),"page":page or f"https://github.com/{GITHUB_REPO}/releases"})
 
     async def _handle(self, msg, ws):
         t=msg.get("type")
@@ -1157,100 +1389,22 @@ class MacroDeck:
             await ws.send(json.dumps(self._serial_status()))
         elif t=="get_serial_status":
             await ws.send(json.dumps(self._serial_status()))
-        elif t=="save_protocol":
-            proto=msg.get("protocol",{}); errors={}
-            for key,pat in proto.items():
-                try: pattern_to_regex(pat) if key.startswith("in_") else pattern_format(pat,i=0,v=0)
-                except Exception as e: errors[key]=str(e)
-            if errors: await ws.send(json.dumps({"type":"protocol_saved","ok":False,"errors":errors}))
-            else:
-                self.cfg.data["protocol"]=proto; self.cfg.save()
-                await ws.send(json.dumps({"type":"protocol_saved","ok":True}))
-        elif t=="test_protocol_pattern":
-            pattern=msg.get("pattern",""); sample=msg.get("sample","")
-            try:
-                m=pattern_to_regex(pattern).match(sample.strip())
-                if m: await ws.send(json.dumps({"type":"protocol_test_result","ok":True,"groups":m.groupdict()}))
-                else: await ws.send(json.dumps({"type":"protocol_test_result","ok":False,"error":"Trame ne correspond pas"}))
-            except Exception as e: await ws.send(json.dumps({"type":"protocol_test_result","ok":False,"error":str(e)}))
         elif t=="simulate_esp32_frame":
-            raw=msg.get("raw","").strip()
-            if not raw:
-                await ws.send(json.dumps({"type":"protocol_test_result","ok":False,"error":"Trame vide"})); return
-            proto=self.cfg.data.get("protocol",{}); matched_event=None; matched_groups={}
-            for ev_key,ev_name in [("in_press","press"),("in_long_press","long_press"),
-                                    ("in_double_click","double_click"),("in_release","release"),("in_pot","pot")]:
-                pat=proto.get(ev_key,"")
-                if not pat: continue
-                try:
-                    m2=pattern_to_regex(pat).match(raw)
-                    if m2: matched_event=ev_name; matched_groups=m2.groupdict(); break
-                except: continue
-            if not matched_event:
-                try:
-                    parsed=json.loads(raw); t2=parsed.get("t","")
-                    if t2 in ("press","long_press","double_click","release","pot"):
-                        matched_event=t2; matched_groups={k:v for k,v in parsed.items() if k!="t"}
-                except: pass
-            self._on_esp32(raw)
-            if matched_event:
-                await ws.send(json.dumps({"type":"protocol_test_result","ok":True,
-                    "event":matched_event,"groups":matched_groups,"message":f"Trame '{matched_event}' exécutée ✓"}))
-            else:
+            raw=msg.get("raw","").strip(); fr=parse_frame(raw)
+            if not fr:
                 await ws.send(json.dumps({"type":"protocol_test_result","ok":False,
-                    "error":"Aucun patron ne correspond (trame envoyée quand même)"}))
-        elif t=="open_update_url":
-            dl_url=msg.get("download_url","")
-            async def _do_dl(dl_url):
-                import urllib.request, tempfile
-                REPO="tuturpotter-web/Imperium"
-                try:
-                    if not dl_url:
-                        req=urllib.request.Request(f"https://api.github.com/repos/{REPO}/releases/latest",
-                            headers={"User-Agent":"Imperium-updater"})
-                        with urllib.request.urlopen(req,timeout=8) as r: release=json.loads(r.read())
-                        asset=next((a for a in release.get("assets",[]) if a["name"].endswith(".exe")),None)
-                        if not asset:
-                            await ws.send(json.dumps({"type":"update_progress","error":"Aucun .exe dans la release"})); return
-                        dl_url=asset["browser_download_url"]; filename=asset["name"]
-                    else:
-                        filename=dl_url.split("/")[-1]
-                    await ws.send(json.dumps({"type":"update_progress","status":"downloading","pct":0,"filename":filename}))
-                    tmp=os.path.join(tempfile.gettempdir(),filename)
-                    last_pct=-1
-                    def _rep(bn,bs,fs):
-                        nonlocal last_pct
-                        pct=min(100,int(bn*bs/fs*100)) if fs>0 else 0
-                        if pct!=last_pct:
-                            last_pct=pct
-                            asyncio.ensure_future(ws.send(json.dumps({"type":"update_progress","status":"downloading","pct":pct,"filename":filename})))
-                    await asyncio.get_event_loop().run_in_executor(None,lambda:urllib.request.urlretrieve(dl_url,tmp,_rep))
-                    await ws.send(json.dumps({"type":"update_progress","status":"launching","pct":100,"filename":filename}))
-                    await asyncio.sleep(0.5)
-                    subprocess.Popen([tmp],creationflags=CREATE_NO_WINDOW)
-                    await asyncio.sleep(1); os._exit(0)
-                except Exception as e: await ws.send(json.dumps({"type":"update_progress","error":str(e)}))
-            asyncio.ensure_future(_do_dl(dl_url))
+                    "error":f"Trame non reconnue : \"{raw}\" — formats attendus : B0:1, B0:0, P0:50"})); return
+            self._on_esp32(raw)
+            kind,idx,val=fr
+            what=(f"Bouton {idx+1} {'enfoncé' if val else 'relâché'}" if kind=="btn" else f"Potard {idx+1} = {val}%")
+            await ws.send(json.dumps({"type":"protocol_test_result","ok":True,"message":what}))
         elif t=="check_update":
-            async def _do_check():
-                import urllib.request, urllib.error
-                REPO="tuturpotter-web/Imperium"
-                try:
-                    req=urllib.request.Request(f"https://api.github.com/repos/{REPO}/releases/latest",
-                        headers={"User-Agent":"Imperium-updater"})
-                    with urllib.request.urlopen(req,timeout=8) as r: data=json.loads(r.read())
-                    latest=data.get("tag_name","").lstrip("v")
-                    asset=next((a for a in data.get("assets",[]) if a["name"].endswith(".exe")),None)
-                    dl_url=asset["browser_download_url"] if asset else ""
-                    if latest and latest!=APP_VERSION:
-                        await ws.send(json.dumps({"type":"update_available","current":APP_VERSION,"latest":latest,"download_url":dl_url}))
-                    else:
-                        await ws.send(json.dumps({"type":"toast","message":f"✓ Imperium {APP_VERSION} est à jour"}))
-                except urllib.error.URLError as e:
-                    await ws.send(json.dumps({"type":"toast","message":f"⚠ MAJ impossible : {e.reason}"}))
-                except Exception as e:
-                    await ws.send(json.dumps({"type":"toast","message":f"⚠ MAJ : {e}"}))
-            asyncio.ensure_future(_do_check())
+            threading.Thread(target=self._check_update,args=(bool(msg.get("silent")),),daemon=True).start()
+        elif t=="install_update":
+            threading.Thread(target=self._install_update,
+                args=(msg.get("download_url",""),msg.get("filename","Imperium_Setup.exe"),msg.get("page","")),daemon=True).start()
+        elif t=="open_external":
+            open_url_default(msg.get("url",""))
         elif t=="preview_overlay":
             key=self.cfg.data.get("active_profile","default")
             profile=self.cfg.data.get("profiles",{}).get(key)
