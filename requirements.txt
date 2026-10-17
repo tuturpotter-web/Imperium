@@ -1,0 +1,12 @@
+websockets
+websocket-client
+pillow
+pyserial
+psutil
+keyboard
+mouse
+pywin32
+comtypes
+pycaw
+WMI
+pywebview
