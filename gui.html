@@ -91,19 +91,63 @@ html,body{height:100%;background:var(--bg0);color:var(--text);font-family:'Inter
 .dev-profile-arrow:hover{background:var(--bg3);color:var(--text)}
 
 /* Boutons */
-.btn-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}
-.hw-btn{background:var(--card);border:1px solid var(--border);border-radius:10px;aspect-ratio:1;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:all .12s;position:relative;overflow:hidden;padding:6px;user-select:none}
-.hw-btn:hover{border-color:var(--border3);transform:translateY(-1px);box-shadow:0 4px 12px #00000030}
-.hw-btn.pressed{border-color:var(--accent);transform:scale(.94);box-shadow:0 0 16px var(--accent-glow)}
-.hw-btn.selected{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent-glow)}
-.btn-num{position:absolute;top:5px;left:6px;font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;z-index:2}
-.btn-ic{font-size:17px;line-height:1}
-.btn-img-label{position:absolute;bottom:0;left:0;right:0;padding:3px 4px 5px;background:linear-gradient(to top,#000000cc,#00000000);display:flex;align-items:flex-end;justify-content:center}
-.btn-nm{font-size:8px;color:var(--text2);text-align:center;line-height:1.3;font-weight:500}
-.btn-img-label .btn-nm{color:#fff;text-shadow:0 1px 3px #000000cc}
-.btn-bar{position:absolute;bottom:0;left:6px;right:6px;height:2px;border-radius:2px;background:var(--accent);opacity:.35;transition:opacity .2s;z-index:2}
-.hw-btn.selected .btn-bar,.hw-btn.pressed .btn-bar{opacity:1}
-.btn-cnt{position:absolute;top:4px;right:5px;font-size:8px;color:var(--accent);background:var(--accent-dim);padding:1px 3px;border-radius:3px;font-family:'JetBrains Mono',monospace;z-index:2}
+.btn-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.hw-btn{position:relative;aspect-ratio:1;border-radius:26%;cursor:pointer;user-select:none;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:10px 6px 9px;
+  background:linear-gradient(165deg,var(--bg4) 0%,var(--bg3) 100%);border:1px solid var(--border2);
+  box-shadow:inset 0 1px 0 #ffffff12,0 8px 16px -10px #000000a0;
+  transition:transform .16s cubic-bezier(.3,1.4,.5,1),box-shadow .16s,border-color .16s,filter .16s}
+.hw-btn:hover{transform:translateY(-2px);border-color:var(--border3);box-shadow:inset 0 1px 0 #ffffff1a,0 12px 22px -10px #000000b0}
+.hw-btn:active{transform:scale(.95)}
+.hw-btn.pressed{transform:scale(.93);border-color:var(--accent);filter:brightness(1.12);
+  box-shadow:inset 0 1px 0 #ffffff1a,0 0 0 3px var(--accent-glow),0 0 26px var(--accent-glow)}
+.hw-btn.selected{border-color:var(--accent);box-shadow:inset 0 1px 0 #ffffff1a,0 0 0 2px var(--accent),0 12px 26px -10px var(--accent-glow)}
+.btn-num,.btn-cnt{position:absolute;top:7px;min-width:17px;height:17px;padding:0 5px;border-radius:9px;
+  font-size:9px;line-height:17px;text-align:center;font-family:'JetBrains Mono',monospace;z-index:2}
+.btn-num{left:8px;background:var(--bg1);color:var(--text2);font-weight:500}
+.btn-cnt{right:8px;background:var(--accent);color:#fff;font-weight:700;box-shadow:0 2px 6px var(--accent-glow)}
+.btn-chip{width:44%;max-width:48px;aspect-ratio:1;border-radius:32%;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 30% 25%,var(--accent-glow),var(--accent-dim));box-shadow:inset 0 0 0 1px var(--accent-glow);
+  transition:transform .16s}
+.hw-btn:hover .btn-chip{transform:scale(1.07)}
+.btn-ic{font-size:19px;line-height:1}
+.btn-nm{max-width:100%;padding:0 4px;font-size:9.5px;font-weight:500;color:var(--text2);text-align:center;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hw-btn.selected .btn-nm,.hw-btn.pressed .btn-nm{color:var(--text)}
+.hw-btn.has-img{padding:0;justify-content:flex-end}
+.btn-img-label{position:absolute;left:7px;right:7px;bottom:7px;padding:4px 8px;border-radius:12px;display:flex;justify-content:center;
+  background:#0b0c1099;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:1}
+.btn-img-label .btn-nm{color:#fff;padding:0}
+.btn-bar{position:absolute;bottom:5px;left:50%;width:14px;height:3px;margin-left:-7px;border-radius:3px;background:var(--accent);
+  opacity:0;transform:scaleX(.4);transition:opacity .2s,transform .2s;z-index:2}
+.hw-btn.selected .btn-bar,.hw-btn.pressed .btn-bar{opacity:1;transform:scaleX(1)}
+.hw-btn.has-img .btn-bar{display:none}
+@media (prefers-reduced-motion:reduce){.hw-btn,.btn-chip,.btn-bar{transition:none}}
+
+/* Bannière de mise à jour */
+#updateBanner{position:fixed;right:18px;bottom:18px;z-index:10000;display:none;flex-wrap:wrap;align-items:center;gap:10px 12px;
+  width:360px;max-width:calc(100vw - 36px);padding:13px 12px 13px 18px;border-radius:20px;background:var(--bg2);
+  border:1px solid var(--border3);box-shadow:0 18px 40px -12px #000000b0}
+#updateBanner.show{display:flex}
+#updateBanner.err{border-color:var(--red)}
+.ub-txt{display:flex;flex-direction:column;gap:2px;flex:1;min-width:140px;font-size:12px}
+.ub-txt b{font-weight:600;color:var(--text)}
+.ub-txt span{color:var(--text2);font-size:11px;word-break:break-word}
+.ub-btn{height:30px;padding:0 14px;border-radius:15px;border:1px solid var(--border3);background:var(--bg4);color:var(--text);cursor:pointer;
+  font:600 11px 'Inter',sans-serif}
+.ub-btn:hover{filter:brightness(1.15)}
+.ub-btn.pr{background:var(--accent);border-color:transparent;color:#fff}
+.ub-x{width:26px;height:26px;border-radius:13px;border:none;background:none;color:var(--text3);cursor:pointer;font-size:12px}
+.ub-x:hover{background:var(--bg4);color:var(--text)}
+.ub-track{flex-basis:100%;height:6px;border-radius:3px;background:var(--bg4);overflow:hidden}
+.ub-fill{height:100%;width:0;border-radius:3px;background:var(--accent);transition:width .2s}
+
+/* Tableau des trames ESP32 */
+.frame-row{display:grid;grid-template-columns:92px 1fr;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.frame-row:last-of-type{border-bottom:none}
+.frame-code{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);background:var(--accent-dim);border-radius:10px;padding:6px 8px;text-align:center}
+.frame-txt{font-size:11px;color:var(--text2);line-height:1.55}
+.frame-txt b{color:var(--text);font-weight:600}
 
 /* LED zone */
 .led-zone{display:grid;grid-template-columns:1fr 16px 16px 1fr;gap:6px;margin-bottom:12px;align-items:stretch}
@@ -343,7 +387,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="logo">
     <div class="logo-ic">🎛</div>
     <span class="logo-t">MacroDeck</span>
-    <span class="logo-v">V15</span>
+    <span class="logo-v" id="logoVer">V15</span>
   </div>
   <div class="vdiv"></div>
   <span id="viewTitle" style="font-size:13px;font-weight:600;color:var(--text2)">Device</span>
@@ -510,7 +554,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
           <div class="s-tabs">
             <button class="s-tab active" id="stab-general" onclick="switchSettingsTab('general')">⚙ Général</button>
             <button class="s-tab" id="stab-serial" onclick="switchSettingsTab('serial')">🔌 Connexion</button>
-            <button class="s-tab" id="stab-proto" onclick="switchSettingsTab('proto')">📡 Protocole</button>
+            <button class="s-tab" id="stab-proto" onclick="switchSettingsTab('proto')">📡 Trames ESP32</button>
             <button class="s-tab" id="stab-overlay" onclick="switchSettingsTab('overlay')">🪟 Overlay</button>
           </div>
 
@@ -535,7 +579,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
                 <div><div class="s-section-title">À propos</div><div class="s-section-desc">Version et mises à jour</div></div>
               </div>
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-                <div style="font-size:11px;color:var(--text3)">MacroDeck — WebSocket :8765 — HTTP :8766</div>
+                <div style="font-size:11px;color:var(--text3)"><b id="appVersionLbl" style="color:var(--text)"></b> — WebSocket :8765 — HTTP :8766</div>
                 <button class="tbtn" onclick="checkUpdate()">🔄 Vérifier les MAJ</button>
               </div>
             </div>
@@ -597,54 +641,37 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
             <div class="s-section">
               <div class="s-section-hdr">
                 <div class="s-section-ic" style="background:#f9731620">📥</div>
-                <div><div class="s-section-title">Trames reçues — Boutons</div><div class="s-section-desc">Format simplifié : btn{i}:on et btn{i}:off — la durée entre on/off détermine le type d'appui</div></div>
+                <div><div class="s-section-title">Trames envoyées par l'ESP32</div><div class="s-section-desc">Une trame = une ligne de texte, à 115200 bauds. Rien à configurer.</div></div>
               </div>
-              <div style="background:var(--bg0);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:10px;color:var(--text3);line-height:1.7">
-                <b style="color:var(--text)">Format par défaut :</b> <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;color:var(--accent)">btn{i}:on</code> au press, <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;color:var(--accent)">btn{i}:off</code> au relâchement.<br>
-                Le backend calcule la durée pour distinguer appui simple (&lt;400ms), long (&gt;400ms) et double clic (&lt;300ms entre deux on).
-              </div>
-              <div class="proto-row"><span class="proto-lbl">Bouton ON</span><input class="inp proto-inp" id="proto_in_press" placeholder="btn{i}:on"></div>
-              <div class="proto-row"><span class="proto-lbl">Bouton OFF</span><input class="inp proto-inp" id="proto_in_release" placeholder="btn{i}:off"></div>
-              <div style="font-size:9px;color:var(--text3);margin-top:4px">Garde vides les autres champs — le timing fait tout.</div>
-              <div class="proto-row" style="margin-top:10px"><span class="proto-lbl">Appui long</span><input class="inp proto-inp" id="proto_in_long_press" placeholder="(optionnel — calculé auto)"></div>
-              <div class="proto-row"><span class="proto-lbl">Double clic</span><input class="inp proto-inp" id="proto_in_double_click" placeholder="(optionnel — calculé auto)"></div>
-            </div>
-            <div class="s-section">
-              <div class="s-section-hdr">
-                <div class="s-section-ic" style="background:#22c55e20">🎚</div>
-                <div><div class="s-section-title">Trames reçues — Potards</div><div class="s-section-desc">Format de la valeur envoyée par les potentiomètres</div></div>
-              </div>
-              <div class="proto-row"><span class="proto-lbl">Valeur potard</span><input class="inp proto-inp" id="proto_in_pot" placeholder="pot{i}:{v}"></div>
+              <div class="frame-row"><div class="frame-code">B0:1</div><div class="frame-txt"><b>Bouton enfoncé.</b> B0 à B7 correspondent aux boutons 1 à 8.</div></div>
+              <div class="frame-row"><div class="frame-code">B0:0</div><div class="frame-txt"><b>Bouton relâché.</b> L'application déduit toute seule l'appui simple, l'appui long et le double clic.</div></div>
+              <div class="frame-row"><div class="frame-code">P0:75</div><div class="frame-txt"><b>Potentiomètre.</b> P0 à P3 correspondent aux potards 1 à 4, valeur de 0 à 100. À envoyer quand la valeur change.</div></div>
             </div>
             <div class="s-section">
               <div class="s-section-hdr">
                 <div class="s-section-ic" style="background:#3b82f620">📤</div>
-                <div><div class="s-section-title">Trames envoyées — LEDs</div><div class="s-section-desc">Format des commandes envoyées à l'ESP32 pour les LEDs</div></div>
+                <div><div class="s-section-title">Trame envoyée à l'ESP32</div><div class="s-section-desc">Une trame par LED, chaque seconde</div></div>
               </div>
-              <div class="proto-row"><span class="proto-lbl">Mise à jour LED</span><input class="inp proto-inp" id="proto_out_led" placeholder="led{i}:{v}"></div>
+              <div class="frame-row"><div class="frame-code">L0:42</div><div class="frame-txt"><b>Niveau de LED.</b> L0 à L3, valeur de 0 à 100.</div></div>
+              <div style="font-size:10px;color:var(--text3);margin-top:8px">Les anciennes trames <code>btn0:on</code>, <code>btn0:off</code> et <code>pot0:50</code> restent acceptées.</div>
             </div>
-            <div style="display:flex;gap:6px;margin-bottom:10px">
-              <button class="tbtn pr" onclick="saveProtocol()">💾 Enregistrer</button>
-              <button class="tbtn" onclick="resetProtocolDefaults()">↺ Réinitialiser</button>
-            </div>
-            <div id="protocolSaveMsg" style="font-size:10px;margin-bottom:14px"></div>
-
             <div class="s-section">
               <div class="s-section-hdr">
                 <div class="s-section-ic" style="background:#eab30820">🧪</div>
-                <div><div class="s-section-title">Simulateur de trames</div><div class="s-section-desc">Teste sans avoir l'ESP32 branché — choisir un bouton ou saisir une trame</div></div>
+                <div><div class="s-section-title">Simulateur de trames</div><div class="s-section-desc">Teste sans ESP32 branché : choisis un bouton ou saisis une trame</div></div>
               </div>
               <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
                 <div class="grp-lbl" style="margin-bottom:0;width:auto;white-space:nowrap">Bouton :</div>
                 <select class="sel" id="simBtnSel" style="width:90px">
-                  ${[1,2,3,4,5,6,7,8].map(n=>`<option value="${n-1}">BTN ${n}</option>`).join('')}
+                  <option value="0">BTN 1</option><option value="1">BTN 2</option><option value="2">BTN 3</option><option value="3">BTN 4</option>
+                  <option value="4">BTN 5</option><option value="5">BTN 6</option><option value="6">BTN 7</option><option value="7">BTN 8</option>
                 </select>
                 <button class="tbtn" onclick="simBtnPress()">▶ Appui</button>
                 <button class="tbtn" onclick="simBtnLong()">⏳ Long</button>
                 <button class="tbtn" onclick="simBtnDouble()">⚡ Double</button>
               </div>
               <div style="display:flex;gap:6px;margin-bottom:6px">
-                <input class="inp" id="protoTestSample" placeholder="ou trame brute ex: btn1:on" style="flex:1;font-family:'JetBrains Mono',monospace">
+                <input class="inp" id="protoTestSample" placeholder="ou trame brute, ex : P0:75" style="flex:1;font-family:'JetBrains Mono',monospace">
                 <button class="tbtn" onclick="simulateEsp32Frame()">▶ Envoyer</button>
               </div>
               <div id="protoTestResult" style="font-size:10px;color:var(--text3)"></div>
@@ -740,6 +767,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   </div>
 </div>
 
+<div id="updateBanner" role="status" aria-live="polite"></div>
 <div id="toast"></div>
 
 </div>
@@ -857,6 +885,135 @@ let ACTS = [
   {cat:"Auto",icon:"🏠",type:"home_assistant",name:"Home Assistant",desc:"Service HA",
    params:[{key:"ha_url",lbl:"URL HA",ph:"http://homeassistant.local:8123"},{key:"token",lbl:"Token",ph:"eyJ..."},{key:"service",lbl:"Service",ph:"light.turn_on"},{key:"entity_id",lbl:"Entity",ph:"light.bureau"}]},
 ];
+
+
+// ── Actions ajoutées : raccourcis prédéfinis ─────────────────────────────
+const _kb=(cat,icon,type,name,desc)=>({cat,icon,type,name,desc,params:[]});
+ACTS.push(
+  _kb("Fenêtres","⬆","win_maximize","Maximiser la fenêtre","Win+↑"),
+  _kb("Fenêtres","⬇","win_restore","Restaurer / réduire","Win+↓"),
+  _kb("Fenêtres","◧","win_snap_left","Fenêtre à gauche","Win+←"),
+  _kb("Fenêtres","◨","win_snap_right","Fenêtre à droite","Win+→"),
+  _kb("Fenêtres","🔀","win_switch","Changer de fenêtre","Alt+Tab"),
+  _kb("Fenêtres","🗔","win_task_view","Vue des tâches","Win+Tab"),
+  _kb("Fenêtres","❌","win_close","Fermer la fenêtre","Alt+F4"),
+  _kb("Fenêtres","▶","desktop_next","Bureau virtuel suivant","Ctrl+Win+→"),
+  _kb("Fenêtres","◀","desktop_prev","Bureau virtuel précédent","Ctrl+Win+←"),
+  _kb("Fenêtres","➕","desktop_new","Nouveau bureau virtuel","Ctrl+Win+D"),
+  _kb("Fenêtres","➖","desktop_close","Fermer le bureau virtuel","Ctrl+Win+F4"),
+  _kb("Windows","📁","win_explorer","Explorateur de fichiers","Win+E"),
+  _kb("Windows","🏃","win_run","Exécuter…","Win+R"),
+  _kb("Windows","⚙","win_settings","Paramètres Windows","Win+I"),
+  _kb("Windows","🔎","win_search","Recherche Windows","Win+S"),
+  _kb("Windows","📊","win_task_manager","Gestionnaire des tâches","Ctrl+Maj+Échap"),
+  _kb("Windows","😀","win_emoji","Panneau emoji","Win+."),
+  _kb("Windows","📋","win_clipboard","Historique du presse-papiers","Win+V"),
+  _kb("Windows","🔔","win_notifications","Centre de notifications","Win+N"),
+  _kb("Windows","🎛","win_quick_settings","Paramètres rapides","Win+A"),
+  _kb("Windows","🧩","win_widgets","Widgets","Win+W"),
+  _kb("Windows","🖥","win_project","Projeter l'écran","Win+P"),
+  _kb("Windows","🎤","win_voice_typing","Dictée vocale","Win+H"),
+  _kb("Jeu","🎮","game_bar","Xbox Game Bar","Win+G"),
+  _kb("Jeu","⏺","game_record_toggle","Game Bar — enregistrer","Win+Alt+R"),
+  _kb("Jeu","⏪","game_record_last","Game Bar — garder les dernières secondes","Win+Alt+G"),
+  _kb("Jeu","📷","game_screenshot","Game Bar — capture d'écran","Win+Alt+Impr"),
+  _kb("Jeu","🟩","nvidia_overlay","Overlay NVIDIA","Alt+Z"),
+  _kb("Jeu","💾","nvidia_replay_save","NVIDIA — sauvegarder le replay","Alt+F10"),
+  _kb("Jeu","♨","steam_overlay","Overlay Steam","Maj+Tab"),
+  _kb("Navigateur","➕","browser_new_tab","Nouvel onglet","Ctrl+T"),
+  _kb("Navigateur","✖","browser_close_tab","Fermer l'onglet","Ctrl+W"),
+  _kb("Navigateur","↩","browser_reopen_tab","Rouvrir l'onglet fermé","Ctrl+Maj+T"),
+  _kb("Navigateur","⏩","browser_next_tab","Onglet suivant","Ctrl+Tab"),
+  _kb("Navigateur","⏪","browser_prev_tab","Onglet précédent","Ctrl+Maj+Tab"),
+  _kb("Navigateur","🔄","browser_refresh","Actualiser la page","F5"),
+  _kb("Navigateur","♻","browser_hard_refresh","Actualiser sans cache","Ctrl+F5"),
+  _kb("Navigateur","◀","browser_back","Page précédente","Alt+←"),
+  _kb("Navigateur","▶","browser_forward","Page suivante","Alt+→"),
+  _kb("Navigateur","🕶","browser_private","Navigation privée","Ctrl+Maj+N"),
+  _kb("Navigateur","🛠","browser_devtools","Outils de développement","F12"),
+  _kb("Navigateur","⛶","browser_fullscreen","Plein écran navigateur","F11"),
+  _kb("Navigateur","🔗","browser_address","Barre d'adresse","Ctrl+L"),
+  _kb("Navigateur","⭐","browser_bookmark","Ajouter aux favoris","Ctrl+D"),
+  _kb("Navigateur","🔍","browser_find","Rechercher dans la page","Ctrl+F"),
+  _kb("Édition","📄","edit_copy","Copier","Ctrl+C"),
+  _kb("Édition","✂","edit_cut","Couper","Ctrl+X"),
+  _kb("Édition","📋","edit_paste","Coller","Ctrl+V"),
+  _kb("Édition","📝","edit_paste_plain","Coller sans mise en forme","Ctrl+Maj+V"),
+  _kb("Édition","↶","edit_undo","Annuler","Ctrl+Z"),
+  _kb("Édition","↷","edit_redo","Rétablir","Ctrl+Y"),
+  _kb("Édition","▦","edit_select_all","Tout sélectionner","Ctrl+A"),
+  _kb("Édition","💾","edit_save","Enregistrer","Ctrl+S"),
+  _kb("Édition","🆕","edit_new","Nouveau","Ctrl+N"),
+  _kb("Édition","📂","edit_open","Ouvrir","Ctrl+O"),
+  _kb("Édition","🖨","edit_print","Imprimer","Ctrl+P"),
+  _kb("Édition","↵","edit_enter","Touche Entrée","Entrée"),
+  _kb("Édition","⎋","edit_escape","Touche Échap","Échap"),
+  _kb("Édition","🗑","edit_delete","Touche Suppr","Suppr"),
+  _kb("Édition","⇥","edit_tab","Touche Tab","Tab"),
+  _kb("Vidéo","⏯","video_play","Lecture / pause (YouTube)","K"),
+  _kb("Vidéo","🔇","video_mute","Muet (YouTube)","M"),
+  _kb("Vidéo","⛶","video_fullscreen","Plein écran vidéo","F"),
+  _kb("Vidéo","💬","video_captions","Sous-titres","C"),
+  _kb("Vidéo","⏪","video_seek_back","Reculer de 10 s","J"),
+  _kb("Vidéo","⏩","video_seek_fwd","Avancer de 10 s","L"),
+  _kb("Vidéo","⏭","video_next","Vidéo suivante","Maj+N"),
+  _kb("Navigateur","🔎","browser_zoom_in","Zoom +","Ctrl + molette"),
+  _kb("Navigateur","🔍","browser_zoom_out","Zoom −","Ctrl + molette"),
+  _kb("Navigateur","1️⃣","browser_zoom_reset","Zoom 100 %","Ctrl+0"),
+  _kb("Visio","🖥","zoom_share","Zoom — Partager l'écran","Alt+S"),
+  _kb("Visio","🖥","teams_share","Teams — Partager l'écran","Ctrl+Maj+E"),
+  _kb("Visio","📹","meet_camera","Meet — Caméra","Ctrl+E"),
+  _kb("Web","📅","google_calendar","Ouvrir Google Agenda","")
+);
+
+// ── Actions ajoutées : avec paramètres ──────────────────────────────────
+ACTS.push(
+  // Texte
+  {cat:"Texte",icon:"📋",type:"paste_text",name:"Coller un texte",desc:"Collage instantané, accents compris",
+   params:[{key:"text",lbl:"Texte",ph:"Bonjour !"}]},
+  {cat:"Texte",icon:"📎",type:"clipboard_set",name:"Copier un texte",desc:"Met le texte dans le presse-papiers",
+   params:[{key:"text",lbl:"Texte",ph:"À copier"}]},
+  {cat:"Texte",icon:"📆",type:"type_datetime",name:"Saisir la date / l'heure",desc:"Tape la date du moment",
+   params:[{key:"format",lbl:"Format",ph:"%d/%m/%Y %H:%M"}]},
+  {cat:"Texte",icon:"🗣",type:"say_text",name:"Lire un texte à voix haute",desc:"Synthèse vocale Windows",
+   params:[{key:"text",lbl:"Texte",ph:"Pause café !"}]},
+  // Souris
+  {cat:"Clavier",icon:"🖱",type:"mouse_double_click",name:"Double clic",desc:"Clic gauche ×2",params:[]},
+  {cat:"Clavier",icon:"🖱",type:"mouse_right_click",name:"Clic droit",desc:"Menu contextuel",params:[]},
+  {cat:"Clavier",icon:"🖱",type:"mouse_middle_click",name:"Clic molette",desc:"Clic central",params:[]},
+  {cat:"Clavier",icon:"🎯",type:"mouse_move",name:"Déplacer la souris",desc:"Vers une position de l'écran",
+   params:[{key:"x",lbl:"X",ph:"960"},{key:"y",lbl:"Y",ph:"540"}]},
+  // Système
+  {cat:"Système",icon:"🔗",type:"open_uri",name:"Ouvrir un lien d'application",desc:"spotify:, steam://, discord://…",
+   params:[{key:"uri",lbl:"Lien",ph:"spotify:"}]},
+  {cat:"Système",icon:"⚙",type:"open_settings",name:"Ouvrir une page des paramètres",desc:"ms-settings:…",
+   params:[{key:"page",lbl:"Page",ph:"display, bluetooth, network…"}]},
+  {cat:"Système",icon:"🌓",type:"toggle_dark_mode",name:"Thème clair / sombre",desc:"Bascule le thème Windows",params:[]},
+  {cat:"Système",icon:"🖥",type:"monitor_off",name:"Éteindre l'écran",desc:"Le PC reste allumé",params:[]},
+  {cat:"Système",icon:"🗑",type:"empty_recycle_bin",name:"Vider la corbeille",desc:"Sans confirmation",params:[]},
+  {cat:"Système",icon:"🌐",type:"flush_dns",name:"Vider le cache DNS",desc:"ipconfig /flushdns",params:[]},
+  {cat:"Système",icon:"🔁",type:"restart_explorer",name:"Redémarrer l'explorateur",desc:"Relance la barre des tâches",params:[]},
+  {cat:"Système",icon:"💀",type:"kill_active_app",name:"Tuer l'application active",desc:"Fermeture forcée de la fenêtre au premier plan",params:[]},
+  {cat:"Système",icon:"🛌",type:"hibernate",name:"Hiberner",desc:"shutdown /h",params:[]},
+  {cat:"Système",icon:"⏳",type:"shutdown_timer",name:"Éteindre dans X minutes",desc:"Extinction programmée",
+   params:[{key:"minutes",lbl:"Minutes",ph:"30"}]},
+  {cat:"Système",icon:"🚫",type:"cancel_shutdown",name:"Annuler l'extinction",desc:"shutdown /a",params:[]},
+  // Audio
+  {cat:"Audio",icon:"🔇",type:"mute_on",name:"Couper le son",desc:"Mute (sans basculer)",params:[]},
+  {cat:"Audio",icon:"🔊",type:"mute_off",name:"Remettre le son",desc:"Unmute (sans basculer)",params:[]},
+  {cat:"Audio",icon:"🔕",type:"app_mute_toggle",name:"Muet d'une application",desc:"Bascule le son d'une app précise",
+   params:[{key:"name",lbl:"Application",ph:"Spotify.exe",special:"audio_session_picker"}]},
+  // OBS
+  {cat:"OBS",icon:"📡",type:"obs_stream_toggle",name:"OBS — Stream marche/arrêt",desc:"Bascule le stream",params:[]},
+  {cat:"OBS",icon:"⏺",type:"obs_record_toggle",name:"OBS — Enregistrement marche/arrêt",desc:"Bascule l'enregistrement",params:[]},
+  {cat:"OBS",icon:"⏸",type:"obs_record_pause",name:"OBS — Pause enregistrement",desc:"",params:[]},
+  {cat:"OBS",icon:"▶",type:"obs_record_resume",name:"OBS — Reprendre enregistrement",desc:"",params:[]},
+  {cat:"OBS",icon:"💾",type:"obs_replay_save",name:"OBS — Sauvegarder le replay",desc:"Replay buffer",params:[]},
+  {cat:"OBS",icon:"🔁",type:"obs_replay_toggle",name:"OBS — Replay buffer marche/arrêt",desc:"",params:[]},
+  {cat:"OBS",icon:"🎞",type:"obs_studio_mode",name:"OBS — Mode studio",desc:"Active / désactive",params:[]},
+  {cat:"OBS",icon:"🎬",type:"obs_transition",name:"OBS — Lancer la transition",desc:"Aperçu vers programme",params:[]},
+  {cat:"OBS",icon:"📷",type:"obs_virtualcam_toggle",name:"OBS — Caméra virtuelle",desc:"Marche / arrêt",params:[]}
+);
 
 const ALL_CATS = ["Tous",...new Set(ACTS.map(a=>a.cat))];
 
@@ -1007,6 +1164,10 @@ function connectWS() {
       if(m.type==="metrics") { metrics = m.data; updateMetrics(); updateMetricsView(); }
       if(m.type==="update_available") { handleUpdateAvailable(m); }
       if(m.type==="update_progress") { handleUpdateProgress(m); }
+      if(m.type==="app_info") {
+        appVersion = m.version || ""; renderAppVersion();
+        if(!_updateChecked){ _updateChecked = true; setTimeout(()=>wsSend({type:"check_update",silent:true}), 2500); }
+      }
       if(m.type==="button_event") { flashBtn(m.button); addLog("rx",m.event||"press",`BTN${m.button+1}`); }
       if(m.type==="pot_event") { animatePot(m.pot,m.value); addLog("rx","pot",`POT${m.pot+1} ${m.value}%`); }
       if(m.type==="profile_changed") { activeProfile = m.profile; syncProfile(); toast("Profil : "+getProfileName(m.profile)); }
@@ -1024,7 +1185,6 @@ function connectWS() {
         updateUsbStatus();
         if(document.getElementById("usbInfoModal")?.classList.contains("open")){ openUsbInfo(_lastUsbSlot||1); }
       }
-      if(m.type==="protocol_saved") { handleProtocolSaved(m); }
       if(m.type==="protocol_test_result") { handleProtocolTestResult(m); }
     };
     ws.onerror = () => {};
@@ -1183,7 +1343,6 @@ function syncFromConfig() {
   syncProfile();
   buildLeds();
   renderProfiles();
-  loadProtocolFields();
 }
 function syncProfile() {
   const p = getActiveProfileData();
@@ -1205,7 +1364,7 @@ function buildBtns() {
     const b = getBtnData(i);
     const acts = (b[evType]||[]).length;
     const d = document.createElement("div");
-    d.className="hw-btn"+(selBtnIdx===i?" selected":"");
+    d.className="hw-btn"+(selBtnIdx===i?" selected":"")+(b.iconImage?" has-img":"");
     d.id="hwb-"+i;
     if(b.iconImage){
       // Background-image couvre tout le bouton, impossible à rater par le
@@ -1215,10 +1374,10 @@ function buildBtns() {
       d.style.backgroundImage = `url("${b.iconImage}")`;
       d.style.backgroundSize = "cover";
       d.style.backgroundPosition = "center";
-      d.innerHTML=`<div class="btn-num">${i+1}</div>${acts?`<div class="btn-cnt">${acts}</div>`:""}<div class="btn-img-label"><div class="btn-nm">${b.label||"Btn "+(i+1)}</div></div><div class="btn-bar"></div>`;
+      d.innerHTML=`<div class="btn-num">${i+1}</div>${acts?`<div class="btn-cnt">${acts}</div>`:""}<div class="btn-img-label"><div class="btn-nm">${b.label||"Btn "+(i+1)}</div></div>`;
     } else {
       d.style.backgroundImage = "";
-      d.innerHTML=`<div class="btn-num">${i+1}</div>${acts?`<div class="btn-cnt">${acts}</div>`:""}<div class="btn-ic">${b.icon||"⭐"}</div><div class="btn-nm">${b.label||"Btn "+(i+1)}</div><div class="btn-bar"></div>`;
+      d.innerHTML=`<div class="btn-num">${i+1}</div>${acts?`<div class="btn-cnt">${acts}</div>`:""}<div class="btn-chip"><div class="btn-ic">${b.icon||"⭐"}</div></div><div class="btn-nm">${b.label||"Btn "+(i+1)}</div><div class="btn-bar"></div>`;
     }
     d.onclick = () => { selBtnIdx=i; selPotIdx=null; buildBtns(); openBtnDrawer(i); };
     d.addEventListener("contextmenu",e=>{e.preventDefault();pressBtn(i,"double_click");});
@@ -1938,7 +2097,7 @@ function switchView(id,btnEl) {
   const t=document.getElementById("viewTitle"); if(t) t.textContent=titles[id]||id;
   if(id==="profiles") renderProfiles();
   if(id==="plugins") renderPlugins();
-  if(id==="settings"){ loadProtocolFields(); setTimeout(initOverlayTab,0); }
+  if(id==="settings"){ setTimeout(initOverlayTab,0); }
 }
 function switchSettingsTab(tab) {
   ["general","serial","proto","overlay"].forEach(t=>{
@@ -1996,78 +2155,29 @@ function renderPorts(ports){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// PROTOCOLE ESP32 — config des trames série (entrantes et sortantes)
+// TRAMES ESP32 — format fixe : B0:1 / B0:0 / P0:75   (PC → ESP32 : L0:42)
 // ═══════════════════════════════════════════════════════════════
-const PROTO_DEFAULTS = {
-  in_press:        'btn{i}:on',
-  in_long_press:   '',
-  in_double_click: '',
-  in_release:      'btn{i}:off',
-  in_pot:          'pot{i}:{v}',
-  out_led:         'led{i}:{v}',
-};
-function getProtocol(){
-  return cfg.protocol || {...PROTO_DEFAULTS};
-}
-// Remplit les champs de saisie avec la config actuelle (appelé à l'ouverture
-// des paramètres et à chaque réception de config depuis le backend).
-function loadProtocolFields(){
-  const proto = getProtocol();
-  for(const key of Object.keys(PROTO_DEFAULTS)){
-    const el = document.getElementById("proto_"+key);
-    if(el) el.value = proto[key] || PROTO_DEFAULTS[key];
-  }
-}
-function saveProtocol(){
-  const proto = {};
-  for(const key of Object.keys(PROTO_DEFAULTS)){
-    const el = document.getElementById("proto_"+key);
-    proto[key] = (el?.value || PROTO_DEFAULTS[key]).trim();
-  }
-  cfg.protocol = proto;
-  wsSend({type:"save_protocol", protocol:proto});
-  const msg = document.getElementById("protocolSaveMsg");
-  if(msg){ msg.textContent="⏳ Validation en cours..."; msg.style.color="var(--text3)"; }
-}
-function resetProtocolDefaults(){
-  if(!confirm("Revenir au protocole JSON par défaut ? Tes patrons personnalisés seront perdus.")) return;
-  cfg.protocol = {...PROTO_DEFAULTS};
-  loadProtocolFields();
-  saveProtocol();
-  toast("↺ Protocole réinitialisé");
-}
-function simulateEsp32Frame(){
-  const raw = document.getElementById("protoTestSample")?.value || "";
+function simulateEsp32Frame(raw){
+  if(typeof raw !== "string") raw = document.getElementById("protoTestSample")?.value || "";
   if(!raw.trim()){ toast("⚠ Entre une trame à tester"); return; }
   wsSend({type:"simulate_esp32_frame", raw});
-  const res = document.getElementById("protoTestResult");
-  if(res){ res.textContent="⏳ Envoi en cours..."; res.style.color="var(--text3)"; }
-}
-// Réponses du backend pour la config protocole
-function handleProtocolSaved(m){
-  const msg = document.getElementById("protocolSaveMsg");
-  if(!msg) return;
-  if(m.ok){
-    msg.textContent="✓ Protocole enregistré avec succès";
-    msg.style.color="var(--green)";
-    toast("✓ Protocole ESP32 enregistré");
-  } else {
-    const errs = Object.entries(m.errors||{}).map(([k,v])=>`${k}: ${v}`).join(" · ");
-    msg.textContent="⚠ Erreur(s) dans le patron — "+errs;
-    msg.style.color="var(--red)";
-  }
 }
 function handleProtocolTestResult(m){
   const res = document.getElementById("protoTestResult");
   if(!res) return;
-  if(m.ok){
-    const groups = Object.entries(m.groups||{}).map(([k,v])=>`${k}=${v}`).join(", ");
-    res.innerHTML = `<span style="color:var(--green)">✓ ${m.message||"Trame reconnue"}</span>`
-      + (groups ? `<br><span style="color:var(--text3);font-family:'JetBrains Mono',monospace">${groups}</span>` : "");
-  } else {
-    res.innerHTML = `<span style="color:var(--red)">✗ ${m.error||"Aucun patron ne correspond"}</span>`;
-  }
+  res.textContent = m.ok ? "✓ " + (m.message || "Trame reconnue") : "✗ " + (m.error || "Trame non reconnue");
+  res.style.color = m.ok ? "var(--green)" : "var(--red)";
 }
+function _simSeq(frames){ let t = 0; frames.forEach(([raw, wait]) => { t += wait; setTimeout(() => simulateEsp32Frame(raw), t); }); }
+function _simBtn(type){
+  const n = parseInt(document.getElementById("simBtnSel")?.value || 0), on = `B${n}:1`, off = `B${n}:0`;
+  if(type === "press")           _simSeq([[on,0],[off,80]]);
+  else if(type === "long_press") _simSeq([[on,0],[off,550]]);
+  else                           _simSeq([[on,0],[off,60],[on,100],[off,60]]);
+}
+function simBtnPress(){ _simBtn("press"); }
+function simBtnLong(){ _simBtn("long_press"); }
+function simBtnDouble(){ _simBtn("double_click"); }
 
 // ═══════════════════════════════════════════════════════════════
 // OVERLAY CONFIG
@@ -2083,18 +2193,6 @@ function initOverlayTab() {
   const al=document.getElementById("ov_alpha"); if(al) al.value = ov.alpha||97;
   renderOverlayPotsEditor();
 }
-// Simulator helpers
-function _simBtn(slot, type){
-  const proto = getProtocol();
-  let raw = "";
-  if(type==="press") raw = (proto.in_press||"btn{i}:on").replace("{i}",slot);
-  else if(type==="long_press") raw = (proto.in_long_press||"").replace("{i}",slot) || (proto.in_press||"btn{i}:on").replace("{i}",slot);
-  else if(type==="double_click") raw = (proto.in_double_click||"").replace("{i}",slot) || (proto.in_press||"btn{i}:on").replace("{i}",slot);
-  if(raw){ document.getElementById("protoTestSample").value=raw; simulateEsp32Frame(); }
-}
-function simBtnPress(){ const s=parseInt(document.getElementById("simBtnSel")?.value||0); _simBtn(s,"press"); }
-function simBtnLong(){ const s=parseInt(document.getElementById("simBtnSel")?.value||0); _simBtn(s,"long_press"); }
-function simBtnDouble(){ const s=parseInt(document.getElementById("simBtnSel")?.value||0); _simBtn(s,"double_click"); }
 function renderOverlayPotsEditor() {
   const ov = getOverlayCfg();
   const profile = cfg&&cfg.profiles&&cfg.profiles[cfg.active_profile||activeProfile];
@@ -2119,10 +2217,6 @@ function renderOverlayPotsEditor() {
         <input type="file" accept="image/*" id="ov_pot_img_${i}" style="display:none" onchange="onOvPotImgChosen(${i},this)">
         <button class="tbtn" onclick="document.getElementById('ov_pot_img_${i}').click()">🖼 Importer</button>
         ${hasImg?`<button class="tbtn" onclick="clearOvPotImg(${i})">✕ Supprimer</button>`:""}
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-        <span style="font-size:10px;color:var(--text3);width:50px">Texte</span>
-        <input class="inp" id="ov_pot_text_${i}" value="${ovPot.text||""}" placeholder="Vide = auto" style="flex:1">
       </div>
     </div>`;
   }
@@ -2164,47 +2258,52 @@ function saveOverlayCfg() {
   cfg.overlay.position  = document.getElementById("ov_position")?.value||"br";
   cfg.overlay.alpha     = parseInt(document.getElementById("ov_alpha")?.value)||97;
   if(!cfg.overlay.pots) cfg.overlay.pots={};
-  for(let i=0;i<4;i++) {
-    if(!cfg.overlay.pots[i]) cfg.overlay.pots[i]={};
-    const t = document.getElementById(`ov_pot_text_${i}`);
-    if(t) cfg.overlay.pots[i].text = t.value;
-  }
   wsSend({type:"save_config",data:cfg});
   const msg = document.getElementById("ovSaveMsg");
   if(msg){ msg.textContent="✓ Enregistré"; setTimeout(()=>msg.textContent="",2000); }
 }
 function previewOverlay() { wsSend({type:"preview_overlay"}); }
 
-// ── MAJ disponible → toast cliquable ─────────────────────────────────────
-let _updateDownloadUrl = "";
+// ── MISE À JOUR ──────────────────────────────────────────────────────────
+let appVersion = "", _update = null, _updateChecked = false;
+function renderAppVersion(){
+  const a = document.getElementById("appVersionLbl"); if(a) a.textContent = appVersion ? "Version " + appVersion : "";
+  const b = document.getElementById("logoVer");       if(b && appVersion) b.textContent = appVersion === "dev" ? "dev" : "v" + appVersion;
+}
+function _banner(html, kind){
+  const b = document.getElementById("updateBanner");
+  b.className = "show" + (kind ? " " + kind : ""); b.innerHTML = html;
+}
+function hideUpdateBanner(){ document.getElementById("updateBanner").className = ""; }
+function openExternal(url){ if(url) wsSend({type:"open_external", url}); }
 function handleUpdateAvailable(m) {
-  _updateDownloadUrl = m.download_url || "";
-  const t = document.getElementById("toast");
-  t.innerHTML = `🚀 MAJ disponible : <b>${m.current}</b> → <b>${m.latest}</b> &nbsp;<button id="dlUpdateBtn" onclick="startUpdate()" style="background:var(--accent);color:#fff;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;font-weight:600">⬇ Télécharger &amp; installer</button> <button onclick="document.getElementById('toast').className='';document.getElementById('toast').innerHTML=''" style="background:none;color:#aaa;border:none;cursor:pointer;font-size:14px;margin-left:4px">✕</button>`;
-  t.className = "show";
-  clearTimeout(window._toastTimer);
+  _update = {url:m.download_url || "", filename:m.filename || "Imperium_Setup.exe", page:m.page || ""};
+  _banner(`<div class="ub-txt"><b>Mise à jour disponible</b><span>${m.current} → ${m.latest}</span></div>
+    <button class="ub-btn pr" onclick="startUpdate()">Mettre à jour</button>
+    <button class="ub-x" onclick="hideUpdateBanner()" aria-label="Fermer">✕</button>`);
 }
 function startUpdate() {
-  const t = document.getElementById("toast");
-  t.innerHTML = `⬇ Téléchargement… <span id="updatePct">0%</span> <div style="display:inline-block;width:120px;height:6px;background:var(--bg3);border-radius:3px;vertical-align:middle;margin-left:6px"><div id="updateBar" style="height:6px;background:var(--accent);border-radius:3px;width:0%;transition:width .2s"></div></div>`;
-  t.className = "show";
-  wsSend({type:"open_update_url", download_url: _updateDownloadUrl});
+  _banner(`<div class="ub-txt"><b>Téléchargement…</b><span id="updatePct">0 %</span></div>
+    <div class="ub-track"><div class="ub-fill" id="updateBar"></div></div>`);
+  wsSend({type:"install_update", download_url:_update?.url || "", filename:_update?.filename || "Imperium_Setup.exe", page:_update?.page || ""});
 }
 function handleUpdateProgress(m) {
   if(m.error) {
-    toast("⚠ Erreur MAJ : " + m.error, 6000);
+    _update = Object.assign(_update || {}, {page: m.page || _update?.page || ""});
+    _banner(`<div class="ub-txt"><b>La mise à jour a échoué</b><span id="ubErr"></span></div>
+      <button class="ub-btn pr" onclick="startUpdate()">Réessayer</button>
+      <button class="ub-btn" onclick="openExternal(_update.page)">Télécharger à la main</button>
+      <button class="ub-x" onclick="hideUpdateBanner()" aria-label="Fermer">✕</button>`, "err");
+    document.getElementById("ubErr").textContent = m.error;
     return;
   }
-  const t = document.getElementById("toast");
-  if(!t) return;
   if(m.status === "launching") {
-    t.innerHTML = `✅ Installation en cours — Imperium va redémarrer…`;
+    _banner(`<div class="ub-txt"><b>Installation en cours</b><span>Imperium va redémarrer…</span></div>`);
     return;
   }
   const pct = m.pct || 0;
-  const pctEl = document.getElementById("updatePct");
-  const barEl = document.getElementById("updateBar");
-  if(pctEl) pctEl.textContent = pct + "%";
+  const pctEl = document.getElementById("updatePct"), barEl = document.getElementById("updateBar");
+  if(pctEl) pctEl.textContent = pct + " %";
   if(barEl) barEl.style.width = pct + "%";
 }
 function checkUpdate() { wsSend({type:"check_update"}); }
