@@ -67,10 +67,12 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; \
   Flags: uninsdeletevalue; Tasks: startup
 
 [Run]
-; Proposer de lancer l'app à la fin de l'installation
+; Proposer de lancer l'app à la fin de l'installation.
+; Sans "skipifsilent" : lors d'une mise à jour automatique (installation silencieuse),
+; l'app est relancée toute seule une fois l'installation terminée.
 Filename: "{app}\{#MyAppExeName}"; \
   Description: "Lancer {#MyAppName} maintenant"; \
-  Flags: nowait postinstall skipifsilent
+  Flags: nowait postinstall runasoriginaluser
 
 [UninstallRun]
 ; Tuer le processus avant désinstallation si il tourne
