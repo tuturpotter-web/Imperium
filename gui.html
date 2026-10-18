@@ -34,6 +34,52 @@
   --card:linear-gradient(160deg,#fbf8f1,#f0eadf);--dev:linear-gradient(160deg,#f3eee3,#e8e0d1);--hi:#ffffffb0;
 }
 
+/* Teintes alternatives (la teinte « cuivre » est la palette de base ci-dessus) */
+:root[data-theme="dark"][data-tint="marine"]{
+  --bg0:#0a1020;--bg1:#0e1629;--bg2:#131d34;--bg3:#1a2640;--bg4:#243456;
+  --border:#b4c8f50d;--border2:#b4c8f51a;--border3:#b4c8f532;
+  --accent:#6fa3ef;--accent2:#94bcf6;--accent-deep:#3f78cc;
+  --accent-dim:#6fa3ef20;--accent-glow:#6fa3ef40;--on-accent:#07142b;
+  --grad:linear-gradient(135deg,#86b3f3,#4a80d6);
+  --text:#e8eefb;--text2:#a9b8d6;--text3:#7a8cb2;
+  --green:#7fc5a0;--yellow:#e6c06a;--red:#ea8271;--blue:#8fb0dc;--purple:#a99fdb;--orange:#e49d63;
+  --green-dim:#7fc5a022;--yellow-dim:#e6c06a22;--red-dim:#ea827122;--blue-dim:#8fb0dc22;--purple-dim:#a99fdb22;--orange-dim:#e49d6322;
+  --card:linear-gradient(160deg,#18233d,#111a2f);--dev:linear-gradient(160deg,#16213a,#0c1325);--hi:#ffffff0a;
+}
+:root[data-theme="light"][data-tint="marine"]{
+  --bg0:#e6ebf4;--bg1:#f5f7fc;--bg2:#ecf0f8;--bg3:#dfe6f2;--bg4:#d0d9ea;
+  --border:#1a2b5016;--border2:#1a2b5026;--border3:#1a2b5042;
+  --accent:#2c5fb4;--accent2:#224d98;--accent-deep:#1b3f7e;
+  --accent-dim:#2c5fb41a;--accent-glow:#2c5fb433;--on-accent:#ffffff;
+  --grad:linear-gradient(135deg,#3b72cc,#244f98);
+  --text:#0f1a33;--text2:#43547a;--text3:#566890;
+  --green:#2b7a58;--yellow:#8f6612;--red:#b04538;--blue:#3d6aa5;--purple:#6b5aa8;--orange:#a8602f;
+  --green-dim:#2b7a5820;--yellow-dim:#8f661220;--red-dim:#b0453820;--blue-dim:#3d6aa520;--purple-dim:#6b5aa820;--orange-dim:#a8602f20;
+  --card:linear-gradient(160deg,#fafbfe,#eef2f9);--dev:linear-gradient(160deg,#f1f4fa,#e3e9f4);--hi:#ffffffc0;
+}
+:root[data-theme="dark"][data-tint="anthracite"]{
+  --bg0:#121314;--bg1:#181a1c;--bg2:#1f2124;--bg3:#282b2f;--bg4:#33373c;
+  --border:#ffffff0f;--border2:#ffffff1c;--border3:#ffffff33;
+  --accent:#55bfae;--accent2:#7ad3c4;--accent-deep:#2f9484;
+  --accent-dim:#55bfae20;--accent-glow:#55bfae40;--on-accent:#07201c;
+  --grad:linear-gradient(135deg,#6acfbd,#38a290);
+  --text:#eceef0;--text2:#b6bbc2;--text3:#868c95;
+  --green:#a5c96b;--yellow:#e2b659;--red:#e0786a;--blue:#8fa6bd;--purple:#a999c4;--orange:#dd915a;
+  --green-dim:#a5c96b22;--yellow-dim:#e2b65922;--red-dim:#e0786a22;--blue-dim:#8fa6bd22;--purple-dim:#a999c422;--orange-dim:#dd915a22;
+  --card:linear-gradient(160deg,#2a2d31,#202225);--dev:linear-gradient(160deg,#25282b,#181a1c);--hi:#ffffff0b;
+}
+:root[data-theme="light"][data-tint="anthracite"]{
+  --bg0:#e7e8ea;--bg1:#f6f6f7;--bg2:#eeeff0;--bg3:#e2e4e6;--bg4:#d4d7da;
+  --border:#1a1c1f16;--border2:#1a1c1f26;--border3:#1a1c1f42;
+  --accent:#1c7567;--accent2:#145c51;--accent-deep:#0f4a41;
+  --accent-dim:#1c75671a;--accent-glow:#1c756733;--on-accent:#ffffff;
+  --grad:linear-gradient(135deg,#27897a,#155f54);
+  --text:#1a1c1f;--text2:#4a5058;--text3:#5f6570;
+  --green:#567a22;--yellow:#8f6612;--red:#b0483b;--blue:#52708f;--purple:#6f5f94;--orange:#a85f2f;
+  --green-dim:#567a2220;--yellow-dim:#8f661220;--red-dim:#b0483b20;--blue-dim:#52708f20;--purple-dim:#6f5f9420;--orange-dim:#a85f2f20;
+  --card:linear-gradient(160deg,#fafafa,#eeeff0);--dev:linear-gradient(160deg,#f2f3f4,#e4e6e8);--hi:#ffffffc0;
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg0);color:var(--text);font-family:'Inter','Segoe UI Variable','Segoe UI',system-ui,sans-serif;font-size:13px;-webkit-font-smoothing:antialiased;overflow:hidden}
 ::-webkit-scrollbar{width:4px;height:4px}
@@ -604,6 +650,28 @@ input[type=range]{accent-color:var(--accent)}
   .proto-row{flex-wrap:wrap}
   .proto-lbl{width:100%}
 }
+
+/* Icônes de menus (remplacent les emojis) */
+.ic{width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.sb-btn .ic{width:19px;height:19px}
+.logo-ic .ic{width:19px;height:19px;stroke-width:2}
+.ic-btn .ic{width:16px;height:16px}
+.s-section-ic{display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.s-section-ic .ic{width:18px;height:18px}
+.plugin-ic .ic{width:20px;height:20px}
+.pc-btn .ic{width:13px;height:13px}
+
+/* Sélecteur de teinte */
+.tint-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:6px}
+.tint-opt{display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:10px;border-radius:12px;border:1px solid var(--border2);background:var(--bg1);color:var(--text);cursor:pointer;text-align:left}
+.tint-opt:hover{border-color:var(--border3);transform:translateY(-1px)}
+.tint-opt.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.tint-sw{display:block;height:46px;border-radius:8px;margin-bottom:4px;border:1px solid var(--border2);
+  background:linear-gradient(135deg,var(--t-bg) 0 64%,var(--t-ac) 64% 100%)}
+.tint-nm{font-size:12px;font-weight:650}
+.tint-opt.active .tint-nm::after{content:"✓";margin-left:6px;color:var(--accent)}
+.tint-ds{font-size:10px;line-height:1.35;color:var(--text3)}
+@media(max-width:520px){.tint-picker{grid-template-columns:1fr}}
 @media(max-height:620px){.device-view{padding:12px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
@@ -613,7 +681,7 @@ input[type=range]{accent-color:var(--accent)}
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="logo">
-    <div class="logo-ic">🎛</div>
+    <div class="logo-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><rect x="7" y="7" width="3.6" height="3.6" rx="1"/><rect x="13.4" y="7" width="3.6" height="3.6" rx="1"/><rect x="7" y="13.4" width="3.6" height="3.6" rx="1"/><rect x="13.4" y="13.4" width="3.6" height="3.6" rx="1"/></svg></div>
     <span class="logo-t">MacroDeck</span>
     <span class="logo-v" id="logoVer">V15</span>
   </div>
@@ -622,21 +690,21 @@ input[type=range]{accent-color:var(--accent)}
   <div class="tb-right">
     <div class="st-pill" title="Sauvegarde automatique active"><div class="st-dot" id="autosaveDot" style="background:var(--text3)"></div><span style="font-size:10px">Auto-save</span></div>
     <div class="st-pill"><div class="st-dot" id="wsDot"></div><span id="wsLbl">Déconnecté</span></div>
-    <button class="ic-btn" onclick="toggleTheme()" id="themeBtn" title="Thème">🌙</button>
-    <button class="tbtn pr" onclick="saveConfig()">💾 Enregistrer</button>
+    <button class="ic-btn" onclick="toggleTheme()" id="themeBtn" title="Thème"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg></button>
+    <button class="tbtn pr" onclick="saveConfig()">Enregistrer</button>
   </div>
 </div>
 
 <div class="shell">
   <!-- SIDEBAR -->
   <div class="sidebar">
-    <button class="sb-btn active" title="Device" onclick="switchView('device',null);sbActive(this)">🎛</button>
-    <button class="sb-btn" title="Métriques" onclick="switchView('metrics',null);sbActive(this)">📊</button>
-    <button class="sb-btn" title="Profils" onclick="switchView('profiles',null);sbActive(this)">◈</button>
-    <button class="sb-btn" title="Plugins" onclick="switchView('plugins',null);sbActive(this)">🧩</button>
+    <button class="sb-btn active" title="Device" onclick="switchView('device',null);sbActive(this)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><rect x="7" y="7" width="3.6" height="3.6" rx="1"/><rect x="13.4" y="7" width="3.6" height="3.6" rx="1"/><rect x="7" y="13.4" width="3.6" height="3.6" rx="1"/><rect x="13.4" y="13.4" width="3.6" height="3.6" rx="1"/></svg></button>
+    <button class="sb-btn" title="Métriques" onclick="switchView('metrics',null);sbActive(this)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></button>
+    <button class="sb-btn" title="Profils" onclick="switchView('profiles',null);sbActive(this)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 13 9 5 9-5"/></svg></button>
+    <button class="sb-btn" title="Plugins" onclick="switchView('plugins',null);sbActive(this)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3v5M15 3v5M6 8h12v4a6 6 0 0 1-12 0V8ZM12 18v3"/></svg></button>
     <div class="sb-sep"></div>
-    <button class="sb-btn" title="Serial" onclick="switchView('serial',null);sbActive(this)">⌨</button>
-    <button class="sb-btn" title="Paramètres" onclick="switchView('settings',null);sbActive(this)">⚙</button>
+    <button class="sb-btn" title="Serial" onclick="switchView('serial',null);sbActive(this)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 10 3 2-3 2M13 15h4"/></svg></button>
+    <button class="sb-btn" title="Paramètres" onclick="switchView('settings',null);sbActive(this)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
   </div>
 
   <div class="views">
@@ -763,8 +831,8 @@ input[type=range]{accent-color:var(--accent)}
           </div>
           <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
             <label style="font-size:10px;color:var(--text3);display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" id="autoScroll" checked style="accent-color:var(--accent)"> Auto</label>
-            <button class="fp" onclick="clearLog()">🗑 Vider</button>
-            <button class="fp" onclick="exportLog()">↗ Export</button>
+            <button class="fp" onclick="clearLog()">Vider</button>
+            <button class="fp" onclick="exportLog()">Export</button>
           </div>
         </div>
         <div class="serial-log" id="serialLog"></div>
@@ -780,35 +848,43 @@ input[type=range]{accent-color:var(--accent)}
 
           <!-- TABS -->
           <div class="s-tabs">
-            <button class="s-tab active" id="stab-general" onclick="switchSettingsTab('general')">⚙ Général</button>
-            <button class="s-tab" id="stab-serial" onclick="switchSettingsTab('serial')">🔌 Connexion</button>
-            <button class="s-tab" id="stab-proto" onclick="switchSettingsTab('proto')">📡 Trames ESP32</button>
-            <button class="s-tab" id="stab-overlay" onclick="switchSettingsTab('overlay')">🪟 Overlay</button>
+            <button class="s-tab active" id="stab-general" onclick="switchSettingsTab('general')">Général</button>
+            <button class="s-tab" id="stab-serial" onclick="switchSettingsTab('serial')">Connexion</button>
+            <button class="s-tab" id="stab-proto" onclick="switchSettingsTab('proto')">Trames ESP32</button>
+            <button class="s-tab" id="stab-overlay" onclick="switchSettingsTab('overlay')">Overlay</button>
           </div>
 
           <!-- TAB: GÉNÉRAL -->
           <div id="stab-content-general">
             <div class="s-section">
               <div class="s-section-hdr">
-                <div class="s-section-ic" style="background:var(--accent-dim)">🎨</div>
-                <div><div class="s-section-title">Apparence</div><div class="s-section-desc">Thème visuel de l'interface</div></div>
+                <div class="s-section-ic" style="background:var(--accent-dim);color:var(--accent)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z"/></svg></div>
+                <div><div class="s-section-title">Apparence</div><div class="s-section-desc">Mode et teinte de l'interface</div></div>
               </div>
               <div class="grp" style="margin-bottom:0">
-                <div class="grp-lbl">Thème</div>
+                <div class="grp-lbl">Mode</div>
                 <select class="sel" onchange="applyTheme(this.value)" id="themeSel" style="max-width:200px">
-                  <option value="dark">🌙 Sombre</option>
-                  <option value="light">☀️ Clair</option>
+                  <option value="dark">Sombre</option>
+                  <option value="light">Clair</option>
                 </select>
+              </div>
+              <div class="grp" style="margin:18px 0 0">
+                <div class="grp-lbl">Teinte</div>
+                <div class="tint-picker" role="group" aria-label="Teinte de l'interface">
+                  <button class="tint-opt" data-tint="cuivre" onclick="setTint('cuivre')"><span class="tint-sw" style="--t-bg:#1c1b18;--t-ac:#cd9468"></span><span class="tint-nm">Cuivre</span><span class="tint-ds">Anthracite chaud, accent cuivre</span></button>
+                  <button class="tint-opt" data-tint="marine" onclick="setTint('marine')"><span class="tint-sw" style="--t-bg:#0e1629;--t-ac:#6fa3ef"></span><span class="tint-nm">Bleu marine</span><span class="tint-ds">Bleu profond, accent azur</span></button>
+                  <button class="tint-opt" data-tint="anthracite" onclick="setTint('anthracite')"><span class="tint-sw" style="--t-bg:#181a1c;--t-ac:#55bfae"></span><span class="tint-nm">Gris anthracite</span><span class="tint-ds">Gris neutre, accent turquoise</span></button>
+                </div>
               </div>
             </div>
             <div class="s-section">
               <div class="s-section-hdr">
-                <div class="s-section-ic" style="background:var(--green-dim)">ℹ</div>
+                <div class="s-section-ic" style="background:var(--green-dim);color:var(--green)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></div>
                 <div><div class="s-section-title">À propos</div><div class="s-section-desc">Version et mises à jour</div></div>
               </div>
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                 <div style="font-size:11px;color:var(--text3)"><b id="appVersionLbl" style="color:var(--text)"></b> — WebSocket :8765 — HTTP :8766</div>
-                <button class="tbtn" onclick="checkUpdate()">🔄 Vérifier les MAJ</button>
+                <button class="tbtn" onclick="checkUpdate()">Vérifier les MAJ</button>
               </div>
             </div>
           </div>
@@ -817,7 +893,7 @@ input[type=range]{accent-color:var(--accent)}
           <div id="stab-content-serial" style="display:none">
             <div class="s-section">
               <div class="s-section-hdr">
-                <div class="s-section-ic" style="background:var(--accent-dim)">🎛</div>
+                <div class="s-section-ic" style="background:var(--accent-dim);color:var(--accent)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg></div>
                 <div style="flex:1"><div class="s-section-title">ESP32 — Macropad</div><div class="s-section-desc">Boutons, potards et LEDs · « AUTO » détecte la carte</div></div>
                 <div class="com-status" id="comStatus0">○ Non connecté</div>
               </div>
@@ -825,8 +901,8 @@ input[type=range]{accent-color:var(--accent)}
                 <div class="grp-lbl">Port COM</div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap">
                   <input class="inp" id="serialPortInput" value="AUTO" placeholder="AUTO" style="flex:1;min-width:140px">
-                  <button class="tbtn" onclick="refreshPorts()">🔄 Détecter</button>
-                  <button class="tbtn pr" onclick="connectSerial(0)">⚡ Connecter</button>
+                  <button class="tbtn" onclick="refreshPorts()">Détecter</button>
+                  <button class="tbtn pr" onclick="connectSerial(0)">Connecter</button>
                   <button class="tbtn" onclick="disconnectSerial(0)">⏏ Déconnecter</button>
                 </div>
                 <div id="portsList" style="margin-top:6px;font-size:10px;color:var(--text3)"></div>
@@ -843,7 +919,7 @@ input[type=range]{accent-color:var(--accent)}
             </div>
             <div class="s-section">
               <div class="s-section-hdr">
-                <div class="s-section-ic" style="background:var(--green-dim)">🔌</div>
+                <div class="s-section-ic" style="background:var(--green-dim);color:var(--green)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v13"/><circle cx="12" cy="19" r="2"/><path d="m12 9 3-2v-1.5M12 12l-3-2V8"/></svg></div>
                 <div style="flex:1"><div class="s-section-title">Port USB 1</div><div class="s-section-desc">Périphérique COM · laisse vide pour la simple détection</div></div>
                 <div class="com-status" id="comStatus1">○ Non connecté</div>
               </div>
@@ -851,8 +927,8 @@ input[type=range]{accent-color:var(--accent)}
                 <div class="grp-lbl">Port COM</div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap">
                   <input class="inp" id="serialPortInput2" value="" placeholder="ex : COM5" style="flex:1;min-width:140px">
-                  <button class="tbtn" onclick="refreshPorts()">🔄 Détecter</button>
-                  <button class="tbtn pr" onclick="connectSerial(1)">⚡ Connecter</button>
+                  <button class="tbtn" onclick="refreshPorts()">Détecter</button>
+                  <button class="tbtn pr" onclick="connectSerial(1)">Connecter</button>
                   <button class="tbtn" onclick="disconnectSerial(1)">⏏ Déconnecter</button>
                 </div>
                 <div id="portsList2" style="margin-top:6px;font-size:10px;color:var(--text3)"></div>
@@ -869,7 +945,7 @@ input[type=range]{accent-color:var(--accent)}
             </div>
             <div class="s-section">
               <div class="s-section-hdr">
-                <div class="s-section-ic" style="background:var(--purple-dim)">🔌</div>
+                <div class="s-section-ic" style="background:var(--purple-dim);color:var(--purple)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v13"/><circle cx="12" cy="19" r="2"/><path d="m12 9 3-2v-1.5M12 12l-3-2V8"/></svg></div>
                 <div style="flex:1"><div class="s-section-title">Port USB 2</div><div class="s-section-desc">Périphérique COM · laisse vide pour la simple détection</div></div>
                 <div class="com-status" id="comStatus2">○ Non connecté</div>
               </div>
@@ -877,8 +953,8 @@ input[type=range]{accent-color:var(--accent)}
                 <div class="grp-lbl">Port COM</div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap">
                   <input class="inp" id="serialPortInput3" value="" placeholder="ex : COM6" style="flex:1;min-width:140px">
-                  <button class="tbtn" onclick="refreshPorts()">🔄 Détecter</button>
-                  <button class="tbtn pr" onclick="connectSerial(2)">⚡ Connecter</button>
+                  <button class="tbtn" onclick="refreshPorts()">Détecter</button>
+                  <button class="tbtn pr" onclick="connectSerial(2)">Connecter</button>
                   <button class="tbtn" onclick="disconnectSerial(2)">⏏ Déconnecter</button>
                 </div>
                 <div id="portsList3" style="margin-top:6px;font-size:10px;color:var(--text3)"></div>
@@ -899,7 +975,7 @@ input[type=range]{accent-color:var(--accent)}
           <div id="stab-content-proto" style="display:none">
             <div class="s-section">
               <div class="s-section-hdr">
-                <div class="s-section-ic" style="background:var(--orange-dim)">📥</div>
+                <div class="s-section-ic" style="background:var(--orange-dim);color:var(--orange)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg></div>
                 <div><div class="s-section-title">Trames envoyées par l'ESP32</div><div class="s-section-desc">Une trame = une ligne de texte, à 115200 bauds. Rien à configurer.</div></div>
               </div>
               <div class="frame-row"><div class="frame-code">B0:1</div><div class="frame-txt"><b>Bouton enfoncé.</b> B0 à B7 correspondent aux boutons 1 à 8.</div></div>
@@ -908,7 +984,7 @@ input[type=range]{accent-color:var(--accent)}
             </div>
             <div class="s-section">
               <div class="s-section-hdr">
-                <div class="s-section-ic" style="background:var(--blue-dim)">📤</div>
+                <div class="s-section-ic" style="background:var(--blue-dim);color:var(--blue)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9m0 0-4 4m4-4 4 4M5 4h14"/></svg></div>
                 <div><div class="s-section-title">Trame envoyée à l'ESP32</div><div class="s-section-desc">Une trame par LED, chaque seconde</div></div>
               </div>
               <div class="frame-row"><div class="frame-code">L0:42</div><div class="frame-txt"><b>Niveau de LED.</b> L0 à L3, valeur de 0 à 100.</div></div>
@@ -916,7 +992,7 @@ input[type=range]{accent-color:var(--accent)}
             </div>
             <div class="s-section">
               <div class="s-section-hdr">
-                <div class="s-section-ic" style="background:var(--yellow-dim)">🧪</div>
+                <div class="s-section-ic" style="background:var(--yellow-dim);color:var(--yellow)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6L5 19a1.5 1.5 0 0 0 1.3 2h11.4A1.5 1.5 0 0 0 19 19l-5-10V3"/></svg></div>
                 <div><div class="s-section-title">Simulateur de trames</div><div class="s-section-desc">Teste sans ESP32 branché : choisis un bouton ou saisis une trame</div></div>
               </div>
               <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
@@ -925,13 +1001,13 @@ input[type=range]{accent-color:var(--accent)}
                   <option value="0">BTN 1</option><option value="1">BTN 2</option><option value="2">BTN 3</option><option value="3">BTN 4</option>
                   <option value="4">BTN 5</option><option value="5">BTN 6</option><option value="6">BTN 7</option><option value="7">BTN 8</option>
                 </select>
-                <button class="tbtn" onclick="simBtnPress()">▶ Appui</button>
-                <button class="tbtn" onclick="simBtnLong()">⏳ Long</button>
-                <button class="tbtn" onclick="simBtnDouble()">⚡ Double</button>
+                <button class="tbtn" onclick="simBtnPress()">Appui</button>
+                <button class="tbtn" onclick="simBtnLong()">Long</button>
+                <button class="tbtn" onclick="simBtnDouble()">Double</button>
               </div>
               <div style="display:flex;gap:6px;margin-bottom:6px">
                 <input class="inp" id="protoTestSample" placeholder="ou trame brute, ex : P0:75" style="flex:1;font-family:'JetBrains Mono',monospace">
-                <button class="tbtn" onclick="simulateEsp32Frame()">▶ Envoyer</button>
+                <button class="tbtn" onclick="simulateEsp32Frame()">Envoyer</button>
               </div>
               <div id="protoTestResult" style="font-size:10px;color:var(--text3)"></div>
             </div>
@@ -941,7 +1017,7 @@ input[type=range]{accent-color:var(--accent)}
           <div id="stab-content-overlay" style="display:none">
             <div class="s-section">
               <div class="s-section-hdr">
-                <div class="s-section-ic" style="background:var(--accent-dim)">🪟</div>
+                <div class="s-section-ic" style="background:var(--accent-dim);color:var(--accent)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 9h18"/></svg></div>
                 <div><div class="s-section-title">Popup de changement de profil</div><div class="s-section-desc">Affichée au-dessus de toutes les fenêtres à chaque changement de profil</div></div>
               </div>
               <div class="grp">
@@ -955,10 +1031,10 @@ input[type=range]{accent-color:var(--accent)}
               <div class="grp">
                 <div class="grp-lbl">Position</div>
                 <select class="sel" id="ov_position" style="max-width:220px">
-                  <option value="br">↙ Bas droite (défaut)</option>
-                  <option value="bl">↘ Bas gauche</option>
-                  <option value="tr">↖ Haut droite</option>
-                  <option value="tl">↗ Haut gauche</option>
+                  <option value="br">Bas droite (défaut)</option>
+                  <option value="bl">Bas gauche</option>
+                  <option value="tr">Haut droite</option>
+                  <option value="tl">Haut gauche</option>
                 </select>
               </div>
               <div class="grp" style="margin-bottom:0">
@@ -968,14 +1044,14 @@ input[type=range]{accent-color:var(--accent)}
             </div>
             <div class="s-section">
               <div class="s-section-hdr">
-                <div class="s-section-ic" style="background:var(--green-dim)">🎚</div>
+                <div class="s-section-ic" style="background:var(--green-dim);color:var(--green)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></div>
                 <div><div class="s-section-title">Images des potards dans l'overlay</div><div class="s-section-desc">Par profil — chaque profil peut avoir ses propres images</div></div>
               </div>
               <div id="ov_pots_cfg"></div>
             </div>
             <div style="display:flex;gap:8px;margin-top:4px">
-              <button class="tbtn pr" onclick="saveOverlayCfg()">💾 Enregistrer</button>
-              <button class="tbtn" onclick="previewOverlay()">👁 Prévisualiser</button>
+              <button class="tbtn pr" onclick="saveOverlayCfg()">Enregistrer</button>
+              <button class="tbtn" onclick="previewOverlay()">Prévisualiser</button>
             </div>
             <div id="ovSaveMsg" style="font-size:10px;margin-top:6px;color:var(--accent)"></div>
           </div>
@@ -1014,14 +1090,14 @@ input[type=range]{accent-color:var(--accent)}
       <button class="modal-x" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
-      <input class="act-search" id="actSearch" placeholder="🔍 Rechercher..." oninput="filterActs(this.value)">
+      <input class="act-search" id="actSearch" placeholder="Rechercher…" oninput="filterActs(this.value)">
       <div id="actParams" style="display:none"></div>
       <div class="act-cats" id="actCats"></div>
       <div class="act-list" id="actList"></div>
     </div>
     <div class="modal-foot">
       <button class="tbtn" onclick="closeModal()">Annuler</button>
-      <button class="tbtn pr" onclick="confirmAction()">✓ Ajouter</button>
+      <button class="tbtn pr" onclick="confirmAction()">Ajouter</button>
     </div>
   </div>
 </div>
@@ -1374,12 +1450,12 @@ function ledDisplayText(key, metricsData){
   return ledValueFor(key, metricsData)+"%";
 }
 // Dégradé fluide vert → jaune → rouge en fonction du pourcentage d'intensité
-// (0% = sauge, 50% = ambre, 100% = brique), interpolé en HSL pour
+// (0% = vert foncé, 50% = jaune, 100% = rouge), interpolé en HSL pour
 // une transition continue plutôt que des paliers brusques.
 function ledGradientColor(pct){
   const p = Math.max(0, Math.min(100, pct));
-  // Sauge → ambre → brique (palette chaude), interpolés en HSL
-  const A = [105,26,62], B = [38,64,62], C = [10,58,57];
+  // Vert foncé → jaune → rouge, interpolés en HSL (indépendant de la teinte choisie)
+  const A = [135,58,30], B = [45,88,46], C = [2,76,47];
   const [from, to, t] = p <= 50 ? [A, B, p/50] : [B, C, (p-50)/50];
   const [h, sat, l] = from.map((v, k) => v + (to[k]-v)*t);
   return `hsl(${h.toFixed(0)},${sat.toFixed(0)}%,${l.toFixed(0)}%)`;
@@ -1481,11 +1557,11 @@ function renderPlugins(){
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div style="font-size:13px;font-weight:600">Plugins installés (${pluginMeta.length})</div>
-      <button class="tbtn" onclick="reloadPlugins()">🔄 Recharger les plugins</button>
+      <button class="tbtn" onclick="reloadPlugins()">Recharger les plugins</button>
     </div>
     ${pluginMeta.length===0?`
       <div style="text-align:center;padding:40px 20px;color:var(--text3)">
-        <div style="font-size:32px;margin-bottom:10px">🧩</div>
+        <div style="margin-bottom:10px;color:var(--text3)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:40px;height:40px"><path d="M9 3v5M15 3v5M6 8h12v4a6 6 0 0 1-12 0V8ZM12 18v3"/></svg></div>
         <div style="font-size:12px;margin-bottom:6px">Aucun plugin installé</div>
         <div style="font-size:11px;max-width:420px;margin:0 auto;line-height:1.6">
           Pose un fichier <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">.json</code> dans le dossier
@@ -1498,7 +1574,7 @@ function renderPlugins(){
           const actsForPlugin=pluginCatalog.filter(a=>a.plugin===p.name||a.plugin===p.file);
           return `<div class="plugin-card">
             <div class="plugin-card-h">
-              <span class="plugin-ic">🧩</span>
+              <span class="plugin-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3v5M15 3v5M6 8h12v4a6 6 0 0 1-12 0V8ZM12 18v3"/></svg></span>
               <div><div class="plugin-name">${p.name||p.file}</div><div class="plugin-file">${p.file}${p.version?` · v${p.version}`:""}</div></div>
               <span class="plugin-count">${actsForPlugin.length} action${actsForPlugin.length>1?"s":""}</span>
             </div>
@@ -1508,7 +1584,7 @@ function renderPlugins(){
       </div>
     `}
     <div class="sep" style="margin:20px 0"></div>
-    <div class="grp-lbl" style="margin-bottom:8px">📖 Créer un plugin</div>
+    <div class="grp-lbl" style="margin-bottom:8px">Créer un plugin</div>
     <div style="font-size:11px;color:var(--text2);line-height:1.7;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px">
       Un plugin est un simple fichier <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">.json</code> qui déclare une ou plusieurs actions.
       Pas besoin de recompiler MacroDeck : pose le fichier dans <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">plugins/</code> et clique sur "Recharger".
@@ -1519,7 +1595,7 @@ function renderPlugins(){
       • <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">http</code> — appel API/webhook (parfait pour Discord, Home Assistant, n8n...)<br><br>
       Les paramètres saisis dans la GUI (ex: <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">{message}</code>) et la valeur d'un potard
       (<code style="background:var(--bg3);padding:1px 5px;border-radius:4px">{value}</code>) sont automatiquement substitués dans la commande.
-      <button class="tbtn" style="margin-top:10px" onclick="downloadPluginExample()">⬇ Télécharger un exemple de plugin</button>
+      <button class="tbtn" style="margin-top:10px" onclick="downloadPluginExample()">Télécharger un exemple de plugin</button>
     </div>`;
 }
 function reloadPlugins(){
@@ -1560,7 +1636,7 @@ let _autosaveTimer = null;
 function markDirty() {
   clearTimeout(_autosaveTimer);
   _autosaveTimer = setTimeout(() => {
-    cfg.theme = theme;
+    cfg.theme = theme; cfg.tint = tint;
     wsSend({type:"save_config", data: cfg});
     localStorage.setItem("md_cfg", JSON.stringify(cfg));
     const dot = document.getElementById("autosaveDot");
@@ -1571,7 +1647,7 @@ function markDirty() {
 // pour ne jamais perdre la dernière modification en cours.
 window.addEventListener("beforeunload", () => {
   if(ws && ws.readyState===1) {
-    cfg.theme = theme;
+    cfg.theme = theme; cfg.tint = tint;
     ws.send(JSON.stringify({type:"save_config", data: cfg}));
   }
   localStorage.setItem("md_cfg", JSON.stringify(cfg));
@@ -1605,6 +1681,9 @@ function syncFromConfig() {
   buildLeds();
   renderProfiles();
   loadSerialFields();
+  // la teinte locale prime ; sinon on reprend celle de la config
+  if(localStorage.getItem("md_tint")){ if(cfg.tint !== tint){ cfg.tint = tint; wsSend({type:"set_tint", tint}); } }
+  else if(cfg.tint) applyTint(cfg.tint);
 }
 function syncProfile() {
   const p = getActiveProfileData();
@@ -1757,8 +1836,8 @@ function renderBtnDrawer(i) {
           ? `<img src="${b.iconImage}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;border:1px solid var(--border)" alt="">`
           : `<input class="inp" style="width:46px;font-size:16px;text-align:center" value="${b.icon||"⭐"}" oninput="setBtnField(${i},'icon',this.value)">`}
         <input type="file" accept="image/*" id="iconFileInput_${i}" style="display:none" onchange="onIconFileChosen(${i},this)">
-        <button class="picker-load-btn" style="width:auto;padding:6px 10px" onclick="document.getElementById('iconFileInput_${i}').click()">🖼 Importer une image...</button>
-        ${b.iconImage?`<button class="picker-load-btn" style="width:auto;padding:6px 10px" onclick="setBtnField(${i},'iconImage',null);renderBtnDrawer(${i});buildBtns()">↺ Revenir à l'emoji</button>`:""}
+        <button class="picker-load-btn" style="width:auto;padding:6px 10px" onclick="document.getElementById('iconFileInput_${i}').click()">Importer une image...</button>
+        ${b.iconImage?`<button class="picker-load-btn" style="width:auto;padding:6px 10px" onclick="setBtnField(${i},'iconImage',null);renderBtnDrawer(${i});buildBtns()">Revenir à l'emoji</button>`:""}
       </div>
       <div style="font-size:9px;color:var(--text3);margin-top:4px">PNG/JPG recommandé, carré, max 1 Mo</div>
     </div>
@@ -1774,9 +1853,9 @@ function renderBtnDrawer(i) {
     <div class="grp">
       <div class="grp-lbl">Tester</div>
       <div class="test-row">
-        <button class="test-btn" onclick="pressBtn(${i},'press')">▶ Simple</button>
-        <button class="test-btn" onclick="pressBtn(${i},'long_press')">⏳ Long</button>
-        <button class="test-btn" onclick="pressBtn(${i},'double_click')">⚡ Double</button>
+        <button class="test-btn" onclick="pressBtn(${i},'press')">Simple</button>
+        <button class="test-btn" onclick="pressBtn(${i},'long_press')">Long</button>
+        <button class="test-btn" onclick="pressBtn(${i},'double_click')">Double</button>
       </div>
     </div>`;
 }
@@ -1826,7 +1905,7 @@ function renderPotParam(i,par,p){
   if(par.special==="audio_session_picker"){
     return `<div class="p-row"><div class="p-lbl">${par.lbl}</div><div style="flex:1">
       <input class="p-inp" value="${val}" placeholder="${par.ph||""}" oninput="setPotField(${i},'${par.key}',this.value)">
-      <div class="picker-list" id="potPicker_${i}_${par.key}"><button class="picker-load-btn" onclick="loadAudioSessionsForPot(${i},'${par.key}')">🔊 Choisir parmi les apps avec du son actif...</button></div>
+      <div class="picker-list" id="potPicker_${i}_${par.key}"><button class="picker-load-btn" onclick="loadAudioSessionsForPot(${i},'${par.key}')">Choisir parmi les apps avec du son actif...</button></div>
     </div></div>`;
   }
   if(par.key==="script"){
@@ -1918,11 +1997,11 @@ function renderProfiles() {
     <div class="profile-card ${activeProfile===key?"active":""}" onclick="switchProfile('${key}')">
       ${activeProfile===key?'<span class="pc-active-badge">Actif</span>':""}
       <div class="pc-name">${p.name||key}</div>
-      <div class="pc-trigger">${p.app_trigger?"🔗 Déclencheur : "+p.app_trigger:"Pas de déclencheur auto"}</div>
+      <div class="pc-trigger">${p.app_trigger?"Déclencheur : "+p.app_trigger:"Pas de déclencheur auto"}</div>
       <div class="pc-actions">
-        <button class="pc-btn" onclick="event.stopPropagation();renameProfile('${key}')">✏ Renommer</button>
-        <button class="pc-btn" onclick="event.stopPropagation();editTrigger('${key}')">🔗 Trigger</button>
-        ${key!=="default"?`<button class="pc-btn del" onclick="event.stopPropagation();deleteProfile('${key}')">🗑</button>`:""}
+        <button class="pc-btn" onclick="event.stopPropagation();renameProfile('${key}')">Renommer</button>
+        <button class="pc-btn" onclick="event.stopPropagation();editTrigger('${key}')">Trigger</button>
+        ${key!=="default"?`<button class="pc-btn del" onclick="event.stopPropagation();deleteProfile('${key}')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>`:""}
       </div>
     </div>`).join("");
 }
@@ -2004,7 +2083,7 @@ function buildLeds(){
     const def=ledMetricDef(key);
     return `<div class="led-strip" id="led-${i}" onclick="openLedPicker(${i})" title="Clique pour choisir la métrique affichée">
       <div class="led-glow" id="led-glow-${i}"></div>
-      <span class="led-lbl" id="led-lbl-${i}">${def.icon} ${def.name}</span>
+      <span class="led-lbl" id="led-lbl-${i}">${def.name}</span>
       <span class="led-pct" id="led-pct-${i}">—</span>
     </div>`;
   };
@@ -2025,7 +2104,7 @@ function updateLeds(){
     const glow=document.getElementById("led-glow-"+i);
     const pctEl=document.getElementById("led-pct-"+i);
     const lblEl=document.getElementById("led-lbl-"+i);
-    if(lblEl) lblEl.textContent = `${def.icon} ${def.name}`;
+    if(lblEl) lblEl.textContent = def.name;
     if(pctEl) pctEl.textContent = ledDisplayText(key, metrics);
     if(glow){
       if(def.isOff){
@@ -2064,7 +2143,6 @@ function showLedPickerModal(i, cur){
   }
   document.getElementById("ledPickerBody").innerHTML = LED_METRICS.map(m=>`
     <div class="pot-act-item${m.key===cur?" selected":""}" onclick="pickLedMetric(${i},'${m.key}')">
-      <span class="pot-act-ic">${m.icon}</span>
       <div class="pot-act-info"><div class="n">${m.name}</div></div>
     </div>`).join("");
   modal.classList.add("open");
@@ -2119,8 +2197,8 @@ function openUsbInfo(slot){
     </div>
     <div class="sep" style="margin:12px 0"></div>
     <div style="display:flex;gap:6px">
-      <button class="tbtn" style="flex:1" onclick="refreshPorts()">🔄 Actualiser</button>
-      <button class="tbtn pr" style="flex:1" onclick="closeUsbInfo();goToComSettings()">⚙ Configurer</button>
+      <button class="tbtn" style="flex:1" onclick="refreshPorts()">Actualiser</button>
+      <button class="tbtn pr" style="flex:1" onclick="closeUsbInfo();goToComSettings()">Configurer</button>
     </div>
     <div id="usbPortsList" style="margin-top:10px;font-size:10px;color:var(--text3)"></div>`;
   modal.classList.add("open");
@@ -2148,7 +2226,7 @@ function updateMetricsView() {
   const netPct=Math.min(100,((m.net_down||0)/1024)*10);
   setCard("net",netPct);
   st("dn-up",m.net_up!==undefined?_speed(m.net_up):"—"); st("dn-down",m.net_down!==undefined?_speed(m.net_down):"—");
-  st("sys-clock",m.time||"—"); st("sys-date",m.date||"—"); st("sys-up",m.uptime||"—"); st("sys-vol",m.volume!==undefined?m.volume+"%":"—"); st("sys-mute",m.muted?"🔇 Oui":"Non");
+  st("sys-clock",m.time||"—"); st("sys-date",m.date||"—"); st("sys-up",m.uptime||"—"); st("sys-vol",m.volume!==undefined?m.volume+"%":"—"); st("sys-mute",m.muted?"Oui":"Non");
   const pl=document.getElementById("proc-list");
   if(pl&&m.top_processes) pl.innerHTML=m.top_processes.map(p=>`<div class="proc-r"><div class="proc-nm">${p.name}</div><div class="proc-c">${p.cpu.toFixed(1)}%</div><div class="proc-m">${p.mem.toFixed(1)}%</div></div>`).join("");
 }
@@ -2194,28 +2272,28 @@ function selectAct(type){
   pd.innerHTML=`<div class="act-params"><div class="ap-title">Paramètres</div>${act.params.map(p=>{
     if(p.special==="app_picker") return `<div class="p-row"><div class="p-lbl">${p.lbl}</div><div style="flex:1">
       <input class="p-inp" style="width:100%;margin-bottom:5px" id="param_${p.key}" placeholder="${p.ph||""}" oninput="selActObj.params['${p.key}']=this.value">
-      <input class="app-srch" id="appSrch" placeholder="🔍 Filtrer les apps..." oninput="filterAppPicker(this.value)">
-      <div class="app-lst" id="appLst">${appsLoaded?"":"<div style='padding:14px;text-align:center;font-size:11px;color:var(--text3)'>⏳ Scan des applications installées en cours...<br><span style='font-size:9px'>(peut prendre quelques secondes la première fois)</span><br><button class=\"picker-load-btn\" style=\"margin-top:8px;width:auto;padding:4px 10px\" onclick=\"wsSend({type:'get_apps'})\">🔄 Réessayer</button></div>"}</div>
+      <input class="app-srch" id="appSrch" placeholder="Filtrer les apps…" oninput="filterAppPicker(this.value)">
+      <div class="app-lst" id="appLst">${appsLoaded?"":"<div style='padding:14px;text-align:center;font-size:11px;color:var(--text3)'>Scan des applications installées en cours...<br><span style='font-size:9px'>(peut prendre quelques secondes la première fois)</span><br><button class=\"picker-load-btn\" style=\"margin-top:8px;width:auto;padding:4px 10px\" onclick=\"wsSend({type:'get_apps'})\">Réessayer</button></div>"}</div>
     </div></div>`;
     if(p.special==="process_picker") return `<div class="p-row"><div class="p-lbl">${p.lbl}</div><div style="flex:1">
       <input class="p-inp" style="width:100%;margin-bottom:5px" id="param_${p.key}" placeholder="${p.ph||""}" oninput="selActObj.params['${p.key}']=this.value">
-      <div class="picker-list"><button class="picker-load-btn" onclick="loadProcessPicker('${p.key}')">📋 Choisir parmi les processus en cours...</button>
+      <div class="picker-list"><button class="picker-load-btn" onclick="loadProcessPicker('${p.key}')">Choisir parmi les processus en cours...</button>
       <div class="picker-results" id="procPicker_${p.key}" style="display:none"></div></div>
     </div></div>`;
     if(p.special==="audio_session_picker") return `<div class="p-row"><div class="p-lbl">${p.lbl}</div><div style="flex:1">
       <input class="p-inp" style="width:100%;margin-bottom:5px" id="param_${p.key}" placeholder="${p.ph||""}" oninput="selActObj.params['${p.key}']=this.value">
-      <div class="picker-list"><button class="picker-load-btn" onclick="loadAudioPicker('${p.key}')">🔊 Choisir parmi les apps avec du son actif...</button>
+      <div class="picker-list"><button class="picker-load-btn" onclick="loadAudioPicker('${p.key}')">Choisir parmi les apps avec du son actif...</button>
       <div class="picker-results" id="audioPicker_${p.key}" style="display:none"></div></div>
     </div></div>`;
     if(p.special==="folder_picker") return `<div class="p-row"><div class="p-lbl">${p.lbl}</div><div style="flex:1">
       <div style="display:flex;gap:6px">
         <input class="p-inp" style="flex:1" id="param_${p.key}" placeholder="${p.ph||""}" oninput="selActObj.params['${p.key}']=this.value">
-        <button class="picker-load-btn" style="width:auto;padding:5px 10px" onclick="pickNativeFolder('${p.key}')">📁 Parcourir...</button>
+        <button class="picker-load-btn" style="width:auto;padding:5px 10px" onclick="pickNativeFolder('${p.key}')">Parcourir...</button>
       </div></div></div>`;
     if(p.special==="file_picker") return `<div class="p-row"><div class="p-lbl">${p.lbl}</div><div style="flex:1">
       <div style="display:flex;gap:6px">
         <input class="p-inp" style="flex:1" id="param_${p.key}" placeholder="${p.ph||""}" oninput="selActObj.params['${p.key}']=this.value">
-        <button class="picker-load-btn" style="width:auto;padding:5px 10px" onclick="pickNativeFile('${p.key}')">📄 Parcourir...</button>
+        <button class="picker-load-btn" style="width:auto;padding:5px 10px" onclick="pickNativeFile('${p.key}')">Parcourir...</button>
       </div></div></div>`;
     if(p.key==="script"||p.key==="code") return `<div class="p-row"><div class="p-lbl">${p.lbl}</div>
       <textarea class="p-inp" style="min-height:70px;font-family:'JetBrains Mono',monospace" id="param_${p.key}" placeholder="${p.ph||""}" oninput="selActObj.params['${p.key}']=this.value"></textarea></div>`;
@@ -2376,20 +2454,33 @@ function sbActive(el){document.querySelectorAll(".sb-btn").forEach(b=>b.classLis
 // ═══════════════════════════════════════════════════════════════
 // THÈME
 // ═══════════════════════════════════════════════════════════════
+const ICON_MOON = `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg>`, ICON_SUN = `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M5 19l1.4-1.4M17.6 6.4 19 5"/></svg>`;
 function applyTheme(t){
   theme=t;document.documentElement.setAttribute("data-theme",t);
-  document.getElementById("themeBtn").textContent=t==="dark"?"🌙":"☀️";
+  document.getElementById("themeBtn").innerHTML=t==="dark"?ICON_MOON:ICON_SUN;
   const s=document.getElementById("themeSel");if(s) s.value=t;
   localStorage.setItem("md_theme",t);
 }
 function toggleTheme(){applyTheme(theme==="dark"?"light":"dark");}
 applyTheme(localStorage.getItem("md_theme")||"dark");
 
+// Teinte : cuivre (défaut), bleu marine, gris anthracite
+const TINTS = ["cuivre","marine","anthracite"];
+let tint = "cuivre";
+function applyTint(t){
+  if(!TINTS.includes(t)) t = "cuivre";
+  tint = t; document.documentElement.setAttribute("data-tint", t);
+  localStorage.setItem("md_tint", t);
+  document.querySelectorAll(".tint-opt").forEach(b => { const on = b.dataset.tint === t; b.classList.toggle("active", on); b.setAttribute("aria-pressed", on); });
+}
+function setTint(t){ applyTint(t); cfg.tint = tint; wsSend({type:"set_tint", tint}); markDirty(); }
+applyTint(localStorage.getItem("md_tint") || "cuivre");
+
 // ═══════════════════════════════════════════════════════════════
 // SAVE / SETTINGS
 // ═══════════════════════════════════════════════════════════════
 function saveConfig(){
-  cfg.theme=theme;
+  cfg.theme = theme; cfg.tint = tint;
   wsSend({type:"save_config",data:cfg});
   localStorage.setItem("md_cfg",JSON.stringify(cfg));
   toast("✓ Configuration enregistrée");
@@ -2506,8 +2597,8 @@ function renderOverlayPotsEditor() {
           ? `<img src="${pot.image}" style="width:38px;height:38px;object-fit:cover;border-radius:50%;border:2px solid var(--accent)">`
           : `<div style="width:38px;height:38px;border:1px dashed var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text3)">◎</div>`}
         <input type="file" accept="image/*" id="ov_pot_img_${i}" style="display:none" onchange="onOvPotImgChosen(${i},this)">
-        <button class="tbtn" onclick="document.getElementById('ov_pot_img_${i}').click()">🖼 Importer</button>
-        ${hasImg?`<button class="tbtn" onclick="clearOvPotImg(${i})">✕ Supprimer</button>`:""}
+        <button class="tbtn" onclick="document.getElementById('ov_pot_img_${i}').click()">Importer</button>
+        ${hasImg?`<button class="tbtn" onclick="clearOvPotImg(${i})">Supprimer</button>`:""}
       </div>
     </div>`;
   }
