@@ -335,7 +335,7 @@ DEFAULT_CONFIG = {
     },
     "active_profile": "default",
     "led_strips": {str(i):{"metric":["cpu","ram","gpu_usage","ssd_usage"][i]} for i in range(4)},
-    "serial_port": "AUTO", "theme": "dark",
+    "serial_port": "AUTO", "theme": "dark", "tint": "cuivre",
     "serial_port2": "", "serial_port3": "", "baud_rate": 115200, "baud_rate2": 115200, "baud_rate3": 115200
 }
 
@@ -895,7 +895,13 @@ class ProfileOverlayWindow:
         ALPHA    = max(0.2, min(1.0, int(ov.get("alpha", 97)) / 100))
         OV_POTS  = ov.get("pots", {})
         
-        ACC="#cd9468"; FG="#f3eee4"; BG="#1c1b18"; CARD="#2a2823"; FG3="#8f8779"; BG3="#232220"; BG4="#37342e"; BDR="#3b372f"
+        # Palette de la popup : même teinte que l'interface (ACC, FG, BG, CARD, FG3, BG3, BG4, BDR)
+        _PAL = {
+            "cuivre":     ("#cd9468", "#f3eee4", "#1c1b18", "#2a2823", "#8f8779", "#232220", "#37342e", "#3b372f"),
+            "marine":     ("#6fa3ef", "#e8eefb", "#0e1629", "#1a2640", "#7a8cb2", "#131d34", "#243456", "#263554"),
+            "anthracite": ("#55bfae", "#eceef0", "#181a1c", "#282b2f", "#868c95", "#1f2124", "#33373c", "#34373c"),
+        }
+        ACC,FG,BG,CARD,FG3,BG3,BG4,BDR = _PAL.get(ov.get("tint","cuivre"), _PAL["cuivre"])
         PAD=10; GAP=4; COLS=4
         W = COLS*CELL + (COLS-1)*GAP + PAD*2
         H = 38 + 1 + 8 + CELL*2 + GAP + 8 + 1 + 8 + CELL + 12
@@ -1216,7 +1222,7 @@ class MacroDeck:
             key=obj.get("profile")
             profile=self.cfg.data.get("profiles",{}).get(key)
             if profile and self.overlay:
-                self.overlay.show_profile(profile,self.cfg.data.get("overlay",{}))
+                self.overlay.show_profile(profile,self._ov_cfg())
         raw=json.dumps(obj)
         loop=self._loop
         if loop and loop.is_running():
@@ -1234,6 +1240,10 @@ class MacroDeck:
                 self.cfg.data["active_profile"]=name
                 self._broadcast({"type":"profile_changed","profile":name})
                 return
+
+    def _ov_cfg(self):
+        """Config de la popup de profil + teinte de l'interface."""
+        return {**self.cfg.data.get("overlay", {}), "tint": self.cfg.data.get("tint", "cuivre")}
 
     def _dispatch_button(self, idx, ev):
         actions=self.cfg.active()["buttons"].get(str(idx),{}).get(ev,[])
@@ -1419,6 +1429,10 @@ class MacroDeck:
             kind,idx,val=fr
             what=(f"Bouton {idx+1} {'enfoncé' if val else 'relâché'}" if kind=="btn" else f"Potard {idx+1} = {val}%")
             await ws.send(json.dumps({"type":"protocol_test_result","ok":True,"message":what}))
+        elif t=="set_tint":
+            tint=msg.get("tint","cuivre")
+            if tint in ("cuivre","marine","anthracite"):
+                self.cfg.data["tint"]=tint; self.cfg.save()
         elif t=="check_update":
             threading.Thread(target=self._check_update,args=(bool(msg.get("silent")),),daemon=True).start()
         elif t=="install_update":
@@ -1430,7 +1444,7 @@ class MacroDeck:
             key=self.cfg.data.get("active_profile","default")
             profile=self.cfg.data.get("profiles",{}).get(key)
             if profile and self.overlay:
-                self.overlay.show_profile(profile,self.cfg.data.get("overlay",{}))
+                self.overlay.show_profile(profile,self._ov_cfg())
         elif t=="update_button":
             pid=msg.get("profile","default"); bid=str(msg.get("button",0))
             if pid in self.cfg.data["profiles"]:
