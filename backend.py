@@ -336,7 +336,7 @@ DEFAULT_CONFIG = {
     "active_profile": "default",
     "led_strips": {str(i):{"metric":["cpu","ram","gpu_usage","ssd_usage"][i]} for i in range(4)},
     "serial_port": "AUTO", "theme": "dark",
-    "serial_port2": "", "baud_rate": 115200, "baud_rate2": 115200
+    "serial_port2": "", "serial_port3": "", "baud_rate": 115200, "baud_rate2": 115200, "baud_rate3": 115200
 }
 
 # ── TRAMES ESP32 ─────────────────────────────────────────────────────────────
@@ -895,7 +895,7 @@ class ProfileOverlayWindow:
         ALPHA    = max(0.2, min(1.0, int(ov.get("alpha", 97)) / 100))
         OV_POTS  = ov.get("pots", {})
         
-        ACC="#6366f1"; FG="#f1f5f9"; BG="#0d0e12"; CARD="#1c1f29"; FG3="#94a3b8"; BG3="#181b22"; BG4="#1e212b"; BDR="#2a2d3a"
+        ACC="#cd9468"; FG="#f3eee4"; BG="#1c1b18"; CARD="#2a2823"; FG3="#8f8779"; BG3="#232220"; BG4="#37342e"; BDR="#3b372f"
         PAD=10; GAP=4; COLS=4
         W = COLS*CELL + (COLS-1)*GAP + PAD*2
         H = 38 + 1 + 8 + CELL*2 + GAP + 8 + 1 + 8 + CELL + 12
@@ -1018,9 +1018,11 @@ class AppWatcher:
 # ── SERIAL ────────────────────────────────────────────────────────────────────
 class Transport:
     """
-    3 slots USB :
-      slot 0 = ESP32 — reçoit et envoie des trames série
-      slot 1 & 2 = USB passifs — monitoring seulement (clés USB, hubs, etc.)
+    3 périphériques COM :
+      slot 0 = ESP32  (macropad : trames de boutons/potards, envoi des LEDs)
+      slot 1 = port USB 1, slot 2 = port USB 2
+    Un slot 1/2 sans port configuré reste en surveillance passive (détection seule).
+    Un slot 1/2 avec un port configuré ouvre vraiment la liaison COM.
     """
     LONG_MS=400; DOUBLE_MS=300
     N_SLOTS = 3
@@ -1030,6 +1032,7 @@ class Transport:
         self._slots    = [None] * self.N_SLOTS
         self._port_names = [None] * self.N_SLOTS
         self._btn_state  = {}
+        self._baud       = [115200] * self.N_SLOTS
         # Démarrer le monitoring passif des ports USB 1 et 2
         threading.Thread(target=self._usb_monitor_loop, daemon=True).start()
 
@@ -1043,8 +1046,8 @@ class Transport:
         self._slots[slot] = None; self._port_names[slot] = None
         if port == "AUTO":
             ports = serial.tools.list_ports.comports()
-            # Éviter de prendre un port déjà utilisé par un autre slot
-            used  = {self._port_names[i] for i in range(self.N_SLOTS) if i != slot and self._port_names[i]}
+            # Éviter un port déjà OUVERT par un autre slot (un simple port détecté ne compte pas)
+            used  = {self._port_names[i] for i in range(self.N_SLOTS) if i != slot and self._slots[i] is not None and self._port_names[i]}
             # Préférer les puces connues ESP32
             cands = [p.device for p in ports
                      if any(k in p.description.upper() for k in ["CP210","CH340","FTDI","USB SERIAL"])
@@ -1055,11 +1058,21 @@ class Transport:
         if not port: return
         try:
             ser = serial.Serial(port, baud, timeout=0.1)
-            self._slots[slot] = ser; self._port_names[slot] = port
+            self._slots[slot] = ser; self._port_names[slot] = port; self._baud[slot] = baud
             threading.Thread(target=self._loop, args=(ser, slot), daemon=True).start()
             log.info(f"Serial slot {slot}: {port} @ {baud}")
         except Exception as e:
             log.error(f"Serial slot {slot}: {e}")
+        self._refresh_passive()
+
+    def stop(self, slot):
+        """Ferme la liaison COM d'un slot (sans toucher à la configuration)."""
+        ser = self._slots[slot]
+        self._slots[slot] = None; self._port_names[slot] = None
+        if ser:
+            try: ser.close()
+            except: pass
+        self._refresh_passive()
 
     def is_connected(self, slot=0):
         s = self._slots[slot]; return bool(s and s.is_open)
@@ -1083,46 +1096,42 @@ class Transport:
 
     # ── Slots 1 & 2 (USB passifs) ────────────────────────────────────────────
     def _usb_monitor_loop(self):
-        """Surveille les ports USB 1 et 2 en mode passif.
-        Détecte connexion/déconnexion et vitesse (Full/Hi/Super Speed).
-        Ne lit pas de trames, ne bloque pas."""
+        """Détecte les ports COM présents et attribue les ports libres aux slots 1 et 2
+        qui ne sont pas ouverts. Ne lit aucune trame et ne bloque pas."""
         if not SERIAL_OK: return
         while True:
-            try:
-                all_ports = {p.device: p for p in serial.tools.list_ports.comports()}
-                esp_port  = self._port_names[0]
-                passive   = [p for dev, p in all_ports.items() if dev != esp_port]
-                for slot in (1, 2):
-                    idx = slot - 1  # index dans passive[]
-                    if idx < len(passive):
-                        self._port_names[slot] = passive[idx].device
-                    else:
-                        self._port_names[slot] = None
-            except: pass
+            self._refresh_passive()
             time.sleep(2)
 
-    def usb_info(self, slot):
-        """Retourne les infos du port USB passif (slot 1 ou 2)."""
-        if not SERIAL_OK or slot not in (1, 2):
-            return {"connected": False, "port": None, "description": "", "speed": ""}
-        port = self._port_names[slot]
-        if not port:
-            return {"connected": False, "port": None, "description": "", "speed": ""}
+    def _refresh_passive(self):
         try:
-            ports = serial.tools.list_ports.comports()
-            info  = next((p for p in ports if p.device == port), None)
+            present = [p.device for p in serial.tools.list_ports.comports()]
+            used    = {self._port_names[i] for i in range(self.N_SLOTS) if self._slots[i] is not None}
+            free    = [d for d in present if d not in used]
+            for k, slot in enumerate([x for x in (1, 2) if self._slots[x] is None]):
+                self._port_names[slot] = free[k] if k < len(free) else None
+        except: pass
+
+    def usb_info(self, slot):
+        """Infos du port USB 1 ou 2 : détecté (passif) ou liaison COM ouverte."""
+        empty = {"connected": False, "opened": False, "port": None, "description": "", "speed": "", "baud": 0}
+        if not SERIAL_OK or slot not in (1, 2): return empty
+        port = self._port_names[slot]
+        if not port: return empty
+        opened = self.is_connected(slot)
+        desc = ""; speed = ""
+        try:
+            info = next((p for p in serial.tools.list_ports.comports() if p.device == port), None)
             if info:
                 desc = info.description or ""
-                # Détecter la vitesse USB depuis la description ou vid/pid
-                speed = ""
                 dl = desc.lower()
-                if "super" in dl or "3.0" in dl or "3.1" in dl or "3.2" in dl: speed = "SuperSpeed (5-20 Gb/s)"
+                if   "super" in dl or "3.0" in dl or "3.1" in dl or "3.2" in dl: speed = "SuperSpeed (5-20 Gb/s)"
                 elif "hi"   in dl or "2.0" in dl:                               speed = "Hi-Speed (480 Mb/s)"
                 elif "full" in dl or "1.1" in dl:                               speed = "Full-Speed (12 Mb/s)"
                 elif "low"  in dl or "1.0" in dl:                               speed = "Low-Speed (1.5 Mb/s)"
-                return {"connected": True, "port": port, "description": desc, "speed": speed}
         except: pass
-        return {"connected": True, "port": port, "description": "", "speed": ""}
+        return {"connected": True, "opened": opened, "port": port, "description": desc, "speed": speed,
+                "baud": self._baud[slot] if opened else 0}
 
     # ── Timing boutons (slot 0 uniquement) ───────────────────────────────────
     def _handle_timing(self, btn_idx, event, on_msg_fn):
@@ -1192,6 +1201,8 @@ class PluginManager:
         except Exception as e: log.error(f"Plugin '{action_type}': {e}")
 
 # ── MACRODECK CORE ────────────────────────────────────────────────────────────
+SERIAL_KEYS = (("serial_port","baud_rate"), ("serial_port2","baud_rate2"), ("serial_port3","baud_rate3"))
+
 class MacroDeck:
     def __init__(self):
         self.cfg=ConfigManager(); self.ws_clients=set(); self._loop=None
@@ -1230,6 +1241,7 @@ class MacroDeck:
         self._broadcast({"type":"button_event","button":idx,"event":ev})
 
     def _on_esp32(self, raw: str, slot: int = 0):
+        if slot: self._broadcast({"type":"serial_line","slot":slot,"line":raw})
         fr=parse_frame(raw)
         if not fr: return
         kind,idx,val=fr
@@ -1267,6 +1279,7 @@ class MacroDeck:
             # Slot 0 — ESP32
             "connected": self.transport.is_connected(0),
             "port":      self.transport._port_names[0],
+            "baud":      self.transport._baud[0] if self.transport.is_connected(0) else 0,
             # Slots 1 & 2 — USB passifs (clés USB, hubs…)
             "usb1": self.transport.usb_info(1),
             "usb2": self.transport.usb_info(2),
@@ -1385,7 +1398,15 @@ class MacroDeck:
                 await ws.send(json.dumps({"type":"picked_path","field":field,"path":path}))
             asyncio.ensure_future(_do())
         elif t=="connect_serial":
-            self.transport.start(msg.get("port","AUTO"),baud=int(msg.get("baud",115200)),slot=int(msg.get("slot",0)))
+            slot=max(0,min(2,int(msg.get("slot",0))))
+            pk,bk=SERIAL_KEYS[slot]
+            port=msg.get("port","AUTO" if slot==0 else ""); baud=int(msg.get("baud",115200))
+            self.cfg.data[pk]=port; self.cfg.data[bk]=baud; self.cfg.save()
+            self.transport.start(port,baud=baud,slot=slot)
+            await asyncio.sleep(0.3)
+            await ws.send(json.dumps(self._serial_status()))
+        elif t=="disconnect_serial":
+            self.transport.stop(max(0,min(2,int(msg.get("slot",0)))))
             await ws.send(json.dumps(self._serial_status()))
         elif t=="get_serial_status":
             await ws.send(json.dumps(self._serial_status()))
@@ -1431,7 +1452,9 @@ class MacroDeck:
 
     async def run(self):
         self._loop = asyncio.get_event_loop()
-        self.transport.start(self.cfg.data.get("serial_port","AUTO"))
+        for slot,(pk,bk) in enumerate(SERIAL_KEYS):
+            port=self.cfg.data.get(pk,"AUTO" if slot==0 else "")
+            if port: self.transport.start(port,baud=int(self.cfg.data.get(bk,115200)),slot=slot)
         srv=await websockets.serve(self._ws_handler,"localhost",WS_PORT,max_size=10*1024*1024)
         await asyncio.gather(self._metrics_loop(),srv.wait_closed())
 
