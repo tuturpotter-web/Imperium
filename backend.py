@@ -106,32 +106,51 @@ def com_init():
 
 _MMDE_CLSID = "{BCDE0395-E52F-467C-8E3D-C4579291692E}"
 
+_audio_hook = {"fn": None, "t": 0}
+def _audio_fail(msg):
+    """Journalise et prévient l'interface (au plus une fois toutes les 15 s) : l'audio ne doit jamais échouer en silence."""
+    log.error(f"audio: {msg}")
+    f = _audio_hook["fn"]
+    if f and time.time() - _audio_hook["t"] > 15: _audio_hook["t"] = time.time(); f(msg)
+
+def _make_endpoint(capture):
+    """Interface de volume du périphérique par défaut. Plusieurs méthodes : pycaw a changé d'API selon les versions
+    (GetSpeakers() renvoie tantôt un IMMDevice, tantôt un objet avec .EndpointVolume)."""
+    errs = []
+    try:        # 1. accès direct par comtypes : indépendant de la version de pycaw
+        from comtypes import CoCreateInstance, GUID
+        try: from pycaw.api.mmdeviceapi import IMMDeviceEnumerator
+        except Exception: from pycaw.pycaw import IMMDeviceEnumerator
+        enum = CoCreateInstance(GUID(_MMDE_CLSID), IMMDeviceEnumerator, CLSCTX_ALL)
+        dev = enum.GetDefaultAudioEndpoint(1, 0) if capture else enum.GetDefaultAudioEndpoint(0, 1)   # (eCapture, eConsole) | (eRender, eMultimedia)
+        return dev.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None).QueryInterface(IAudioEndpointVolume)
+    except Exception as e: errs.append(f"accès direct : {e}")
+    try:        # 2. via pycaw
+        d = AudioUtilities.GetMicrophone() if capture else AudioUtilities.GetSpeakers()
+        ev = getattr(d, "EndpointVolume", None)
+        if ev is not None: return ev
+        return d.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None).QueryInterface(IAudioEndpointVolume)
+    except Exception as e: errs.append(f"pycaw : {e}")
+    raise RuntimeError(" | ".join(errs))
+
 def _endpoint(capture=False):
     key = "mic" if capture else "spk"
     v = getattr(_tls, key, None)
     if v is None:
-        com_init()
-        if capture:
-            from comtypes import CoCreateInstance, GUID
-            from pycaw.pycaw import IMMDeviceEnumerator
-            dev = CoCreateInstance(GUID(_MMDE_CLSID), IMMDeviceEnumerator, CLSCTX_ALL).GetDefaultAudioEndpoint(1, 0)  # eCapture, eConsole
-        else:
-            dev = AudioUtilities.GetSpeakers()
-        v = dev.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None).QueryInterface(IAudioEndpointVolume)
-        setattr(_tls, key, v)
+        com_init(); v = _make_endpoint(capture); setattr(_tls, key, v)
     return v
 
 def _vif(): return _endpoint(False) if PYCAW_OK else None
 
 def _with_endpoint(capture, fn):
     """Exécute fn(endpoint). Un seul nouvel essai avec un endpoint neuf si le périphérique audio a changé."""
-    if not PYCAW_OK: return None
+    if not PYCAW_OK: _audio_fail("pycaw / comtypes introuvables (pip install pycaw)"); return None
+    last = None
     for attempt in (0, 1):
         try: return fn(_endpoint(capture))
         except Exception as e:
-            setattr(_tls, "mic" if capture else "spk", None)
-            if attempt: log.error(f"audio: {e}")
-    return None
+            last = e; setattr(_tls, "mic" if capture else "spk", None)
+    _audio_fail(str(last)); return None
 
 def _clamp100(v): return max(0, min(100, int(round(v))))
 
@@ -1067,6 +1086,7 @@ class ActionEngine:
         self.obs = OBSClient(lambda: self.cfg.data)
         self.discord = DiscordRPC(lambda: self.cfg.data, lambda m: self.broadcast({"type": "toast", "message": m}))
         self.potq = PotWorker(self)
+        _audio_hook["fn"] = lambda m: self.broadcast({"type": "toast", "message": "⚠ Audio : " + m[:160]})
 
     def run(self, actions: list):
         com_init()
@@ -1084,7 +1104,12 @@ class ActionEngine:
         for _ in range(min(abs(n), 10)): self._one({"type": "next_profile" if n > 0 else "prev_profile"})
 
     def _app_level(self, app):
-        return (lambda: get_app_volume(app), lambda v: set_app_volume(app, v), 2)
+        """Volume d'une application. Nom vide = application active ; « * » = toutes les applications."""
+        a = (app or "").strip()
+        if a in ("*", "all", "tout", "toutes"): return (None, set_all_apps_volume, 2)
+        if not a or a.lower() in ("active", "actif", "auto"):
+            return (lambda: get_app_volume(foreground_process()), lambda v: set_app_volume(foreground_process(), v), 2)
+        return (lambda: get_app_volume(a), lambda v: set_app_volume(a, v), 2)
 
     def _level_spec(self, a, c):
         """Actions « niveau » : (lecture, écriture, pas par cran en %) ou None."""
@@ -1385,6 +1410,14 @@ class ActionEngine:
         elif t == "mic_volume_up": set_mic_volume(get_mic_volume() + step)
         elif t == "mic_volume_down": set_mic_volume(get_mic_volume() - step)
         elif t == "mic_volume_set": set_mic_volume(int(a.get("value", 80)))
+        elif t == "app_volume":      # une seule action pour toutes les applications : le paramètre « app » choisit laquelle
+            app = (a.get("app") or "").strip(); target = app or foreground_process()
+            mode = str(a.get("mode") or "augmenter").lower(); val = a.get("value", a.get("step"))
+            if mode.startswith("muet") or mode.startswith("couper"): set_app_mute(target)
+            elif mode.startswith("fix"): set_app_volume(target, int(50 if val is None else val))
+            else:
+                cur = get_app_volume(target); stp = 5 if val is None else val
+                if cur is not None: set_app_volume(target, cur + (stp if mode.startswith("aug") else -stp))
         elif t in ("app_volume_up", "app_volume_down", "app_volume_set"):
             app = a.get("app", ""); cur = get_app_volume(app)
             if t == "app_volume_set": set_app_volume(app, int(a.get("value", 50)))
