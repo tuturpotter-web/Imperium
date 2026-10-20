@@ -2457,6 +2457,31 @@ def _app_dir_persistent():
     if getattr(sys,"frozen",False): return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
 
+def _set_app_icon():
+    """Windows : regroupe la barre des tâches sous « Imperium » et applique icon.ico à la fenêtre
+    (même en lançant backend.py directement, où l'icône serait sinon celle de Python)."""
+    if sys.platform != "win32": return
+    try: ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Imperium.MacroDeck")
+    except Exception: pass
+    path = os.path.join(_app_dir(), "icon.ico")
+    if not os.path.exists(path): return
+    def worker():
+        try:
+            u32 = ctypes.windll.user32
+            u32.FindWindowW.restype = ctypes.c_void_p; u32.LoadImageW.restype = ctypes.c_void_p
+            u32.SendMessageW.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_void_p, ctypes.c_void_p]
+            for _ in range(75):                       # attend la fenêtre (15 s au plus)
+                time.sleep(0.2)
+                hwnd = u32.FindWindowW(None, "Imperium")
+                if not hwnd: continue
+                big = u32.LoadImageW(None, path, 1, 0, 0, 0x10 | 0x40)     # IMAGE_ICON, LR_LOADFROMFILE | LR_DEFAULTSIZE
+                small = u32.LoadImageW(None, path, 1, 16, 16, 0x10)
+                if big: u32.SendMessageW(hwnd, 0x0080, 1, big)             # WM_SETICON, ICON_BIG
+                if small: u32.SendMessageW(hwnd, 0x0080, 0, small)         # ICON_SMALL
+                return
+        except Exception as e: log.warning(f"Icône de fenêtre : {e}")
+    threading.Thread(target=worker, daemon=True).start()
+
 def _http_server():
     import http.server, socketserver
     class Q(http.server.SimpleHTTPRequestHandler):
@@ -2514,6 +2539,7 @@ if __name__=="__main__":
     _wait_for_http()
     try:
         import webview
+        _set_app_icon()
         webview.create_window(
             "Imperium",
             f"http://127.0.0.1:{HTTP_PORT}/gui.html",
