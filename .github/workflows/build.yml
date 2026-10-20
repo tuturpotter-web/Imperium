@@ -54,6 +54,7 @@ jobs:
             --onedir `
             --noconsole `
             --name Imperium `
+            --icon icon.ico `
             --hidden-import win32gui `
             --hidden-import win32process `
             --hidden-import win32api `
@@ -71,7 +72,12 @@ jobs:
             --hidden-import websockets.legacy `
             --hidden-import websockets.legacy.server `
             --hidden-import websocket `
+            --hidden-import PIL.ImageTk `
+            --hidden-import PIL._tkinter_finder `
+            --hidden-import PIL.ImageFilter `
+            --hidden-import PIL.ImageOps `
             --add-data "gui.html;." `
+            --add-data "icon.ico;." `
             backend.py
 
       - name: Inject version into installer.iss
