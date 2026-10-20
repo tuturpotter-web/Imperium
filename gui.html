@@ -672,6 +672,34 @@ input[type=range]{accent-color:var(--accent)}
 .tint-opt.active .tint-nm::after{content:"✓";margin-left:6px;color:var(--accent)}
 .tint-ds{font-size:10px;line-height:1.35;color:var(--text3)}
 @media(max-width:520px){.tint-picker{grid-template-columns:1fr}}
+
+/* Icônes SVG (actions, touches, listes) */
+.emo{font-style:normal}
+.btn-ic{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:inherit}
+.btn-ic .ic{width:58%;height:58%;color:var(--accent);stroke-width:1.7}
+.hw-btn.pressed .btn-ic .ic,.hw-btn.selected .btn-ic .ic{color:var(--accent2)}
+.chip .ic{width:14px;height:14px;vertical-align:-2px;margin-right:3px}
+.ai-ic .ic{width:17px;height:17px;color:var(--accent)}
+.pot-act-ic .ic{width:16px;height:16px;color:var(--accent)}
+.key-ic-prev{width:46px;height:46px;border-radius:12px;background:var(--accent-dim);border:1px solid var(--accent-glow);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
+.key-ic-prev .ic{width:26px;height:26px}
+.icon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:5px;margin-top:10px;max-height:150px;overflow:auto;padding:2px}
+.icon-opt{height:34px;border-radius:9px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:600}
+.icon-opt .ic{width:17px;height:17px}
+.icon-opt:hover{background:var(--bg4);color:var(--text)}
+.icon-opt.active{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
+.chk{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11.5px;color:var(--text2);cursor:pointer}
+.chk input{accent-color:var(--accent)}
+.hint{font-size:10.5px;line-height:1.5;color:var(--text3);margin-top:6px}
+.hint b{color:var(--text2)}
+.p-lbl{width:112px;line-height:1.25}
+.d-tab{padding:7px 4px;font-size:10.5px}
+
+/* Touches avec image : la photo va jusqu'au bord (plus de liseré décalé) */
+.hw-btn.has-img{border-color:transparent;background-origin:border-box;background-clip:border-box;background-repeat:no-repeat}
+.hw-btn.has-img::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px var(--border3);pointer-events:none;z-index:2;transition:box-shadow .16s}
+.hw-btn.has-img:hover::after,.hw-btn.has-img.selected::after{box-shadow:inset 0 0 0 2px var(--accent)}
+.hw-btn.has-img.pressed::after{box-shadow:inset 0 0 0 3px var(--accent)}
 @media(max-height:620px){.device-view{padding:12px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
@@ -850,6 +878,7 @@ input[type=range]{accent-color:var(--accent)}
           <div class="s-tabs">
             <button class="s-tab active" id="stab-general" onclick="switchSettingsTab('general')">Général</button>
             <button class="s-tab" id="stab-serial" onclick="switchSettingsTab('serial')">Connexion</button>
+            <button class="s-tab" id="stab-integ" onclick="switchSettingsTab('integ')">Intégrations</button>
             <button class="s-tab" id="stab-proto" onclick="switchSettingsTab('proto')">Trames ESP32</button>
             <button class="s-tab" id="stab-overlay" onclick="switchSettingsTab('overlay')">Overlay</button>
           </div>
@@ -972,6 +1001,36 @@ input[type=range]{accent-color:var(--accent)}
           </div>
 
           <!-- TAB: PROTOCOLE -->
+          <div id="stab-content-integ" style="display:none">
+            <div class="s-section">
+              <div class="s-section-hdr">
+                <div class="s-section-ic" style="background:var(--purple-dim);color:var(--purple)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 9a5 5 0 0 1 8 0M7 13a5 5 0 0 0 5 4M17 13a5 5 0 0 1-5 4"/></svg></div>
+                <div style="flex:1"><div class="s-section-title">OBS Studio</div><div class="s-section-desc">WebSocket intégré à OBS 28 et plus (Outils → Réglages du serveur WebSocket)</div></div>
+                <div class="com-status" id="obsStatus">○ Non testé</div>
+              </div>
+              <div class="grp"><div class="grp-lbl">Adresse et port</div>
+                <div style="display:flex;gap:6px"><input class="inp" id="integ_obs_host" placeholder="localhost" style="flex:1" oninput="integSet('obs_host',this.value)">
+                <input class="inp" id="integ_obs_port" type="number" placeholder="4455" style="width:100px" oninput="integSet('obs_port',parseInt(this.value)||4455)"></div></div>
+              <div class="grp"><div class="grp-lbl">Mot de passe</div><input class="inp" id="integ_obs_password" type="password" placeholder="(vide si aucun)" oninput="integSet('obs_password',this.value)"></div>
+              <div style="display:flex;gap:8px;align-items:center"><button class="tbtn pr" onclick="obsTest()">Tester la connexion</button>
+                <span class="hint" style="margin:0">Les anciennes versions d'OBS (plugin v4, port 4444) sont reconnues automatiquement.</span></div>
+            </div>
+            <div class="s-section">
+              <div class="s-section-hdr">
+                <div class="s-section-ic" style="background:var(--accent-dim);color:var(--accent)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7c3-1.5 7-1.5 10 0 2 3 3 6 3 9-1.5 1.2-3 1.8-4.5 2l-1-1.800M7 7C4 10 3.5 13 4 16c1.5 1.2 3 1.8 4.5 2l1-1.800M9 12.500h.01M15 12.500h.01"/></svg></div>
+                <div style="flex:1"><div class="s-section-title">Discord</div><div class="s-section-desc">Volume d'un seul utilisateur, micro, casque, salons vocaux</div></div>
+                <div class="com-status" id="discordStatus">○ Non connecté</div>
+              </div>
+              <div class="hint" style="margin:0 0 12px">Discord n'offre pas cette fonction à tout le monde : il faut créer sa propre application. 1) Sur discord.com/developers, crée une application. 2) Dans OAuth2, ajoute l'adresse de redirection <b>http://localhost</b>. 3) Dans « App Testers », ajoute ton compte. 4) Copie l'ID client et le secret ci-dessous, puis clique sur Autoriser et valide dans Discord (une seule fois). Sans cela, les actions de micro et de casque utilisent des raccourcis clavier.</div>
+              <div class="grp"><div class="grp-lbl">ID client</div><input class="inp" id="integ_discord_client_id" placeholder="123456789012345678" oninput="integSet('discord_client_id',this.value.trim())"></div>
+              <div class="grp"><div class="grp-lbl">Secret client</div><input class="inp" id="integ_discord_client_secret" type="password" placeholder="••••••••" oninput="integSet('discord_client_secret',this.value.trim())"></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="tbtn pr" onclick="discordConnect()">Autoriser et connecter</button>
+                <button class="tbtn" onclick="discordUsers()">Voir les participants de l'appel</button></div>
+              <div id="discordUsers" class="hint" style="margin-top:10px"></div>
+              <div class="hint">Les identifiants sont enregistrés en clair dans ta configuration locale.</div>
+            </div>
+          </div>
+
           <div id="stab-content-proto" style="display:none">
             <div class="s-section">
               <div class="s-section-hdr">
@@ -980,6 +1039,7 @@ input[type=range]{accent-color:var(--accent)}
               </div>
               <div class="frame-row"><div class="frame-code">B0:1</div><div class="frame-txt"><b>Bouton enfoncé.</b> B0 à B7 correspondent aux boutons 1 à 8.</div></div>
               <div class="frame-row"><div class="frame-code">B0:0</div><div class="frame-txt"><b>Bouton relâché.</b> L'application déduit toute seule l'appui simple, l'appui long et le double clic.</div></div>
+              <div class="frame-row"><div class="frame-code">E0:1</div><div class="frame-txt"><b>Encodeur rotatif.</b> E0 à E3 : nombre de crans tournés, positif vers la droite, négatif vers la gauche (<code>E0:-1</code>). C'est le format conseillé pour un encodeur : le défilement ou le zoom ne s'arrêtent jamais en bout de course.</div></div>
               <div class="frame-row"><div class="frame-code">P0:75</div><div class="frame-txt"><b>Potentiomètre.</b> P0 à P3 correspondent aux potards 1 à 4, valeur de 0 à 100. À envoyer quand la valeur change.</div></div>
             </div>
             <div class="s-section">
@@ -1021,6 +1081,7 @@ input[type=range]{accent-color:var(--accent)}
                 <div><div class="s-section-title">Popup de changement de profil</div><div class="s-section-desc">Affichée au-dessus de toutes les fenêtres à chaque changement de profil</div></div>
               </div>
               <div class="grp">
+                <label class="chk" style="margin:0 0 14px"><input type="checkbox" id="ov_legacy"> Mode compatibilité (à cocher si la popup n'apparaît pas ou s'affiche mal)</label>
                 <div class="grp-lbl">Taille des cellules (px)</div>
                 <input class="inp" type="number" id="ov_cell_size" value="56" min="32" max="100" style="width:80px">
               </div>
@@ -1111,244 +1172,13 @@ input[type=range]{accent-color:var(--accent)}
 // ═══════════════════════════════════════════════════════════════
 // CATALOGUE D'ACTIONS
 // ═══════════════════════════════════════════════════════════════
-let ACTS = [
-  // Profils
-  {cat:"Profils",icon:"◈",type:"switch_profile",name:"Aller sur un profil",desc:"Bascule vers un profil spécifique",
-   params:[{key:"profile",lbl:"Clé profil",ph:"obs, discord..."}]},
-  {cat:"Profils",icon:"›",type:"next_profile",name:"Profil suivant",desc:"Passe au profil suivant",params:[]},
-  {cat:"Profils",icon:"‹",type:"prev_profile",name:"Profil précédent",desc:"Revient au profil précédent",params:[]},
-  // PC
-  {cat:"PC",icon:"🚀",type:"open_app",name:"Ouvrir une application",desc:"Lance un logiciel",
-   params:[{key:"path",lbl:"Chemin",ph:"C:\\app.exe",special:"app_picker"}]},
-  {cat:"PC",icon:"✖",type:"close_app",name:"Fermer une application",desc:"Termine un processus",
-   params:[{key:"name",lbl:"Nom processus",ph:"notepad.exe",special:"process_picker"}]},
-  {cat:"PC",icon:"🗂",type:"open_folder",name:"Ouvrir un dossier",desc:"Explorateur",
-   params:[{key:"path",lbl:"Chemin",ph:"C:\\Users\\...",special:"folder_picker"}]},
-  {cat:"PC",icon:"📄",type:"open_file",name:"Ouvrir un fichier",desc:"Avec son app par défaut",
-   params:[{key:"path",lbl:"Chemin",ph:"C:\\doc.pdf",special:"file_picker"}]},
-  {cat:"PC",icon:"🌐",type:"open_url",name:"Ouvrir une URL",desc:"Dans le navigateur",
-   params:[{key:"url",lbl:"URL",ph:"https://..."}]},
-  {cat:"PC",icon:"🔒",type:"lock_session",name:"Verrouiller",desc:"Win+L",params:[]},
-  {cat:"PC",icon:"⏻",type:"shutdown",name:"Éteindre le PC",desc:"shutdown /s /t 0",params:[]},
-  {cat:"PC",icon:"🔄",type:"restart",name:"Redémarrer",desc:"shutdown /r /t 0",params:[]},
-  {cat:"PC",icon:"💤",type:"sleep",name:"Veille",desc:"Mode veille",params:[]},
-  {cat:"PC",icon:"🚪",type:"logoff",name:"Déconnecter",desc:"shutdown /l",params:[]},
-  {cat:"PC",icon:"⌨",type:"run_command",name:"Commande terminal",desc:"CMD sans fenêtre",
-   params:[{key:"command",lbl:"Commande",ph:"cmd /c ..."}]},
-  {cat:"PC",icon:"⚡",type:"script_powershell",name:"Script PowerShell",desc:"Code PS inline",
-   params:[{key:"code",lbl:"Code",ph:"Get-Process ..."}]},
-  {cat:"PC",icon:"🐍",type:"script_python",name:"Script Python",desc:"Code Python inline",
-   params:[{key:"code",lbl:"Code",ph:"import os; ..."}]},
-  {cat:"PC",icon:"📜",type:"script_batch",name:"Script Batch",desc:"Commandes .bat",
-   params:[{key:"code",lbl:"Commandes",ph:"@echo off\n..."}]},
-  {cat:"PC",icon:"🧹",type:"clean_temp",name:"Nettoyer Temp",desc:"Vide %TEMP%",params:[]},
-  {cat:"PC",icon:"📸",type:"screenshot",name:"Capture écran",desc:"Win+Shift+S",params:[]},
-  {cat:"PC",icon:"💻",type:"win_minimize_all",name:"Réduire tout",desc:"Win+D",params:[]},
-  // Clavier
-  {cat:"Clavier",icon:"⌨",type:"hotkey",name:"Raccourci clavier",desc:"Combinaison de touches",
-   params:[{key:"keys",lbl:"Touches",ph:"ctrl+c / alt+f4 / win+r"}]},
-  {cat:"Clavier",icon:"T",type:"type_text",name:"Saisir du texte",desc:"Tape automatiquement",
-   params:[{key:"text",lbl:"Texte",ph:"Bonjour monde !"}]},
-  {cat:"Clavier",icon:"🔁",type:"key_sequence",name:"Séquence de touches",desc:"Touches enchaînées",
-   params:[{key:"sequence",lbl:"Séquence",ph:"ctrl+a, ctrl+c, ctrl+v"}]},
-  {cat:"Clavier",icon:"🖱",type:"mouse_click",name:"Clic souris",desc:"Clic à position",
-   params:[{key:"button",lbl:"Bouton",ph:"left/right"},{key:"x",lbl:"X",ph:""},{key:"y",lbl:"Y",ph:""}]},
-  {cat:"Clavier",icon:"⬇",type:"mouse_scroll",name:"Molette",desc:"Défilement",
-   params:[{key:"delta",lbl:"Delta",ph:"3"}]},
-  // Audio
-  {cat:"Audio",icon:"🔊",type:"volume_up",name:"Volume +",desc:"Augmente le volume",
-   params:[{key:"step",lbl:"Pas %",ph:"5"}]},
-  {cat:"Audio",icon:"🔉",type:"volume_down",name:"Volume −",desc:"Baisse le volume",
-   params:[{key:"step",lbl:"Pas %",ph:"5"}]},
-  {cat:"Audio",icon:"🔢",type:"volume_set",name:"Volume fixe",desc:"Niveau précis",
-   params:[{key:"value",lbl:"Niveau 0-100",ph:"50"}]},
-  {cat:"Audio",icon:"🔇",type:"mute_toggle",name:"Mute/Unmute",desc:"Bascule le son",params:[]},
-  {cat:"Audio",icon:"⏯",type:"media_play_pause",name:"Play/Pause",desc:"Média",params:[]},
-  {cat:"Audio",icon:"⏭",type:"media_next",name:"Piste suivante",desc:"Track +",params:[]},
-  {cat:"Audio",icon:"⏮",type:"media_prev",name:"Piste précédente",desc:"Track −",params:[]},
-  {cat:"Audio",icon:"⏹",type:"media_stop",name:"Stop",desc:"Arrête la lecture",params:[]},
-  {cat:"Audio",icon:"💡",type:"brightness",name:"Luminosité",desc:"Écran",
-   params:[{key:"value",lbl:"Niveau 0-100",ph:"75"}]},
-  // OBS
-  {cat:"OBS",icon:"🎬",type:"obs_scene",name:"OBS — Changer scène",desc:"Bascule vers une scène",
-   params:[{key:"scene",lbl:"Nom scène",ph:"Gaming"}]},
-  {cat:"OBS",icon:"📡",type:"obs_stream_start",name:"OBS — Démarrer stream",desc:"Lance le stream",params:[]},
-  {cat:"OBS",icon:"⏹",type:"obs_stream_stop",name:"OBS — Arrêter stream",desc:"Stoppe le stream",params:[]},
-  {cat:"OBS",icon:"⏺",type:"obs_record_start",name:"OBS — Démarrer enreg.",desc:"Enregistrement",params:[]},
-  {cat:"OBS",icon:"⏹",type:"obs_record_stop",name:"OBS — Arrêter enreg.",desc:"Stoppe l'enreg.",params:[]},
-  {cat:"OBS",icon:"🎙",type:"obs_mute_toggle",name:"OBS — Mute source",desc:"Mute/unmute",
-   params:[{key:"source",lbl:"Source",ph:"Mic/Aux"}]},
-  // Visio
-  {cat:"Visio",icon:"🎙",type:"zoom_mute",name:"Zoom — Mute",desc:"Alt+A",params:[]},
-  {cat:"Visio",icon:"📹",type:"zoom_camera",name:"Zoom — Caméra",desc:"Alt+V",params:[]},
-  {cat:"Visio",icon:"✋",type:"zoom_hand",name:"Zoom — Lever la main",desc:"Alt+Y",params:[]},
-  {cat:"Visio",icon:"🚪",type:"zoom_leave",name:"Zoom — Quitter",desc:"Alt+Q",params:[]},
-  {cat:"Visio",icon:"🎙",type:"teams_mute",name:"Teams — Mute",desc:"Ctrl+Shift+M",params:[]},
-  {cat:"Visio",icon:"📹",type:"teams_camera",name:"Teams — Caméra",desc:"Ctrl+Shift+O",params:[]},
-  {cat:"Visio",icon:"🎙",type:"meet_mute",name:"Meet — Mute",desc:"Ctrl+D",params:[]},
-  {cat:"Visio",icon:"🎙",type:"discord_mute",name:"Discord — Mute",desc:"Ctrl+Shift+M",params:[]},
-  {cat:"Visio",icon:"🔕",type:"discord_deafen",name:"Discord — Sourd",desc:"Ctrl+Shift+D",params:[]},
-  // Dev
-  {cat:"Dev",icon:"🆚",type:"vscode_open",name:"Ouvrir VS Code",desc:"Sur un dossier",
-   params:[{key:"path",lbl:"Dossier",ph:"."}]},
-  {cat:"Dev",icon:"⬇",type:"git_pull",name:"Git Pull",desc:"",params:[{key:"folder",lbl:"Dossier",ph:"."}]},
-  {cat:"Dev",icon:"⬆",type:"git_push",name:"Git Push",desc:"add+commit+push",
-   params:[{key:"folder",lbl:"Dossier",ph:"."},{key:"message",lbl:"Message",ph:"commit"}]},
-  {cat:"Dev",icon:"📝",type:"git_commit",name:"Git Commit",desc:"add+commit",
-   params:[{key:"folder",lbl:"Dossier",ph:"."},{key:"message",lbl:"Message",ph:"commit"}]},
-  {cat:"Dev",icon:"🐳",type:"docker_start",name:"Docker Start",desc:"",params:[{key:"name",lbl:"Conteneur",ph:"my-app"}]},
-  {cat:"Dev",icon:"🐳",type:"docker_stop",name:"Docker Stop",desc:"",params:[{key:"name",lbl:"Conteneur",ph:"my-app"}]},
-  {cat:"Dev",icon:"🖥",type:"ssh",name:"SSH",desc:"Terminal SSH",params:[{key:"host",lbl:"Hôte",ph:"192.168.1.1"},{key:"user",lbl:"User",ph:"root"}]},
-  // Web/IA
-  {cat:"Web",icon:"🤖",type:"open_chatgpt",name:"Ouvrir ChatGPT",desc:"",params:[]},
-  {cat:"Web",icon:"📧",type:"google_gmail",name:"Ouvrir Gmail",desc:"",params:[]},
-  {cat:"Web",icon:"📹",type:"google_meet",name:"Nouvelle réunion Meet",desc:"",params:[]},
-  {cat:"Web",icon:"🌐",type:"open_url",name:"Ouvrir une URL",desc:"",params:[{key:"url",lbl:"URL",ph:"https://..."}]},
-  // Temps
-  {cat:"Temps",icon:"⏱",type:"timer",name:"Timer",desc:"Alerte popup",
-   params:[{key:"seconds",lbl:"Secondes",ph:"60"},{key:"label",lbl:"Message",ph:"Terminé !"}]},
-  {cat:"Temps",icon:"🍅",type:"pomodoro",name:"Pomodoro 25min",desc:"",params:[]},
-  // Réseau
-  {cat:"Réseau",icon:"📡",type:"ping",name:"Ping",desc:"Terminal",params:[{key:"host",lbl:"Hôte",ph:"8.8.8.8"}]},
-  // Auto
-  {cat:"Auto",icon:"⏳",type:"delay",name:"Délai",desc:"Pause entre actions",params:[{key:"ms",lbl:"Millisecondes",ph:"500"}]},
-  {cat:"Auto",icon:"🔗",type:"multi_action",name:"Multi-actions",desc:"Séquence d'actions",params:[{key:"delay",lbl:"Délai entre (ms)",ph:"100"}]},
-  {cat:"Auto",icon:"🌐",type:"api_call",name:"Appel API REST",desc:"Requête HTTP",
-   params:[{key:"url",lbl:"URL",ph:"https://api.exemple.com"},{key:"method",lbl:"Méthode",ph:"GET"}]},
-  {cat:"Auto",icon:"🪝",type:"webhook",name:"Webhook",desc:"Zapier, Make, n8n...",
-   params:[{key:"url",lbl:"URL Webhook",ph:"https://hooks.zapier.com/..."}]},
-  {cat:"Auto",icon:"🏠",type:"home_assistant",name:"Home Assistant",desc:"Service HA",
-   params:[{key:"ha_url",lbl:"URL HA",ph:"http://homeassistant.local:8123"},{key:"token",lbl:"Token",ph:"eyJ..."},{key:"service",lbl:"Service",ph:"light.turn_on"},{key:"entity_id",lbl:"Entity",ph:"light.bureau"}]},
-];
+// ═══ ICÔNES (SVG, remplacent les emojis) ═══
+const ICONS = {"volume-up":"<path d=\"M11 5 6 9H3v6h3l5 4V5Z\"/><path d=\"M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13\"/>","volume-down":"<path d=\"M11 5 6 9H3v6h3l5 4V5Z\"/><path d=\"M15.5 8.5a5 5 0 0 1 0 7\"/>","volume-mute":"<path d=\"M11 5 6 9H3v6h3l5 4V5Z\"/><path d=\"m16 9 5 6M21 9l-5 6\"/>","mic":"<rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5 11a7 7 0 0 0 14 0M12 18v3\"/>","mic-off":"<path d=\"M9 9V6a3 3 0 0 1 5.5-1.7M15 10v1a3 3 0 0 1-4.6 2.5\"/><path d=\"M5 11a7 7 0 0 0 11 5.7M19 11a7 7 0 0 1-.6 2.8M12 18v3\"/><path d=\"M4 4l16 16\"/>","headphones":"<path d=\"M4 15v-3a8 8 0 0 1 16 0v3\"/><rect x=\"3\" y=\"14\" width=\"4\" height=\"6\" rx=\"1.5\"/><rect x=\"17\" y=\"14\" width=\"4\" height=\"6\" rx=\"1.5\"/>","headphones-off":"<path d=\"M4 15v-3a8 8 0 0 1 16 0v3\"/><rect x=\"3\" y=\"14\" width=\"4\" height=\"6\" rx=\"1.5\"/><rect x=\"17\" y=\"14\" width=\"4\" height=\"6\" rx=\"1.5\"/><path d=\"M4 4l16 16\"/>","play":"<path d=\"M7 4.5v15l12-7.5-12-7.5Z\"/>","pause":"<path d=\"M8 5v14M16 5v14\"/>","play-pause":"<path d=\"M3 5v14l9-7-9-7Z\"/><path d=\"M16 5v14M21 5v14\"/>","stop":"<rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"2\"/>","skip-next":"<path d=\"M5 5v14l10-7L5 5Z\"/><path d=\"M19 5v14\"/>","skip-prev":"<path d=\"M19 5v14L9 12l10-7Z\"/><path d=\"M5 5v14\"/>","rewind":"<path d=\"M12 6v12l-8-6 8-6Z\"/><path d=\"M21 6v12l-8-6 8-6Z\"/>","forward":"<path d=\"M12 6v12l8-6-8-6Z\"/><path d=\"M3 6v12l8-6-8-6Z\"/>","repeat":"<path d=\"M17 2l4 4-4 4\"/><path d=\"M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4\"/><path d=\"M21 13v2a3 3 0 0 1-3 3H3\"/>","shuffle":"<path d=\"M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5\"/>","heart":"<path d=\"M12 20s-8-4.7-8-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8 2.5C20 15.3 12 20 12 20Z\"/>","music":"<path d=\"M9 18V5l11-2v13\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><circle cx=\"17\" cy=\"16\" r=\"3\"/>","gauge":"<path d=\"M4 18a8 8 0 1 1 16 0\"/><path d=\"m12 14 4-5\"/>","sun":"<circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M5 19l1.4-1.4M17.6 6.4 19 5\"/>","sun-dim":"<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 3v1.5M12 19.5V21M3 12h1.5M19.5 12H21M5.6 5.6l1 1M17.4 17.4l1 1M5.6 18.4l1-1M17.4 6.6l1-1\"/>","moon":"<path d=\"M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z\"/>","monitor":"<rect x=\"3\" y=\"4\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M8 20h8M12 16v4\"/>","monitor-off":"<rect x=\"3\" y=\"4\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M8 20h8M12 16v4\"/><path d=\"M4 4l16 16\"/>","camera":"<path d=\"M4 8h3l2-3h6l2 3h3v11H4V8Z\"/><circle cx=\"12\" cy=\"13.5\" r=\"3.5\"/>","video":"<rect x=\"3\" y=\"6\" width=\"13\" height=\"12\" rx=\"2\"/><path d=\"m16 10 5-3v10l-5-3\"/>","video-off":"<rect x=\"3\" y=\"6\" width=\"13\" height=\"12\" rx=\"2\"/><path d=\"m16 10 5-3v10l-5-3\"/><path d=\"M4 4l16 16\"/>","screen-share":"<rect x=\"3\" y=\"4\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M12 13V8M9.5 10.5 12 8l2.5 2.5M8 20h8\"/>","hand":"<path d=\"M8 12V6a1.5 1.5 0 0 1 3 0v5M11 11V4.5a1.5 1.5 0 0 1 3 0V11M14 11V6a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-3.5a1.5 1.5 0 0 1 2.4-1.7L8 14\"/>","phone-off":"<path d=\"M3.5 15c4.5-4.5 12.5-4.5 17 0l-2 3-3-1.500v-2.500c-2-.8-4-.8-6 0v2.500L5.5 18l-2-3Z\"/>","chat":"<path d=\"M21 12a8 8 0 0 1-11.6 7.100L4 20l1-4.600A8 8 0 1 1 21 12Z\"/>","users":"<circle cx=\"9\" cy=\"8\" r=\"3.5\"/><path d=\"M2.5 20a6.5 6.5 0 0 1 13 0M16 4.500a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6\"/>","user":"<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21a8 8 0 0 1 16 0\"/>","user-next":"<circle cx=\"9\" cy=\"8\" r=\"3.5\"/><path d=\"M2.5 20a6.5 6.5 0 0 1 10-5.500M16 16h5m-2-2.5 2.5 2.5-2.5 2.5\"/>","user-prev":"<circle cx=\"15\" cy=\"8\" r=\"3.5\"/><path d=\"M21.5 20a6.5 6.5 0 0 0-10-5.500M8 16H3m2-2.500L2.5 16 5 18.5\"/>","user-volume":"<circle cx=\"9\" cy=\"8\" r=\"3.5\"/><path d=\"M2.5 20a6.5 6.5 0 0 1 10.5-5M16 14.500a3 3 0 0 1 0 4.500M18.5 12.500a6 6 0 0 1 0 8\"/>","user-mute":"<circle cx=\"9\" cy=\"8\" r=\"3.5\"/><path d=\"M2.5 20a6.5 6.5 0 0 1 10.5-5M16 15l5 5M21 15l-5 5\"/>","plus":"<path d=\"M12 5v14M5 12h14\"/>","minus":"<path d=\"M5 12h14\"/>","arrow-up":"<path d=\"M12 19V5M5 12l7-7 7 7\"/>","arrow-down":"<path d=\"M12 5v14M5 12l7 7 7-7\"/>","arrow-left":"<path d=\"M19 12H5M12 5l-7 7 7 7\"/>","arrow-right":"<path d=\"M5 12h14M12 5l7 7-7 7\"/>","arrows-lr":"<path d=\"M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4\"/>","arrows-ud":"<path d=\"M12 3v18M8 7l4-4 4 4M8 17l4 4 4-4\"/>","refresh":"<path d=\"M20 11a8 8 0 1 0-2.3 5.700M20 4v7h-7\"/>","undo":"<path d=\"M9 14 4 9l5-5\"/><path d=\"M4 9h10a6 6 0 0 1 0 12h-3\"/>","redo":"<path d=\"m15 14 5-5-5-5\"/><path d=\"M20 9H10a6 6 0 0 0 0 12h3\"/>","search":"<circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.5\"/>","zoom-in":"<circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.500M8 11h6M11 8v6\"/>","zoom-out":"<circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.500M8 11h6\"/>","scissors":"<circle cx=\"6\" cy=\"6\" r=\"3\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><path d=\"M20 4 8.1 15.900M14.5 14.5 20 20M8.1 8.1 12 12\"/>","copy":"<rect x=\"9\" y=\"9\" width=\"11\" height=\"11\" rx=\"2\"/><path d=\"M5 15V6a2 2 0 0 1 2-2h9\"/>","clipboard":"<rect x=\"6\" y=\"5\" width=\"12\" height=\"16\" rx=\"2\"/><path d=\"M9 5a3 3 0 0 1 6 0M9 12h6M9 16h4\"/>","clipboard-x":"<rect x=\"6\" y=\"5\" width=\"12\" height=\"16\" rx=\"2\"/><path d=\"M9 5a3 3 0 0 1 6 0M10 12l4 4M14 12l-4 4\"/>","save":"<path d=\"M5 4h11l3 3v13H5V4Z\"/><path d=\"M8 4v5h7V4M8 20v-6h8v6\"/>","folder":"<path d=\"M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z\"/>","file":"<path d=\"M6 3h8l5 5v13H6V3Z\"/><path d=\"M14 3v5h5\"/>","file-plus":"<path d=\"M6 3h8l5 5v13H6V3Z\"/><path d=\"M14 3v5h5M12 12v6M9 15h6\"/>","trash":"<path d=\"M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6\"/>","pencil":"<path d=\"M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z\"/><path d=\"m13.5 6.5 4 4\"/>","printer":"<path d=\"M7 9V3h10v6M7 17H4v-7h16v7h-3\"/><rect x=\"7\" y=\"14\" width=\"10\" height=\"7\" rx=\"1\"/>","lock":"<rect x=\"5\" y=\"11\" width=\"14\" height=\"10\" rx=\"2\"/><path d=\"M8 11V8a4 4 0 0 1 8 0v3\"/>","key":"<circle cx=\"8\" cy=\"15\" r=\"4\"/><path d=\"m11 12 9-9M16 7l3 3\"/>","power":"<path d=\"M12 3v9\"/><path d=\"M6.3 6.300a8 8 0 1 0 11.4 0\"/>","restart":"<path d=\"M20 12a8 8 0 1 1-2.5-5.800M20 4v5h-5\"/>","logout":"<path d=\"M9 4H5v16h4M16 8l4 4-4 4M20 12H9\"/>","shield":"<path d=\"M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3Z\"/>","globe":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18\"/>","link":"<path d=\"M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.700l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.700l1-1\"/>","external":"<path d=\"M14 4h6v6M20 4l-9 9M18 14v5H5V6h5\"/>","mail":"<rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"2\"/><path d=\"m3 7 9 6 9-6\"/>","calendar":"<rect x=\"4\" y=\"5\" width=\"16\" height=\"16\" rx=\"2\"/><path d=\"M4 10h16M9 3v4M15 3v4\"/>","clock":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/>","timer":"<circle cx=\"12\" cy=\"13\" r=\"8\"/><path d=\"M12 9v4l2.5 1.500M9 2h6\"/>","hourglass":"<path d=\"M6 3h12M6 21h12M7 3v4l5 5-5 5v4M17 3v4l-5 5 5 5v4\"/>","bell":"<path d=\"M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2ZM10 21a2 2 0 0 0 4 0\"/>","bookmark":"<path d=\"M6 3h12v18l-6-4-6 4V3Z\"/>","star":"<path d=\"m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.100L12 17l-5.4 2.9 1-6.100L3.2 9.500l6.1-.9L12 3Z\"/>","home":"<path d=\"M3 11 12 4l9 7M5 10v10h14V10M10 20v-6h4v6\"/>","sliders":"<path d=\"M4 7h10M18 7h2M4 17h2M10 17h10\"/><circle cx=\"16\" cy=\"7\" r=\"2\"/><circle cx=\"8\" cy=\"17\" r=\"2\"/>","terminal":"<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><path d=\"m7 10 3 2-3 2M13 15h4\"/>","code":"<path d=\"m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16\"/>","git-branch":"<circle cx=\"6\" cy=\"5\" r=\"2\"/><circle cx=\"6\" cy=\"19\" r=\"2\"/><circle cx=\"18\" cy=\"8\" r=\"2\"/><path d=\"M6 7v10M18 10c0 4-6 3-12 7\"/>","git-commit":"<circle cx=\"12\" cy=\"12\" r=\"3.5\"/><path d=\"M3 12h5.500M15.5 12H21\"/>","git-pull":"<circle cx=\"6\" cy=\"5\" r=\"2\"/><circle cx=\"6\" cy=\"19\" r=\"2\"/><circle cx=\"18\" cy=\"19\" r=\"2\"/><path d=\"M6 7v10M18 17V9a3 3 0 0 0-3-3h-3m2.5-2.500L12 6l2.5 2.5\"/>","git-push":"<circle cx=\"12\" cy=\"18\" r=\"2\"/><path d=\"M12 16V5M7.5 9.5 12 5l4.5 4.5\"/>","box":"<path d=\"M12 3 4 7v10l8 4 8-4V7l-8-4Z\"/><path d=\"m4 7 8 4 8-4M12 11v10\"/>","server":"<rect x=\"3\" y=\"4\" width=\"18\" height=\"6\" rx=\"2\"/><rect x=\"3\" y=\"14\" width=\"18\" height=\"6\" rx=\"2\"/><path d=\"M7 7h.01M7 17h.01\"/>","cpu":"<rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"2\"/><rect x=\"10\" y=\"10\" width=\"4\" height=\"4\"/><path d=\"M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4\"/>","wifi":"<path d=\"M2 9a15 15 0 0 1 20 0M5 13a10 10 0 0 1 14 0M8.5 16.500a5 5 0 0 1 7 0\"/><path d=\"M12 20h.01\"/>","network":"<circle cx=\"12\" cy=\"5\" r=\"2\"/><circle cx=\"5\" cy=\"19\" r=\"2\"/><circle cx=\"19\" cy=\"19\" r=\"2\"/><path d=\"M12 7v5M12 12l-6 5M12 12l6 5\"/>","cloud":"<path d=\"M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9a4.5 4.5 0 0 1 0 9H7Z\"/>","download":"<path d=\"M12 4v11m0 0-4-4m4 4 4-4M5 20h14\"/>","upload":"<path d=\"M12 20V9m0 0-4 4m4-4 4 4M5 4h14\"/>","image":"<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><circle cx=\"9\" cy=\"10\" r=\"1.5\"/><path d=\"m21 16-5-5-8 8\"/>","maximize":"<path d=\"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5\"/>","minimize":"<path d=\"M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5\"/>","close":"<path d=\"M6 6l12 12M18 6 6 18\"/>","window":"<rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"3\"/><path d=\"M3 9h18\"/>","window-left":"<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M12 4v16\"/><path d=\"M3 4h9v16H3z\" fill=\"currentColor\" fill-opacity=\".25\"/>","window-right":"<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M12 4v16\"/><path d=\"M12 4h9v16h-9z\" fill=\"currentColor\" fill-opacity=\".25\"/>","windows":"<rect x=\"4\" y=\"4\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"13\" y=\"4\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"4\" y=\"13\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"13\" y=\"13\" width=\"7\" height=\"7\" rx=\"1\"/>","layers":"<path d=\"M12 3 3 8l9 5 9-5-9-5Z\"/><path d=\"m3 13 9 5 9-5\"/>","desktop-next":"<rect x=\"3\" y=\"4\" width=\"14\" height=\"11\" rx=\"2\"/><path d=\"M7 19h6M10 15v4M19 8l3 3-3 3\"/>","desktop-prev":"<rect x=\"7\" y=\"4\" width=\"14\" height=\"11\" rx=\"2\"/><path d=\"M11 19h6M14 15v4M5 8 2 11l3 3\"/>","pin":"<path d=\"M9 4h6l-1 6 3 3H7l3-3-1-6ZM12 13v8\"/>","eye":"<path d=\"M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>","eye-off":"<path d=\"M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M4 4l16 16\"/>","bug":"<rect x=\"8\" y=\"8\" width=\"8\" height=\"11\" rx=\"4\"/><path d=\"M9 8a3 3 0 0 1 6 0M3 12h5M16 12h5M4 18l4-2M20 18l-4-2M4 6l4 3M20 6l-4 3\"/>","wrench":"<path d=\"M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9l-3.8 3.8Z\"/>","zap":"<path d=\"M13 3 5 13h6l-1 8 8-10h-6l1-8Z\"/>","gamepad":"<rect x=\"2\" y=\"7\" width=\"20\" height=\"11\" rx=\"5\"/><path d=\"M7 10v5M4.5 12.500h5M16 11.500h.01M18.5 13.500h.01\"/>","keyboard":"<rect x=\"2\" y=\"6\" width=\"20\" height=\"12\" rx=\"2\"/><path d=\"M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10\"/>","mouse":"<rect x=\"6\" y=\"3\" width=\"12\" height=\"18\" rx=\"6\"/><path d=\"M12 7v4\"/>","mouse-click":"<path d=\"M9 9V5a2 2 0 0 1 4 0v4M9 9h8v5a6 6 0 0 1-6 6 6 6 0 0 1-6-6v-2l4-3Z\"/>","pointer":"<path d=\"M5 3 19 11l-6.5 2L10 20 5 3Z\"/>","type":"<path d=\"M5 6V4h14v2M12 4v16M9 20h6\"/>","command":"<path d=\"M9 9V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V9Z\"/>","share":"<circle cx=\"6\" cy=\"12\" r=\"2.5\"/><circle cx=\"18\" cy=\"6\" r=\"2.5\"/><circle cx=\"18\" cy=\"18\" r=\"2.5\"/><path d=\"m8.2 10.8 7.6-3.600M8.2 13.200l7.6 3.6\"/>","record":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"12\" cy=\"12\" r=\"4\" fill=\"currentColor\"/>","live":"<circle cx=\"12\" cy=\"12\" r=\"2.5\"/><path d=\"M7.5 7.500a6 6 0 0 0 0 9M16.5 7.500a6 6 0 0 1 0 9M4.5 4.500a10 10 0 0 0 0 15M19.5 4.500a10 10 0 0 1 0 15\"/>","film":"<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4\"/>","replay":"<path d=\"M4 12a8 8 0 1 1 3 6.200M4 6v5h5\"/><path d=\"m11 9.5 4 2.5-4 2.500V9.500Z\"/>","sparkles":"<path d=\"M12 3l1.8 4.700L18.5 9.500l-4.7 1.800L12 16l-1.8-4.700L5.5 9.500l4.7-1.800L12 3ZM19 15l.8 2.200L22 18l-2.2.8L19 21l-.8-2.200L16 18l2.2-.8L19 15Z\"/>","rocket":"<path d=\"M5 15c-1 1-2 4-2 6 2 0 5-1 6-2M9 15l-3-3c1-4 5-8 13-9 0 8-5 12-9 13l-1-1Z\"/><circle cx=\"15\" cy=\"9\" r=\"1.5\"/>","coffee":"<path d=\"M5 8h12v6a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V8ZM17 10h2a2 2 0 0 1 0 4h-2M8 3v2M12 3v2\"/>","tab-plus":"<path d=\"M3 9h18v10H3V9Z\"/><path d=\"M3 9V6h7l1 3M12 12.500v4M10 14.500h4\"/>","tab-close":"<path d=\"M3 9h18v10H3V9Z\"/><path d=\"M3 9V6h7l1 3M10 12.500l4 4M14 12.500l-4 4\"/>","tab-next":"<path d=\"M3 9h18v10H3V9Z\"/><path d=\"M3 9V6h7l1 3M10 14h4m-2-2 2 2-2 2\"/>","tab-prev":"<path d=\"M3 9h18v10H3V9Z\"/><path d=\"M3 9V6h7l1 3M14 14h-4m2-2-2 2 2 2\"/>","incognito":"<path d=\"M3 12h18M6 12l1.5-6h9L18 12M7 18a2.5 2.5 0 1 0 0-.1M17 18a2.5 2.5 0 1 0 0-.1M9.5 17h5\"/>","fullscreen":"<path d=\"M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4\"/>","sidebar":"<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M9 4v16\"/>","menu":"<path d=\"M4 7h16M4 12h16M4 17h16\"/>","grid":"<rect x=\"4\" y=\"4\" width=\"6\" height=\"6\" rx=\"1\"/><rect x=\"14\" y=\"4\" width=\"6\" height=\"6\" rx=\"1\"/><rect x=\"4\" y=\"14\" width=\"6\" height=\"6\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"6\" height=\"6\" rx=\"1\"/>","list":"<path d=\"M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01\"/>","bold":"<path d=\"M7 4h6a4 4 0 0 1 0 8H7V4ZM7 12h7a4 4 0 0 1 0 8H7v-8Z\"/>","italic":"<path d=\"M10 4h8M6 20h8M15 4 9 20\"/>","underline":"<path d=\"M7 4v7a5 5 0 0 0 10 0V4M5 21h14\"/>","hash":"<path d=\"M5 9h14M5 15h14M10 4 8 20M16 4l-2 16\"/>","bolt-off":"<path d=\"M13 3 5 13h6l-1 8 8-10h-6l1-8Z\"/><path d=\"M4 4l16 16\"/>","wand":"<path d=\"m4 20 11-11M14 4l1.5 3 3 1.5-3 1.500L14 13l-1.5-3L9.5 8.500l3-1.500L14 4Z\"/>","crosshair":"<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 2v5M12 17v5M2 12h5M17 12h5\"/>","chevrons-up":"<path d=\"m6 11 6-6 6 6M6 19l6-6 6 6\"/>","chevrons-down":"<path d=\"m6 5 6 6 6-6M6 13l6 6 6-6\"/>","text-cursor":"<path d=\"M9 4h6M9 20h6M12 4v16\"/>","align":"<path d=\"M4 6h16M4 12h10M4 18h16\"/>","id":"<rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"2\"/><circle cx=\"9\" cy=\"11\" r=\"2\"/><path d=\"M6 16a3 3 0 0 1 6 0M14 10h4M14 14h3\"/>","dots":"<path d=\"M5 12h.01M12 12h.01M19 12h.01\"/>","toggle":"<rect x=\"2\" y=\"7\" width=\"20\" height=\"10\" rx=\"5\"/><circle cx=\"16\" cy=\"12\" r=\"2.5\"/>","discord":"<path d=\"M7 7c3-1.5 7-1.5 10 0 2 3 3 6 3 9-1.5 1.2-3 1.8-4.5 2l-1-1.800M7 7C4 10 3.5 13 4 16c1.5 1.2 3 1.8 4.5 2l1-1.800M9 12.500h.01M15 12.500h.01\"/>","twitch":"<path d=\"M4 3h17v11l-4 4h-4l-3 3v-3H5V3Z\"/><path d=\"M12 8v4M16 8v4\"/>","obs":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M8 9a5 5 0 0 1 8 0M7 13a5 5 0 0 0 5 4M17 13a5 5 0 0 1-5 4\"/>","spotify":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M7 9.500c3.5-1 7-.7 10 1M7.5 12.500c3-.8 6-.5 8.5 1M8 15.500c2.5-.6 5-.4 7 .8\"/>","steam":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"15\" cy=\"9.5\" r=\"2.5\"/><circle cx=\"9\" cy=\"15\" r=\"2\"/><path d=\"m10.5 14 3-2.5\"/>","chrome":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"12\" cy=\"12\" r=\"3.5\"/><path d=\"M12 8.500h8M8.9 14 5 7.300M15.1 14 11 21\"/>","calc":"<rect x=\"5\" y=\"3\" width=\"14\" height=\"18\" rx=\"2\"/><path d=\"M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01\"/>","note":"<path d=\"M5 4h14v16H5V4Z\"/><path d=\"M8 9h8M8 13h8M8 17h5\"/>","paint":"<path d=\"M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2s-.5-2 1-2H17a4 4 0 0 0 4-4c0-5-4-10-9-10Z\"/><path d=\"M7.5 11h.01M10 7.500h.01M15 8h.01\"/>","tools":"<path d=\"M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9l-3.8 3.8Z\"/>","chart":"<path d=\"M4 20V4M4 20h16M8 16l4-5 3 3 5-7\"/>","disk":"<ellipse cx=\"12\" cy=\"6\" rx=\"8\" ry=\"3\"/><path d=\"M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3\"/>","info":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 11v5M12 8h.01\"/>","check":"<path d=\"m5 12 5 5 9-10\"/>","bell-ring":"<path d=\"M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2ZM10 21a2 2 0 0 0 4 0M2 8a10 10 0 0 1 3-4M22 8a10 10 0 0 0-3-4\"/>","megaphone":"<path d=\"M4 10v4h3l7 4V6L7 10H4ZM18 9a4 4 0 0 1 0 6\"/>","lightbulb":"<path d=\"M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.900V16h7v-2.100A6 6 0 0 0 12 3Z\"/>","plug":"<path d=\"M9 3v5M15 3v5M6 8h12v4a6 6 0 0 1-12 0V8ZM12 18v3\"/>","usb":"<path d=\"M12 4v13\"/><circle cx=\"12\" cy=\"19\" r=\"2\"/><path d=\"m12 9 3-2v-1.500M12 12l-3-2V8\"/>","chip":"<rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"2\"/><path d=\"M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4\"/>","knob":"<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 12 16 7\"/><path d=\"M5 19l-1 1M19 19l1 1\"/>","device":"<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"4\"/><rect x=\"7\" y=\"7\" width=\"3.6\" height=\"3.6\" rx=\"1\"/><rect x=\"13.4\" y=\"7\" width=\"3.6\" height=\"3.6\" rx=\"1\"/><rect x=\"7\" y=\"13.4\" width=\"3.6\" height=\"3.6\" rx=\"1\"/><rect x=\"13.4\" y=\"13.4\" width=\"3.6\" height=\"3.6\" rx=\"1\"/>","flask":"<path d=\"M9 3h6M10 3v6L5 19a1.5 1.5 0 0 0 1.3 2h11.400A1.5 1.5 0 0 0 19 19l-5-10V3\"/>","drop":"<path d=\"M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z\"/>","metrics":"<path d=\"M5 20V10M12 20V4M19 20v-7\"/>"};
+function iconSvg(name, cls="ic"){ const p = ICONS[name]; return p ? `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>` : ""; }
+function iconHtml(v, cls="ic"){ return ICONS[v] ? iconSvg(v, cls) : (v ? `<span class="emo">${v}</span>` : ""); }
 
-
-// ── Actions ajoutées : raccourcis prédéfinis ─────────────────────────────
-const _kb=(cat,icon,type,name,desc)=>({cat,icon,type,name,desc,params:[]});
-ACTS.push(
-  _kb("Fenêtres","⬆","win_maximize","Maximiser la fenêtre","Win+↑"),
-  _kb("Fenêtres","⬇","win_restore","Restaurer / réduire","Win+↓"),
-  _kb("Fenêtres","◧","win_snap_left","Fenêtre à gauche","Win+←"),
-  _kb("Fenêtres","◨","win_snap_right","Fenêtre à droite","Win+→"),
-  _kb("Fenêtres","🔀","win_switch","Changer de fenêtre","Alt+Tab"),
-  _kb("Fenêtres","🗔","win_task_view","Vue des tâches","Win+Tab"),
-  _kb("Fenêtres","❌","win_close","Fermer la fenêtre","Alt+F4"),
-  _kb("Fenêtres","▶","desktop_next","Bureau virtuel suivant","Ctrl+Win+→"),
-  _kb("Fenêtres","◀","desktop_prev","Bureau virtuel précédent","Ctrl+Win+←"),
-  _kb("Fenêtres","➕","desktop_new","Nouveau bureau virtuel","Ctrl+Win+D"),
-  _kb("Fenêtres","➖","desktop_close","Fermer le bureau virtuel","Ctrl+Win+F4"),
-  _kb("Windows","📁","win_explorer","Explorateur de fichiers","Win+E"),
-  _kb("Windows","🏃","win_run","Exécuter…","Win+R"),
-  _kb("Windows","⚙","win_settings","Paramètres Windows","Win+I"),
-  _kb("Windows","🔎","win_search","Recherche Windows","Win+S"),
-  _kb("Windows","📊","win_task_manager","Gestionnaire des tâches","Ctrl+Maj+Échap"),
-  _kb("Windows","😀","win_emoji","Panneau emoji","Win+."),
-  _kb("Windows","📋","win_clipboard","Historique du presse-papiers","Win+V"),
-  _kb("Windows","🔔","win_notifications","Centre de notifications","Win+N"),
-  _kb("Windows","🎛","win_quick_settings","Paramètres rapides","Win+A"),
-  _kb("Windows","🧩","win_widgets","Widgets","Win+W"),
-  _kb("Windows","🖥","win_project","Projeter l'écran","Win+P"),
-  _kb("Windows","🎤","win_voice_typing","Dictée vocale","Win+H"),
-  _kb("Jeu","🎮","game_bar","Xbox Game Bar","Win+G"),
-  _kb("Jeu","⏺","game_record_toggle","Game Bar — enregistrer","Win+Alt+R"),
-  _kb("Jeu","⏪","game_record_last","Game Bar — garder les dernières secondes","Win+Alt+G"),
-  _kb("Jeu","📷","game_screenshot","Game Bar — capture d'écran","Win+Alt+Impr"),
-  _kb("Jeu","🟩","nvidia_overlay","Overlay NVIDIA","Alt+Z"),
-  _kb("Jeu","💾","nvidia_replay_save","NVIDIA — sauvegarder le replay","Alt+F10"),
-  _kb("Jeu","♨","steam_overlay","Overlay Steam","Maj+Tab"),
-  _kb("Navigateur","➕","browser_new_tab","Nouvel onglet","Ctrl+T"),
-  _kb("Navigateur","✖","browser_close_tab","Fermer l'onglet","Ctrl+W"),
-  _kb("Navigateur","↩","browser_reopen_tab","Rouvrir l'onglet fermé","Ctrl+Maj+T"),
-  _kb("Navigateur","⏩","browser_next_tab","Onglet suivant","Ctrl+Tab"),
-  _kb("Navigateur","⏪","browser_prev_tab","Onglet précédent","Ctrl+Maj+Tab"),
-  _kb("Navigateur","🔄","browser_refresh","Actualiser la page","F5"),
-  _kb("Navigateur","♻","browser_hard_refresh","Actualiser sans cache","Ctrl+F5"),
-  _kb("Navigateur","◀","browser_back","Page précédente","Alt+←"),
-  _kb("Navigateur","▶","browser_forward","Page suivante","Alt+→"),
-  _kb("Navigateur","🕶","browser_private","Navigation privée","Ctrl+Maj+N"),
-  _kb("Navigateur","🛠","browser_devtools","Outils de développement","F12"),
-  _kb("Navigateur","⛶","browser_fullscreen","Plein écran navigateur","F11"),
-  _kb("Navigateur","🔗","browser_address","Barre d'adresse","Ctrl+L"),
-  _kb("Navigateur","⭐","browser_bookmark","Ajouter aux favoris","Ctrl+D"),
-  _kb("Navigateur","🔍","browser_find","Rechercher dans la page","Ctrl+F"),
-  _kb("Édition","📄","edit_copy","Copier","Ctrl+C"),
-  _kb("Édition","✂","edit_cut","Couper","Ctrl+X"),
-  _kb("Édition","📋","edit_paste","Coller","Ctrl+V"),
-  _kb("Édition","📝","edit_paste_plain","Coller sans mise en forme","Ctrl+Maj+V"),
-  _kb("Édition","↶","edit_undo","Annuler","Ctrl+Z"),
-  _kb("Édition","↷","edit_redo","Rétablir","Ctrl+Y"),
-  _kb("Édition","▦","edit_select_all","Tout sélectionner","Ctrl+A"),
-  _kb("Édition","💾","edit_save","Enregistrer","Ctrl+S"),
-  _kb("Édition","🆕","edit_new","Nouveau","Ctrl+N"),
-  _kb("Édition","📂","edit_open","Ouvrir","Ctrl+O"),
-  _kb("Édition","🖨","edit_print","Imprimer","Ctrl+P"),
-  _kb("Édition","↵","edit_enter","Touche Entrée","Entrée"),
-  _kb("Édition","⎋","edit_escape","Touche Échap","Échap"),
-  _kb("Édition","🗑","edit_delete","Touche Suppr","Suppr"),
-  _kb("Édition","⇥","edit_tab","Touche Tab","Tab"),
-  _kb("Vidéo","⏯","video_play","Lecture / pause (YouTube)","K"),
-  _kb("Vidéo","🔇","video_mute","Muet (YouTube)","M"),
-  _kb("Vidéo","⛶","video_fullscreen","Plein écran vidéo","F"),
-  _kb("Vidéo","💬","video_captions","Sous-titres","C"),
-  _kb("Vidéo","⏪","video_seek_back","Reculer de 10 s","J"),
-  _kb("Vidéo","⏩","video_seek_fwd","Avancer de 10 s","L"),
-  _kb("Vidéo","⏭","video_next","Vidéo suivante","Maj+N"),
-  _kb("Navigateur","🔎","browser_zoom_in","Zoom +","Ctrl + molette"),
-  _kb("Navigateur","🔍","browser_zoom_out","Zoom −","Ctrl + molette"),
-  _kb("Navigateur","1️⃣","browser_zoom_reset","Zoom 100 %","Ctrl+0"),
-  _kb("Visio","🖥","zoom_share","Zoom — Partager l'écran","Alt+S"),
-  _kb("Visio","🖥","teams_share","Teams — Partager l'écran","Ctrl+Maj+E"),
-  _kb("Visio","📹","meet_camera","Meet — Caméra","Ctrl+E"),
-  _kb("Web","📅","google_calendar","Ouvrir Google Agenda","")
-);
-
-// ── Actions ajoutées : avec paramètres ──────────────────────────────────
-ACTS.push(
-  // Texte
-  {cat:"Texte",icon:"📋",type:"paste_text",name:"Coller un texte",desc:"Collage instantané, accents compris",
-   params:[{key:"text",lbl:"Texte",ph:"Bonjour !"}]},
-  {cat:"Texte",icon:"📎",type:"clipboard_set",name:"Copier un texte",desc:"Met le texte dans le presse-papiers",
-   params:[{key:"text",lbl:"Texte",ph:"À copier"}]},
-  {cat:"Texte",icon:"📆",type:"type_datetime",name:"Saisir la date / l'heure",desc:"Tape la date du moment",
-   params:[{key:"format",lbl:"Format",ph:"%d/%m/%Y %H:%M"}]},
-  {cat:"Texte",icon:"🗣",type:"say_text",name:"Lire un texte à voix haute",desc:"Synthèse vocale Windows",
-   params:[{key:"text",lbl:"Texte",ph:"Pause café !"}]},
-  // Souris
-  {cat:"Clavier",icon:"🖱",type:"mouse_double_click",name:"Double clic",desc:"Clic gauche ×2",params:[]},
-  {cat:"Clavier",icon:"🖱",type:"mouse_right_click",name:"Clic droit",desc:"Menu contextuel",params:[]},
-  {cat:"Clavier",icon:"🖱",type:"mouse_middle_click",name:"Clic molette",desc:"Clic central",params:[]},
-  {cat:"Clavier",icon:"🎯",type:"mouse_move",name:"Déplacer la souris",desc:"Vers une position de l'écran",
-   params:[{key:"x",lbl:"X",ph:"960"},{key:"y",lbl:"Y",ph:"540"}]},
-  // Système
-  {cat:"Système",icon:"🔗",type:"open_uri",name:"Ouvrir un lien d'application",desc:"spotify:, steam://, discord://…",
-   params:[{key:"uri",lbl:"Lien",ph:"spotify:"}]},
-  {cat:"Système",icon:"⚙",type:"open_settings",name:"Ouvrir une page des paramètres",desc:"ms-settings:…",
-   params:[{key:"page",lbl:"Page",ph:"display, bluetooth, network…"}]},
-  {cat:"Système",icon:"🌓",type:"toggle_dark_mode",name:"Thème clair / sombre",desc:"Bascule le thème Windows",params:[]},
-  {cat:"Système",icon:"🖥",type:"monitor_off",name:"Éteindre l'écran",desc:"Le PC reste allumé",params:[]},
-  {cat:"Système",icon:"🗑",type:"empty_recycle_bin",name:"Vider la corbeille",desc:"Sans confirmation",params:[]},
-  {cat:"Système",icon:"🌐",type:"flush_dns",name:"Vider le cache DNS",desc:"ipconfig /flushdns",params:[]},
-  {cat:"Système",icon:"🔁",type:"restart_explorer",name:"Redémarrer l'explorateur",desc:"Relance la barre des tâches",params:[]},
-  {cat:"Système",icon:"💀",type:"kill_active_app",name:"Tuer l'application active",desc:"Fermeture forcée de la fenêtre au premier plan",params:[]},
-  {cat:"Système",icon:"🛌",type:"hibernate",name:"Hiberner",desc:"shutdown /h",params:[]},
-  {cat:"Système",icon:"⏳",type:"shutdown_timer",name:"Éteindre dans X minutes",desc:"Extinction programmée",
-   params:[{key:"minutes",lbl:"Minutes",ph:"30"}]},
-  {cat:"Système",icon:"🚫",type:"cancel_shutdown",name:"Annuler l'extinction",desc:"shutdown /a",params:[]},
-  // Audio
-  {cat:"Audio",icon:"🔇",type:"mute_on",name:"Couper le son",desc:"Mute (sans basculer)",params:[]},
-  {cat:"Audio",icon:"🔊",type:"mute_off",name:"Remettre le son",desc:"Unmute (sans basculer)",params:[]},
-  {cat:"Audio",icon:"🔕",type:"app_mute_toggle",name:"Muet d'une application",desc:"Bascule le son d'une app précise",
-   params:[{key:"name",lbl:"Application",ph:"Spotify.exe",special:"audio_session_picker"}]},
-  // OBS
-  {cat:"OBS",icon:"📡",type:"obs_stream_toggle",name:"OBS — Stream marche/arrêt",desc:"Bascule le stream",params:[]},
-  {cat:"OBS",icon:"⏺",type:"obs_record_toggle",name:"OBS — Enregistrement marche/arrêt",desc:"Bascule l'enregistrement",params:[]},
-  {cat:"OBS",icon:"⏸",type:"obs_record_pause",name:"OBS — Pause enregistrement",desc:"",params:[]},
-  {cat:"OBS",icon:"▶",type:"obs_record_resume",name:"OBS — Reprendre enregistrement",desc:"",params:[]},
-  {cat:"OBS",icon:"💾",type:"obs_replay_save",name:"OBS — Sauvegarder le replay",desc:"Replay buffer",params:[]},
-  {cat:"OBS",icon:"🔁",type:"obs_replay_toggle",name:"OBS — Replay buffer marche/arrêt",desc:"",params:[]},
-  {cat:"OBS",icon:"🎞",type:"obs_studio_mode",name:"OBS — Mode studio",desc:"Active / désactive",params:[]},
-  {cat:"OBS",icon:"🎬",type:"obs_transition",name:"OBS — Lancer la transition",desc:"Aperçu vers programme",params:[]},
-  {cat:"OBS",icon:"📷",type:"obs_virtualcam_toggle",name:"OBS — Caméra virtuelle",desc:"Marche / arrêt",params:[]}
-);
+// ═══ ACTIONS DE BOUTONS (générées depuis le catalogue) ═══
+let ACTS = [{"cat":"Profils","icon":"layers","type":"switch_profile","name":"Aller sur un profil","desc":"Active un profil précis","params":[{"key":"profile","lbl":"Clé du profil","ph":"default"}]},{"cat":"Profils","icon":"arrow-right","type":"next_profile","name":"Profil suivant","desc":"Passe au profil d'après","params":[]},{"cat":"Profils","icon":"arrow-left","type":"prev_profile","name":"Profil précédent","desc":"Revient au profil d'avant","params":[]},{"cat":"PC","icon":"rocket","type":"open_app","name":"Ouvrir une application","desc":"Lance un programme","params":[{"key":"path","lbl":"Programme","ph":"C:\\...\\app.exe","special":"app_picker"}]},{"cat":"PC","icon":"close","type":"close_app","name":"Fermer une application","desc":"Termine tous les processus de ce nom (nom exact)","params":[{"key":"name","lbl":"Processus","ph":"chrome.exe","special":"process_picker"}]},{"cat":"PC","icon":"folder","type":"open_folder","name":"Ouvrir un dossier","desc":"","params":[{"key":"path","lbl":"Dossier","ph":"C:\\Users\\...","special":"folder_picker"}]},{"cat":"PC","icon":"file","type":"open_file","name":"Ouvrir un fichier","desc":"","params":[{"key":"path","lbl":"Fichier","ph":"C:\\...\\doc.pdf","special":"file_picker"}]},{"cat":"PC","icon":"link","type":"open_uri","name":"Ouvrir un lien d'application","desc":"spotify:, steam://, discord://…","params":[{"key":"uri","lbl":"Lien","ph":"spotify:"}]},{"cat":"PC","icon":"sliders","type":"open_settings","name":"Page des paramètres Windows","desc":"ms-settings:…","params":[{"key":"page","lbl":"Page","ph":"display, bluetooth, network…"}]},{"cat":"PC","icon":"lock","type":"lock_session","name":"Verrouiller la session","desc":"Verrouille Windows","params":[]},{"cat":"PC","icon":"power","type":"shutdown","name":"Éteindre le PC","desc":"Extinction immédiate","params":[]},{"cat":"PC","icon":"restart","type":"restart","name":"Redémarrer","desc":"Redémarrage immédiat","params":[]},{"cat":"PC","icon":"moon","type":"sleep","name":"Mise en veille","desc":"","params":[]},{"cat":"PC","icon":"moon","type":"hibernate","name":"Hiberner","desc":"shutdown /h","params":[]},{"cat":"PC","icon":"logout","type":"logoff","name":"Se déconnecter","desc":"Ferme la session Windows","params":[]},{"cat":"PC","icon":"hourglass","type":"shutdown_timer","name":"Éteindre dans X minutes","desc":"Extinction programmée","params":[{"key":"minutes","lbl":"Minutes","ph":"30"}]},{"cat":"PC","icon":"close","type":"cancel_shutdown","name":"Annuler l'extinction","desc":"shutdown /a","params":[]},{"cat":"PC","icon":"terminal","type":"run_command","name":"Commande terminal","desc":"Exécute une commande en arrière-plan","params":[{"key":"command","lbl":"Commande","ph":"ipconfig /flushdns"}]},{"cat":"PC","icon":"terminal","type":"script_powershell","name":"Script PowerShell","desc":"","params":[{"key":"code","lbl":"Code","ph":"Get-Process","area":true}]},{"cat":"PC","icon":"code","type":"script_python","name":"Script Python","desc":"","params":[{"key":"code","lbl":"Code","ph":"print('ok')","area":true}]},{"cat":"PC","icon":"terminal","type":"script_batch","name":"Script Batch","desc":"","params":[{"key":"code","lbl":"Code","ph":"@echo off","area":true}]},{"cat":"PC","icon":"trash","type":"clean_temp","name":"Nettoyer le dossier Temp","desc":"Supprime les fichiers temporaires","params":[]},{"cat":"PC","icon":"trash","type":"empty_recycle_bin","name":"Vider la corbeille","desc":"Sans confirmation","params":[]},{"cat":"PC","icon":"globe","type":"flush_dns","name":"Vider le cache DNS","desc":"ipconfig /flushdns","params":[]},{"cat":"PC","icon":"restart","type":"restart_explorer","name":"Redémarrer l'explorateur","desc":"Relance la barre des tâches","params":[]},{"cat":"PC","icon":"zap","type":"kill_active_app","name":"Tuer l'application active","desc":"Fermeture forcée de la fenêtre au premier plan","params":[]},{"cat":"PC","icon":"moon","type":"toggle_dark_mode","name":"Thème clair / sombre Windows","desc":"Bascule le thème","params":[]},{"cat":"PC","icon":"monitor-off","type":"monitor_off","name":"Éteindre l'écran","desc":"Le PC reste allumé","params":[]},{"cat":"PC","icon":"image","type":"screenshot","name":"Capture d'écran (outil)","desc":"Win+Maj+S","params":[]},{"cat":"PC","icon":"monitor","type":"win_minimize_all","name":"Afficher le bureau","desc":"Win+D","params":[]},{"cat":"PC","icon":"pin","type":"win_always_on_top","name":"Fenêtre toujours au premier plan","desc":"Bascule pour la fenêtre active","params":[]},{"cat":"PC","icon":"minimize","type":"win_minimize_active","name":"Réduire la fenêtre active","desc":"","params":[]},{"cat":"PC","icon":"maximize","type":"win_maximize_active","name":"Agrandir la fenêtre active","desc":"","params":[]},{"cat":"PC","icon":"globe","type":"copy_public_ip","name":"Copier mon IP publique","desc":"Dans le presse-papiers","params":[]},{"cat":"PC","icon":"network","type":"copy_local_ip","name":"Copier mon IP locale","desc":"Dans le presse-papiers","params":[]},{"cat":"PC","icon":"bell","type":"notify","name":"Afficher une notification","desc":"Message dans l'application","params":[{"key":"text","lbl":"Message","ph":"Terminé !"}]},{"cat":"PC","icon":"clock","type":"speak_time","name":"Annoncer l'heure","desc":"Synthèse vocale","params":[]},{"cat":"Fenêtres","icon":"arrow-up","type":"win_maximize","name":"Maximiser la fenêtre","desc":"Win+↑","params":[]},{"cat":"Fenêtres","icon":"arrow-down","type":"win_restore","name":"Restaurer / réduire","desc":"Win+↓","params":[]},{"cat":"Fenêtres","icon":"window-left","type":"win_snap_left","name":"Fenêtre à gauche","desc":"Win+←","params":[]},{"cat":"Fenêtres","icon":"window-right","type":"win_snap_right","name":"Fenêtre à droite","desc":"Win+→","params":[]},{"cat":"Fenêtres","icon":"windows","type":"win_switch","name":"Changer de fenêtre","desc":"Alt+Tab","params":[]},{"cat":"Fenêtres","icon":"layers","type":"win_task_view","name":"Vue des tâches","desc":"Win+Tab","params":[]},{"cat":"Fenêtres","icon":"close","type":"win_close","name":"Fermer la fenêtre","desc":"Alt+F4","params":[]},{"cat":"Fenêtres","icon":"desktop-next","type":"desktop_next","name":"Bureau virtuel suivant","desc":"Ctrl+Win+→","params":[]},{"cat":"Fenêtres","icon":"desktop-prev","type":"desktop_prev","name":"Bureau virtuel précédent","desc":"Ctrl+Win+←","params":[]},{"cat":"Fenêtres","icon":"plus","type":"desktop_new","name":"Nouveau bureau virtuel","desc":"Ctrl+Win+D","params":[]},{"cat":"Fenêtres","icon":"minus","type":"desktop_close","name":"Fermer le bureau virtuel","desc":"Ctrl+Win+F4","params":[]},{"cat":"Windows","icon":"folder","type":"win_explorer","name":"Explorateur de fichiers","desc":"Win+E","params":[]},{"cat":"Windows","icon":"terminal","type":"win_run","name":"Exécuter…","desc":"Win+R","params":[]},{"cat":"Windows","icon":"sliders","type":"win_settings","name":"Paramètres Windows","desc":"Win+I","params":[]},{"cat":"Windows","icon":"search","type":"win_search","name":"Recherche Windows","desc":"Win+S","params":[]},{"cat":"Windows","icon":"chart","type":"win_task_manager","name":"Gestionnaire des tâches","desc":"Ctrl+Maj+Échap","params":[]},{"cat":"Windows","icon":"star","type":"win_emoji","name":"Panneau emoji","desc":"Win+.","params":[]},{"cat":"Windows","icon":"clipboard","type":"win_clipboard","name":"Historique du presse-papiers","desc":"Win+V","params":[]},{"cat":"Windows","icon":"bell","type":"win_notifications","name":"Centre de notifications","desc":"Win+N","params":[]},{"cat":"Windows","icon":"toggle","type":"win_quick_settings","name":"Paramètres rapides","desc":"Win+A","params":[]},{"cat":"Windows","icon":"grid","type":"win_widgets","name":"Widgets","desc":"Win+W","params":[]},{"cat":"Windows","icon":"monitor","type":"win_project","name":"Projeter l'écran","desc":"Win+P","params":[]},{"cat":"Windows","icon":"mic","type":"win_voice_typing","name":"Dictée vocale","desc":"Win+H","params":[]},{"cat":"Jeu","icon":"gamepad","type":"game_bar","name":"Xbox Game Bar","desc":"Win+G","params":[]},{"cat":"Jeu","icon":"record","type":"game_record_toggle","name":"Game Bar — enregistrer","desc":"Win+Alt+R","params":[]},{"cat":"Jeu","icon":"replay","type":"game_record_last","name":"Game Bar — garder les dernières secondes","desc":"Win+Alt+G","params":[]},{"cat":"Jeu","icon":"camera","type":"game_screenshot","name":"Game Bar — capture d'écran","desc":"Win+Alt+Impr","params":[]},{"cat":"Jeu","icon":"cpu","type":"nvidia_overlay","name":"Overlay NVIDIA","desc":"Alt+Z","params":[]},{"cat":"Jeu","icon":"save","type":"nvidia_replay_save","name":"NVIDIA — sauvegarder le replay","desc":"Alt+F10","params":[]},{"cat":"Jeu","icon":"steam","type":"steam_overlay","name":"Overlay Steam","desc":"Maj+Tab","params":[]},{"cat":"Navigateur","icon":"tab-plus","type":"browser_new_tab","name":"Nouvel onglet","desc":"Ctrl+T","params":[]},{"cat":"Navigateur","icon":"tab-close","type":"browser_close_tab","name":"Fermer l'onglet","desc":"Ctrl+W","params":[]},{"cat":"Navigateur","icon":"undo","type":"browser_reopen_tab","name":"Rouvrir l'onglet fermé","desc":"Ctrl+Maj+T","params":[]},{"cat":"Navigateur","icon":"tab-next","type":"browser_next_tab","name":"Onglet suivant","desc":"Ctrl+Tab","params":[]},{"cat":"Navigateur","icon":"tab-prev","type":"browser_prev_tab","name":"Onglet précédent","desc":"Ctrl+Maj+Tab","params":[]},{"cat":"Navigateur","icon":"refresh","type":"browser_refresh","name":"Actualiser la page","desc":"F5","params":[]},{"cat":"Navigateur","icon":"restart","type":"browser_hard_refresh","name":"Actualiser sans cache","desc":"Ctrl+F5","params":[]},{"cat":"Navigateur","icon":"arrow-left","type":"browser_back","name":"Page précédente","desc":"Alt+←","params":[]},{"cat":"Navigateur","icon":"arrow-right","type":"browser_forward","name":"Page suivante","desc":"Alt+→","params":[]},{"cat":"Navigateur","icon":"incognito","type":"browser_private","name":"Navigation privée","desc":"Ctrl+Maj+N","params":[]},{"cat":"Navigateur","icon":"bug","type":"browser_devtools","name":"Outils de développement","desc":"F12","params":[]},{"cat":"Navigateur","icon":"fullscreen","type":"browser_fullscreen","name":"Plein écran navigateur","desc":"F11","params":[]},{"cat":"Navigateur","icon":"link","type":"browser_address","name":"Barre d'adresse","desc":"Ctrl+L","params":[]},{"cat":"Navigateur","icon":"bookmark","type":"browser_bookmark","name":"Ajouter aux favoris","desc":"Ctrl+D","params":[]},{"cat":"Navigateur","icon":"search","type":"browser_find","name":"Rechercher dans la page","desc":"Ctrl+F","params":[]},{"cat":"Édition","icon":"copy","type":"edit_copy","name":"Copier","desc":"Ctrl+C","params":[]},{"cat":"Édition","icon":"scissors","type":"edit_cut","name":"Couper","desc":"Ctrl+X","params":[]},{"cat":"Édition","icon":"clipboard","type":"edit_paste","name":"Coller","desc":"Ctrl+V","params":[]},{"cat":"Édition","icon":"clipboard","type":"edit_paste_plain","name":"Coller sans mise en forme","desc":"Ctrl+Maj+V","params":[]},{"cat":"Édition","icon":"undo","type":"edit_undo","name":"Annuler","desc":"Ctrl+Z","params":[]},{"cat":"Édition","icon":"redo","type":"edit_redo","name":"Rétablir","desc":"Ctrl+Y","params":[]},{"cat":"Édition","icon":"grid","type":"edit_select_all","name":"Tout sélectionner","desc":"Ctrl+A","params":[]},{"cat":"Édition","icon":"save","type":"edit_save","name":"Enregistrer","desc":"Ctrl+S","params":[]},{"cat":"Édition","icon":"file-plus","type":"edit_new","name":"Nouveau","desc":"Ctrl+N","params":[]},{"cat":"Édition","icon":"folder","type":"edit_open","name":"Ouvrir","desc":"Ctrl+O","params":[]},{"cat":"Édition","icon":"printer","type":"edit_print","name":"Imprimer","desc":"Ctrl+P","params":[]},{"cat":"Édition","icon":"arrow-left","type":"edit_enter","name":"Touche Entrée","desc":"Entrée","params":[]},{"cat":"Édition","icon":"close","type":"edit_escape","name":"Touche Échap","desc":"Échap","params":[]},{"cat":"Édition","icon":"trash","type":"edit_delete","name":"Touche Suppr","desc":"Suppr","params":[]},{"cat":"Édition","icon":"arrow-right","type":"edit_tab","name":"Touche Tab","desc":"Tab","params":[]},{"cat":"Vidéo","icon":"play-pause","type":"video_play","name":"Lecture / pause (YouTube)","desc":"K","params":[]},{"cat":"Vidéo","icon":"volume-mute","type":"video_mute","name":"Muet (YouTube)","desc":"M","params":[]},{"cat":"Vidéo","icon":"fullscreen","type":"video_fullscreen","name":"Plein écran vidéo","desc":"F","params":[]},{"cat":"Vidéo","icon":"chat","type":"video_captions","name":"Sous-titres","desc":"C","params":[]},{"cat":"Vidéo","icon":"rewind","type":"video_seek_back","name":"Reculer de 10 s","desc":"J","params":[]},{"cat":"Vidéo","icon":"forward","type":"video_seek_fwd","name":"Avancer de 10 s","desc":"L","params":[]},{"cat":"Vidéo","icon":"skip-next","type":"video_next","name":"Vidéo suivante","desc":"Maj+N","params":[]},{"cat":"Fenêtres","icon":"window-left","type":"win_move_monitor_left","name":"Fenêtre vers l'écran de gauche","desc":"Win+Maj+←","params":[]},{"cat":"Fenêtres","icon":"window-right","type":"win_move_monitor_right","name":"Fenêtre vers l'écran de droite","desc":"Win+Maj+→","params":[]},{"cat":"Fenêtres","icon":"minimize","type":"win_minimize_key","name":"Réduire la fenêtre (clavier)","desc":"Win+↓","params":[]},{"cat":"Windows","icon":"image","type":"win_print_screen","name":"Capture plein écran","desc":"Impr écran","params":[]},{"cat":"Windows","icon":"sparkles","type":"win_copilot","name":"Copilot","desc":"Win+C","params":[]},{"cat":"Windows","icon":"list","type":"win_accessibility","name":"Centre d'accessibilité","desc":"Win+U","params":[]},{"cat":"Navigateur","icon":"arrow-down","type":"browser_downloads","name":"Téléchargements","desc":"Ctrl+J","params":[]},{"cat":"Navigateur","icon":"clock","type":"browser_history","name":"Historique","desc":"Ctrl+H","params":[]},{"cat":"Navigateur","icon":"window","type":"browser_new_window","name":"Nouvelle fenêtre","desc":"Ctrl+N","params":[]},{"cat":"Navigateur","icon":"close","type":"browser_close_window","name":"Fermer la fenêtre","desc":"Ctrl+Maj+W","params":[]},{"cat":"Navigateur","icon":"code","type":"browser_view_source","name":"Code source de la page","desc":"Ctrl+U","params":[]},{"cat":"Navigateur","icon":"tab-next","type":"browser_tab_last","name":"Dernier onglet","desc":"Ctrl+9","params":[]},{"cat":"Navigateur","icon":"zoom-in","type":"browser_zoom_in","name":"Zoom +","desc":"Ctrl + molette","params":[]},{"cat":"Navigateur","icon":"zoom-out","type":"browser_zoom_out","name":"Zoom −","desc":"Ctrl + molette","params":[]},{"cat":"Navigateur","icon":"search","type":"browser_zoom_reset","name":"Zoom 100 %","desc":"Ctrl+0","params":[]},{"cat":"Édition","icon":"bold","type":"edit_bold","name":"Gras","desc":"Ctrl+B","params":[]},{"cat":"Édition","icon":"italic","type":"edit_italic","name":"Italique","desc":"Ctrl+I","params":[]},{"cat":"Édition","icon":"underline","type":"edit_underline","name":"Souligné","desc":"Ctrl+U","params":[]},{"cat":"Édition","icon":"search","type":"edit_replace","name":"Rechercher / remplacer","desc":"Ctrl+H","params":[]},{"cat":"Édition","icon":"arrow-up","type":"edit_home","name":"Début de ligne","desc":"Début","params":[]},{"cat":"Édition","icon":"arrow-down","type":"edit_end","name":"Fin de ligne","desc":"Fin","params":[]},{"cat":"Édition","icon":"chevrons-up","type":"edit_pageup","name":"Page précédente","desc":"Page ↑","params":[]},{"cat":"Édition","icon":"chevrons-down","type":"edit_pagedown","name":"Page suivante","desc":"Page ↓","params":[]},{"cat":"Édition","icon":"pencil","type":"edit_rename","name":"Renommer","desc":"F2","params":[]},{"cat":"Édition","icon":"refresh","type":"edit_refresh","name":"Actualiser","desc":"F5","params":[]},{"cat":"Vidéo","icon":"forward","type":"video_speed_up","name":"Vitesse +","desc":"Maj+.","params":[]},{"cat":"Vidéo","icon":"rewind","type":"video_speed_down","name":"Vitesse −","desc":"Maj+,","params":[]},{"cat":"Vidéo","icon":"skip-prev","type":"video_prev","name":"Vidéo précédente","desc":"Maj+P","params":[]},{"cat":"Vidéo","icon":"fullscreen","type":"video_theater","name":"Mode cinéma","desc":"T","params":[]},{"cat":"Vidéo","icon":"window","type":"video_miniplayer","name":"Mini-lecteur","desc":"I","params":[]},{"cat":"Vidéo","icon":"arrow-left","type":"video_back5","name":"Reculer de 5 s","desc":"←","params":[]},{"cat":"Vidéo","icon":"arrow-right","type":"video_fwd5","name":"Avancer de 5 s","desc":"→","params":[]},{"cat":"Vidéo","icon":"volume-up","type":"video_vol_up","name":"Volume vidéo +","desc":"↑","params":[]},{"cat":"Vidéo","icon":"volume-down","type":"video_vol_down","name":"Volume vidéo −","desc":"↓","params":[]},{"cat":"Vidéo","icon":"arrow-right","type":"video_next_frame","name":"Image suivante","desc":".","params":[]},{"cat":"Vidéo","icon":"arrow-left","type":"video_prev_frame","name":"Image précédente","desc":",","params":[]},{"cat":"Clavier","icon":"keyboard","type":"hotkey","name":"Raccourci clavier","desc":"Ex : ctrl+shift+t","params":[{"key":"keys","lbl":"Touches","ph":"ctrl+shift+t"}]},{"cat":"Clavier","icon":"type","type":"type_text","name":"Saisir du texte","desc":"Tape le texte caractère par caractère","params":[{"key":"text","lbl":"Texte","ph":"Bonjour !"}]},{"cat":"Clavier","icon":"list","type":"key_sequence","name":"Séquence de touches","desc":"Touches séparées par des virgules","params":[{"key":"sequence","lbl":"Séquence","ph":"ctrl+c, alt+tab, ctrl+v"}]},{"cat":"Clavier","icon":"arrow-down","type":"key_down","name":"Maintenir une touche enfoncée","desc":"À mettre sur l'événement « Enfoncé »","params":[{"key":"key","lbl":"Touche","ph":"shift"}]},{"cat":"Clavier","icon":"arrow-up","type":"key_up","name":"Relâcher une touche","desc":"À mettre sur l'événement « Relâché »","params":[{"key":"key","lbl":"Touche","ph":"shift"}]},{"cat":"Clavier","icon":"hourglass","type":"key_hold","name":"Appuyer X ms sur une touche","desc":"","params":[{"key":"key","lbl":"Touche","ph":"w"},{"key":"ms","lbl":"Durée (ms)","ph":"500"}]},{"cat":"Clavier","icon":"mouse-click","type":"mouse_click","name":"Clic souris","desc":"Position facultative","params":[{"key":"button","lbl":"Bouton","ph":"left","options":["left","right","middle"]},{"key":"x","lbl":"X","ph":""},{"key":"y","lbl":"Y","ph":""}]},{"cat":"Clavier","icon":"mouse-click","type":"mouse_double_click","name":"Double clic","desc":"Clic gauche ×2","params":[]},{"cat":"Clavier","icon":"mouse-click","type":"mouse_right_click","name":"Clic droit","desc":"Menu contextuel","params":[]},{"cat":"Clavier","icon":"mouse","type":"mouse_middle_click","name":"Clic molette","desc":"Clic central","params":[]},{"cat":"Clavier","icon":"mouse","type":"mouse_scroll","name":"Molette","desc":"Positif = haut, négatif = bas","params":[{"key":"delta","lbl":"Crans","ph":"3"}]},{"cat":"Clavier","icon":"pointer","type":"mouse_move","name":"Déplacer la souris","desc":"Vers une position de l'écran","params":[{"key":"x","lbl":"X","ph":"960"},{"key":"y","lbl":"Y","ph":"540"}]},{"cat":"Clavier","icon":"crosshair","type":"autoclick_toggle","name":"Auto-clic (marche / arrêt)","desc":"Clique en boucle jusqu'au prochain appui","params":[{"key":"interval","lbl":"Intervalle (s)","ph":"0.1"}]},{"cat":"Texte","icon":"clipboard","type":"paste_text","name":"Coller un texte","desc":"Collage instantané, accents compris","params":[{"key":"text","lbl":"Texte","ph":"Bonjour !"}]},{"cat":"Texte","icon":"copy","type":"clipboard_set","name":"Copier un texte","desc":"Met le texte dans le presse-papiers","params":[{"key":"text","lbl":"Texte","ph":"À copier"}]},{"cat":"Texte","icon":"clipboard-x","type":"clipboard_clear","name":"Vider le presse-papiers","desc":"","params":[]},{"cat":"Texte","icon":"calendar","type":"type_datetime","name":"Saisir la date / l'heure","desc":"Format strftime","params":[{"key":"format","lbl":"Format","ph":"%d/%m/%Y %H:%M"}]},{"cat":"Texte","icon":"hash","type":"type_uuid","name":"Saisir un identifiant unique","desc":"UUID aléatoire","params":[]},{"cat":"Texte","icon":"megaphone","type":"say_text","name":"Lire un texte à voix haute","desc":"Synthèse vocale Windows","params":[{"key":"text","lbl":"Texte","ph":"Pause café !"}]},{"cat":"Audio","icon":"volume-up","type":"volume_up","name":"Volume +","desc":"Augmente le volume général","params":[{"key":"step","lbl":"Pas (%)","ph":"5"}]},{"cat":"Audio","icon":"volume-down","type":"volume_down","name":"Volume −","desc":"Baisse le volume général","params":[{"key":"step","lbl":"Pas (%)","ph":"5"}]},{"cat":"Audio","icon":"gauge","type":"volume_set","name":"Volume fixe","desc":"Règle le volume général","params":[{"key":"value","lbl":"Niveau (%)","ph":"50"}]},{"cat":"Audio","icon":"volume-mute","type":"mute_toggle","name":"Couper / remettre le son","desc":"Bascule le mute général","params":[]},{"cat":"Audio","icon":"volume-mute","type":"mute_on","name":"Couper le son","desc":"Mute (sans basculer)","params":[]},{"cat":"Audio","icon":"volume-up","type":"mute_off","name":"Remettre le son","desc":"Unmute (sans basculer)","params":[]},{"cat":"Audio","icon":"mic-off","type":"mic_mute_toggle","name":"Micro : couper / remettre","desc":"Bascule le mute du micro Windows","params":[]},{"cat":"Audio","icon":"mic-off","type":"mic_mute_on","name":"Micro : couper","desc":"","params":[]},{"cat":"Audio","icon":"mic","type":"mic_mute_off","name":"Micro : remettre","desc":"","params":[]},{"cat":"Audio","icon":"mic","type":"mic_volume_up","name":"Volume du micro +","desc":"","params":[{"key":"step","lbl":"Pas (%)","ph":"5"}]},{"cat":"Audio","icon":"mic","type":"mic_volume_down","name":"Volume du micro −","desc":"","params":[{"key":"step","lbl":"Pas (%)","ph":"5"}]},{"cat":"Audio","icon":"mic","type":"mic_volume_set","name":"Volume du micro fixe","desc":"","params":[{"key":"value","lbl":"Niveau (%)","ph":"80"}]},{"cat":"Audio","icon":"volume-up","type":"app_volume_up","name":"Volume d'une application +","desc":"Une seule app à la fois","params":[{"key":"app","lbl":"Application","ph":"Spotify.exe","special":"audio_session_picker"},{"key":"step","lbl":"Pas (%)","ph":"5"}]},{"cat":"Audio","icon":"volume-down","type":"app_volume_down","name":"Volume d'une application −","desc":"","params":[{"key":"app","lbl":"Application","ph":"Spotify.exe","special":"audio_session_picker"},{"key":"step","lbl":"Pas (%)","ph":"5"}]},{"cat":"Audio","icon":"gauge","type":"app_volume_set","name":"Volume d'une application fixe","desc":"","params":[{"key":"app","lbl":"Application","ph":"Spotify.exe","special":"audio_session_picker"},{"key":"value","lbl":"Niveau (%)","ph":"50"}]},{"cat":"Audio","icon":"volume-mute","type":"app_mute_toggle","name":"Muet d'une application","desc":"Bascule le son d'une app précise","params":[{"key":"app","lbl":"Application","ph":"Spotify.exe","special":"audio_session_picker"}]},{"cat":"Audio","icon":"volume-mute","type":"app_volume_active_mute","name":"Muet de l'application active","desc":"L'app au premier plan","params":[]},{"cat":"Audio","icon":"play-pause","type":"media_play_pause","name":"Lecture / pause","desc":"","params":[]},{"cat":"Audio","icon":"skip-next","type":"media_next","name":"Piste suivante","desc":"","params":[]},{"cat":"Audio","icon":"skip-prev","type":"media_prev","name":"Piste précédente","desc":"","params":[]},{"cat":"Audio","icon":"stop","type":"media_stop","name":"Stop","desc":"","params":[]},{"cat":"Audio","icon":"volume-up","type":"media_key_vol_up","name":"Volume + (touche, avec affichage)","desc":"Touche multimédia","params":[]},{"cat":"Audio","icon":"volume-down","type":"media_key_vol_down","name":"Volume − (touche, avec affichage)","desc":"Touche multimédia","params":[]},{"cat":"Audio","icon":"volume-mute","type":"media_key_mute","name":"Mute (touche, avec affichage)","desc":"Touche multimédia","params":[]},{"cat":"Audio","icon":"sun","type":"brightness","name":"Luminosité fixe","desc":"Règle la luminosité de l'écran","params":[{"key":"value","lbl":"Niveau (%)","ph":"75"}]},{"cat":"Audio","icon":"sun","type":"brightness_up","name":"Luminosité +","desc":"","params":[{"key":"step","lbl":"Pas (%)","ph":"5"}]},{"cat":"Audio","icon":"sun-dim","type":"brightness_down","name":"Luminosité −","desc":"","params":[{"key":"step","lbl":"Pas (%)","ph":"5"}]},{"cat":"Audio","icon":"heart","type":"spotify_like","name":"Spotify — J'aime","desc":"Alt+Maj+B","params":[]},{"cat":"Audio","icon":"shuffle","type":"spotify_shuffle","name":"Spotify — Aléatoire","desc":"Ctrl+S","params":[]},{"cat":"Audio","icon":"repeat","type":"spotify_repeat","name":"Spotify — Répéter","desc":"Ctrl+R","params":[]},{"cat":"Audio","icon":"forward","type":"spotify_seek_fwd","name":"Spotify — Avancer","desc":"Maj+→","params":[]},{"cat":"Audio","icon":"rewind","type":"spotify_seek_back","name":"Spotify — Reculer","desc":"Maj+←","params":[]},{"cat":"Discord","icon":"mic-off","type":"discord_mute","name":"Micro : couper / remettre","desc":"Via l'API Discord, sinon via un raccourci Discord","params":[{"key":"keys","lbl":"Raccourci réglé dans Discord","ph":"ctrl+shift+m"}]},{"cat":"Discord","icon":"headphones-off","type":"discord_deafen","name":"Casque : sourd / entendre","desc":"Via l'API Discord, sinon via un raccourci Discord","params":[{"key":"keys","lbl":"Raccourci réglé dans Discord","ph":"ctrl+shift+d"}]},{"cat":"Discord","icon":"user-next","type":"discord_rpc_user_next","name":"Utilisateur suivant","desc":"Sélectionne le prochain participant de l'appel","params":[]},{"cat":"Discord","icon":"user-prev","type":"discord_rpc_user_prev","name":"Utilisateur précédent","desc":"Sélectionne le participant précédent","params":[]},{"cat":"Discord","icon":"user-volume","type":"discord_rpc_user_vol_up","name":"Volume d'un utilisateur +","desc":"Un seul participant à la fois","params":[{"key":"user","lbl":"Pseudo (vide = utilisateur sélectionné)","ph":"ex : Kevin"},{"key":"step","lbl":"Pas (%)","ph":"10"}]},{"cat":"Discord","icon":"user-volume","type":"discord_rpc_user_vol_down","name":"Volume d'un utilisateur −","desc":"","params":[{"key":"user","lbl":"Pseudo (vide = utilisateur sélectionné)","ph":"ex : Kevin"},{"key":"step","lbl":"Pas (%)","ph":"10"}]},{"cat":"Discord","icon":"user-mute","type":"discord_rpc_user_mute","name":"Rendre muet un utilisateur","desc":"Bascule le mute local de ce participant","params":[{"key":"user","lbl":"Pseudo (vide = utilisateur sélectionné)","ph":"ex : Kevin"}]},{"cat":"Discord","icon":"user","type":"discord_rpc_user_reset","name":"Volume utilisateur à 100 %","desc":"Remet le volume et le son par défaut","params":[{"key":"user","lbl":"Pseudo (vide = utilisateur sélectionné)","ph":"ex : Kevin"}]},{"cat":"Discord","icon":"volume-up","type":"discord_rpc_output_up","name":"Volume de sortie Discord +","desc":"","params":[{"key":"step","lbl":"Pas (%)","ph":"10"}]},{"cat":"Discord","icon":"volume-down","type":"discord_rpc_output_down","name":"Volume de sortie Discord −","desc":"","params":[{"key":"step","lbl":"Pas (%)","ph":"10"}]},{"cat":"Discord","icon":"mic","type":"discord_rpc_input_up","name":"Volume du micro Discord +","desc":"","params":[{"key":"step","lbl":"Pas (%)","ph":"10"}]},{"cat":"Discord","icon":"mic","type":"discord_rpc_input_down","name":"Volume du micro Discord −","desc":"","params":[{"key":"step","lbl":"Pas (%)","ph":"10"}]},{"cat":"Discord","icon":"phone-off","type":"discord_rpc_leave","name":"Quitter le salon vocal","desc":"","params":[]},{"cat":"Discord","icon":"users","type":"discord_rpc_join","name":"Rejoindre un salon vocal","desc":"","params":[{"key":"channel_id","lbl":"ID du salon","ph":"123456789012345678"}]},{"cat":"Discord","icon":"search","type":"discord_quick_switch","name":"Recherche rapide (dans Discord)","desc":"Ctrl+K","params":[]},{"cat":"Discord","icon":"arrow-up","type":"discord_chan_prev","name":"Salon précédent (dans Discord)","desc":"Alt+↑","params":[]},{"cat":"Discord","icon":"arrow-down","type":"discord_chan_next","name":"Salon suivant (dans Discord)","desc":"Alt+↓","params":[]},{"cat":"Discord","icon":"chevrons-up","type":"discord_server_prev","name":"Serveur précédent (dans Discord)","desc":"Ctrl+Alt+↑","params":[]},{"cat":"Discord","icon":"chevrons-down","type":"discord_server_next","name":"Serveur suivant (dans Discord)","desc":"Ctrl+Alt+↓","params":[]},{"cat":"Discord","icon":"bell","type":"discord_unread_next","name":"Prochain salon non lu (dans Discord)","desc":"Alt+Maj+↓","params":[]},{"cat":"OBS","icon":"film","type":"obs_scene","name":"Changer de scène","desc":"","params":[{"key":"scene","lbl":"Nom de la scène","ph":"Jeu"}]},{"cat":"OBS","icon":"skip-next","type":"obs_scene_next","name":"Scène suivante","desc":"","params":[]},{"cat":"OBS","icon":"skip-prev","type":"obs_scene_prev","name":"Scène précédente","desc":"","params":[]},{"cat":"OBS","icon":"live","type":"obs_stream_start","name":"Démarrer le stream","desc":"","params":[]},{"cat":"OBS","icon":"stop","type":"obs_stream_stop","name":"Arrêter le stream","desc":"","params":[]},{"cat":"OBS","icon":"live","type":"obs_stream_toggle","name":"Stream marche / arrêt","desc":"","params":[]},{"cat":"OBS","icon":"record","type":"obs_record_start","name":"Démarrer l'enregistrement","desc":"","params":[]},{"cat":"OBS","icon":"stop","type":"obs_record_stop","name":"Arrêter l'enregistrement","desc":"","params":[]},{"cat":"OBS","icon":"record","type":"obs_record_toggle","name":"Enregistrement marche / arrêt","desc":"","params":[]},{"cat":"OBS","icon":"pause","type":"obs_record_pause","name":"Pause enregistrement","desc":"","params":[]},{"cat":"OBS","icon":"play","type":"obs_record_resume","name":"Reprendre l'enregistrement","desc":"","params":[]},{"cat":"OBS","icon":"replay","type":"obs_replay_save","name":"Sauvegarder le replay","desc":"Replay buffer","params":[]},{"cat":"OBS","icon":"replay","type":"obs_replay_toggle","name":"Replay buffer marche / arrêt","desc":"","params":[]},{"cat":"OBS","icon":"layers","type":"obs_studio_mode","name":"Mode studio","desc":"Active / désactive","params":[]},{"cat":"OBS","icon":"play","type":"obs_transition","name":"Lancer la transition","desc":"Aperçu vers programme","params":[]},{"cat":"OBS","icon":"camera","type":"obs_virtualcam_toggle","name":"Caméra virtuelle","desc":"Marche / arrêt","params":[]},{"cat":"OBS","icon":"volume-mute","type":"obs_mute_toggle","name":"Couper / remettre une source","desc":"","params":[{"key":"source","lbl":"Nom de la source","ph":"Mic/Aux"}]},{"cat":"OBS","icon":"mic-off","type":"obs_mute_on","name":"Couper une source","desc":"","params":[{"key":"source","lbl":"Nom de la source","ph":"Mic/Aux"}]},{"cat":"OBS","icon":"mic","type":"obs_mute_off","name":"Remettre une source","desc":"","params":[{"key":"source","lbl":"Nom de la source","ph":"Mic/Aux"}]},{"cat":"OBS","icon":"volume-up","type":"obs_volume_up","name":"Volume d'une source +","desc":"","params":[{"key":"source","lbl":"Nom de la source","ph":"Mic/Aux"},{"key":"step","lbl":"Pas (%)","ph":"5"}]},{"cat":"OBS","icon":"volume-down","type":"obs_volume_down","name":"Volume d'une source −","desc":"","params":[{"key":"source","lbl":"Nom de la source","ph":"Mic/Aux"},{"key":"step","lbl":"Pas (%)","ph":"5"}]},{"cat":"OBS","icon":"eye","type":"obs_source_toggle","name":"Afficher / masquer une source","desc":"Dans une scène","params":[{"key":"scene","lbl":"Scène","ph":"Jeu"},{"key":"source","lbl":"Source","ph":"Webcam"}]},{"cat":"OBS","icon":"camera","type":"obs_screenshot","name":"Capture d'une source","desc":"Enregistre une image","params":[{"key":"source","lbl":"Source ou scène","ph":"Jeu"},{"key":"path","lbl":"Fichier PNG","ph":"C:\\Users\\moi\\Pictures\\obs.png"}]},{"cat":"OBS","icon":"keyboard","type":"obs_hotkey","name":"Déclencher un raccourci OBS","desc":"Par son nom interne","params":[{"key":"hotkey","lbl":"Nom du raccourci","ph":"OBSBasic.StartRecording"}]},{"cat":"Visio","icon":"mic-off","type":"zoom_mute","name":"Zoom — Micro","desc":"Alt+A","params":[]},{"cat":"Visio","icon":"video-off","type":"zoom_camera","name":"Zoom — Caméra","desc":"Alt+V","params":[]},{"cat":"Visio","icon":"hand","type":"zoom_hand","name":"Zoom — Lever la main","desc":"Alt+Y","params":[]},{"cat":"Visio","icon":"screen-share","type":"zoom_share","name":"Zoom — Partager l'écran","desc":"Alt+S","params":[]},{"cat":"Visio","icon":"record","type":"zoom_record","name":"Zoom — Enregistrer","desc":"Alt+R","params":[]},{"cat":"Visio","icon":"chat","type":"zoom_chat","name":"Zoom — Chat","desc":"Alt+H","params":[]},{"cat":"Visio","icon":"users","type":"zoom_participants","name":"Zoom — Participants","desc":"Alt+U","params":[]},{"cat":"Visio","icon":"phone-off","type":"zoom_leave","name":"Zoom — Quitter","desc":"Alt+Q","params":[]},{"cat":"Visio","icon":"mic-off","type":"teams_mute","name":"Teams — Micro","desc":"Ctrl+Maj+M","params":[]},{"cat":"Visio","icon":"video-off","type":"teams_camera","name":"Teams — Caméra","desc":"Ctrl+Maj+O","params":[]},{"cat":"Visio","icon":"screen-share","type":"teams_share","name":"Teams — Partager l'écran","desc":"Ctrl+Maj+E","params":[]},{"cat":"Visio","icon":"hand","type":"teams_hand","name":"Teams — Lever la main","desc":"Ctrl+Maj+K","params":[]},{"cat":"Visio","icon":"phone-off","type":"teams_leave","name":"Teams — Quitter","desc":"Ctrl+Maj+H","params":[]},{"cat":"Visio","icon":"mic-off","type":"meet_mute","name":"Meet — Micro","desc":"Ctrl+D","params":[]},{"cat":"Visio","icon":"video-off","type":"meet_camera","name":"Meet — Caméra","desc":"Ctrl+E","params":[]},{"cat":"Visio","icon":"hand","type":"meet_hand","name":"Meet — Lever la main","desc":"Ctrl+Alt+H","params":[]},{"cat":"Visio","icon":"chat","type":"meet_chat","name":"Meet — Chat","desc":"Ctrl+Alt+C","params":[]},{"cat":"Dev","icon":"code","type":"vscode_open","name":"Ouvrir dans VS Code","desc":"","params":[{"key":"path","lbl":"Dossier ou fichier","ph":".","special":"folder_picker"}]},{"cat":"Dev","icon":"git-pull","type":"git_pull","name":"Git pull","desc":"","params":[{"key":"folder","lbl":"Dépôt","ph":"C:\\projets\\app","special":"folder_picker"}]},{"cat":"Dev","icon":"git-commit","type":"git_commit","name":"Git commit","desc":"add -A puis commit","params":[{"key":"folder","lbl":"Dépôt","ph":"C:\\projets\\app","special":"folder_picker"},{"key":"message","lbl":"Message","ph":"update"}]},{"cat":"Dev","icon":"git-push","type":"git_push","name":"Git commit + push","desc":"","params":[{"key":"folder","lbl":"Dépôt","ph":"C:\\projets\\app","special":"folder_picker"},{"key":"message","lbl":"Message","ph":"update"}]},{"cat":"Dev","icon":"box","type":"docker_start","name":"Docker — démarrer","desc":"","params":[{"key":"name","lbl":"Conteneur","ph":"mon-conteneur"}]},{"cat":"Dev","icon":"box","type":"docker_stop","name":"Docker — arrêter","desc":"","params":[{"key":"name","lbl":"Conteneur","ph":"mon-conteneur"}]},{"cat":"Dev","icon":"server","type":"ssh","name":"Connexion SSH","desc":"Ouvre un terminal","params":[{"key":"host","lbl":"Hôte","ph":"192.168.1.10"},{"key":"user","lbl":"Utilisateur","ph":"root"}]},{"cat":"Dev","icon":"terminal","type":"vscode_terminal","name":"VS Code — Terminal","desc":"Ctrl+`","params":[]},{"cat":"Dev","icon":"command","type":"vscode_palette","name":"VS Code — Palette de commandes","desc":"Ctrl+Maj+P","params":[]},{"cat":"Dev","icon":"search","type":"vscode_quick_open","name":"VS Code — Ouverture rapide","desc":"Ctrl+P","params":[]},{"cat":"Dev","icon":"sidebar","type":"vscode_sidebar","name":"VS Code — Barre latérale","desc":"Ctrl+B","params":[]},{"cat":"Dev","icon":"play","type":"vscode_debug","name":"VS Code — Lancer le débogage","desc":"F5","params":[]},{"cat":"Dev","icon":"hash","type":"vscode_comment","name":"VS Code — Commenter","desc":"Ctrl+/","params":[]},{"cat":"Web","icon":"globe","type":"open_url","name":"Ouvrir une URL","desc":"","params":[{"key":"url","lbl":"Adresse","ph":"https://..."}]},{"cat":"Web","icon":"sparkles","type":"open_chatgpt","name":"ChatGPT","desc":"chatgpt.com","params":[]},{"cat":"Web","icon":"sparkles","type":"web_claude","name":"Claude","desc":"claude.ai","params":[]},{"cat":"Web","icon":"sparkles","type":"web_gemini","name":"Gemini","desc":"gemini.google.com","params":[]},{"cat":"Web","icon":"mail","type":"google_gmail","name":"Gmail","desc":"mail.google.com","params":[]},{"cat":"Web","icon":"video","type":"google_meet","name":"Nouvelle réunion Meet","desc":"meet.google.com/new","params":[]},{"cat":"Web","icon":"calendar","type":"google_calendar","name":"Google Agenda","desc":"calendar.google.com","params":[]},{"cat":"Web","icon":"cloud","type":"web_drive","name":"Google Drive","desc":"drive.google.com","params":[]},{"cat":"Web","icon":"pin","type":"web_maps","name":"Google Maps","desc":"maps.google.com","params":[]},{"cat":"Web","icon":"globe","type":"web_translate","name":"Google Traduction","desc":"translate.google.com","params":[]},{"cat":"Web","icon":"play","type":"web_youtube","name":"YouTube","desc":"www.youtube.com","params":[]},{"cat":"Web","icon":"twitch","type":"web_twitch","name":"Twitch","desc":"www.twitch.tv","params":[]},{"cat":"Web","icon":"film","type":"web_netflix","name":"Netflix","desc":"www.netflix.com","params":[]},{"cat":"Web","icon":"film","type":"web_prime","name":"Prime Video","desc":"www.primevideo.com","params":[]},{"cat":"Web","icon":"film","type":"web_disney","name":"Disney+","desc":"www.disneyplus.com","params":[]},{"cat":"Web","icon":"spotify","type":"web_spotify","name":"Spotify Web","desc":"open.spotify.com","params":[]},{"cat":"Web","icon":"git-branch","type":"web_github","name":"GitHub","desc":"github.com","params":[]},{"cat":"Web","icon":"chat","type":"web_reddit","name":"Reddit","desc":"www.reddit.com","params":[]},{"cat":"Web","icon":"chat","type":"web_x","name":"X (Twitter)","desc":"x.com","params":[]},{"cat":"Web","icon":"chat","type":"web_whatsapp","name":"WhatsApp Web","desc":"web.whatsapp.com","params":[]},{"cat":"Web","icon":"mail","type":"web_outlook","name":"Outlook","desc":"outlook.live.com","params":[]},{"cat":"Web","icon":"note","type":"web_notion","name":"Notion","desc":"www.notion.so","params":[]},{"cat":"Web","icon":"paint","type":"web_figma","name":"Figma","desc":"www.figma.com","params":[]},{"cat":"Web","icon":"id","type":"web_linkedin","name":"LinkedIn","desc":"www.linkedin.com","params":[]},{"cat":"Web","icon":"info","type":"web_wikipedia","name":"Wikipédia","desc":"fr.wikipedia.org","params":[]},{"cat":"Applications","icon":"calc","type":"app_calc","name":"Calculatrice","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"note","type":"app_notepad","name":"Bloc-notes","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"paint","type":"app_paint","name":"Paint","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"terminal","type":"app_terminal","name":"Terminal Windows","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"terminal","type":"app_cmd","name":"Invite de commandes","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"terminal","type":"app_powershell","name":"PowerShell","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"scissors","type":"app_snipping","name":"Outil Capture d'écran","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"chart","type":"app_taskmgr","name":"Gestionnaire des tâches","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"sliders","type":"app_control","name":"Panneau de configuration","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"cpu","type":"app_devmgmt","name":"Gestionnaire de périphériques","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"disk","type":"app_diskmgmt","name":"Gestion des disques","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"wrench","type":"app_services","name":"Services","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"key","type":"app_regedit","name":"Éditeur du registre","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"gauge","type":"app_resmon","name":"Moniteur de ressources","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"info","type":"app_msinfo","name":"Informations système","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"network","type":"app_network","name":"Connexions réseau","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"volume-up","type":"app_sound","name":"Paramètres du son (classique)","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"zap","type":"app_power","name":"Options d'alimentation","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"code","type":"app_env","name":"Variables d'environnement","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"steam","type":"app_steam","name":"Steam","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"grid","type":"app_store","name":"Microsoft Store","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"camera","type":"app_camera","name":"Caméra Windows","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"clock","type":"app_clock","name":"Horloge et alarmes","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"image","type":"app_photos","name":"Photos","desc":"Ouvre l'application","params":[]},{"cat":"Applications","icon":"gamepad","type":"app_xbox","name":"Xbox","desc":"Ouvre l'application","params":[]},{"cat":"Temps","icon":"timer","type":"timer","name":"Minuteur","desc":"Alerte à la fin","params":[{"key":"seconds","lbl":"Secondes","ph":"60"},{"key":"label","lbl":"Message","ph":"Terminé !"}]},{"cat":"Temps","icon":"coffee","type":"pomodoro","name":"Pomodoro 25 min","desc":"Alerte au bout de 25 minutes","params":[]},{"cat":"Réseau","icon":"network","type":"ping","name":"Ping continu","desc":"Ouvre une fenêtre de ping","params":[{"key":"host","lbl":"Hôte","ph":"8.8.8.8"}]},{"cat":"Auto","icon":"hourglass","type":"delay","name":"Délai","desc":"Pause entre deux actions","params":[{"key":"ms","lbl":"Millisecondes","ph":"500"}]},{"cat":"Auto","icon":"cloud","type":"api_call","name":"Appel API REST","desc":"Corps et en-têtes en JSON","params":[{"key":"url","lbl":"URL","ph":"https://..."},{"key":"method","lbl":"Méthode","ph":"GET","options":["GET","POST","PUT","DELETE","PATCH"]},{"key":"body","lbl":"Corps JSON (facultatif)","ph":"{\"clé\": \"valeur\"}","area":true},{"key":"headers","lbl":"En-têtes JSON (facultatif)","ph":"{\"Authorization\": \"Bearer ...\"}","area":true}]},{"cat":"Auto","icon":"share","type":"webhook","name":"Webhook","desc":"POST JSON","params":[{"key":"url","lbl":"URL","ph":"https://..."},{"key":"payload","lbl":"Données JSON","ph":"{\"text\": \"Salut\"}","area":true}]},{"cat":"Auto","icon":"lightbulb","type":"home_assistant","name":"Home Assistant — service","desc":"Appelle un service","params":[{"key":"ha_url","lbl":"URL","ph":"http://homeassistant.local:8123"},{"key":"token","lbl":"Jeton d'accès","ph":""},{"key":"service","lbl":"Service","ph":"light.toggle"},{"key":"entity_id","lbl":"Entité","ph":"light.salon"}]},{"cat":"Auto","icon":"lightbulb","type":"ha_light_toggle","name":"Home Assistant — allumer / éteindre","desc":"light.toggle","params":[{"key":"ha_url","lbl":"URL","ph":"http://homeassistant.local:8123"},{"key":"token","lbl":"Jeton d'accès","ph":""},{"key":"entity_id","lbl":"Entité","ph":"light.salon"}]}];
 
 const ALL_CATS = ["Tous",...new Set(ACTS.map(a=>a.cat))];
 
@@ -1379,10 +1209,10 @@ let pluginCatalog = [], pluginMeta = [];
 
 // Données par défaut des boutons/pots
 const DEFAULT_BTNS = [
-  {icon:"🎬",label:"OBS Scène"},{icon:"🎙",label:"Mute Discord"},
-  {icon:"⏯",label:"Play/Pause"},{icon:"📸",label:"Screenshot"},
-  {icon:"🔊",label:"Volume +"},{icon:"🔉",label:"Volume −"},
-  {icon:"🆚",label:"VS Code"},{icon:"⚡",label:"PowerShell"},
+  {icon:"🎬",iconName:"film",label:"OBS Scène"},{icon:"🎙",iconName:"mic-off",label:"Mute Discord"},
+  {icon:"⏯",iconName:"play-pause",label:"Play/Pause"},{icon:"📸",iconName:"camera",label:"Screenshot"},
+  {icon:"🔊",iconName:"volume-up",label:"Volume +"},{icon:"🔉",iconName:"volume-down",label:"Volume −"},
+  {icon:"🆚",label:"VS Code"},{icon:"⚡",iconName:"zap",label:"PowerShell"},
 ];
 const DEFAULT_POTS = [
   {name:"Volume sys",action:"volume_system"},
@@ -1392,26 +1222,7 @@ const DEFAULT_POTS = [
 ];
 
 // Catalogue des actions disponibles pour les potards (molette/rotation 0-100%)
-let POT_ACTS = [
-  {cat:"Audio",icon:"🔊",action:"volume_system",name:"Volume système",desc:"Règle le volume général du PC",params:[]},
-  {cat:"Audio",icon:"🎚",action:"volume_app",name:"Volume d'une application",desc:"Règle le volume d'une app précise (session audio active)",
-   params:[{key:"app",lbl:"Application",ph:"chrome.exe, Spotify...",special:"audio_session_picker"}]},
-  {cat:"Audio",icon:"🎮",action:"game_volume",name:"Volume d'un jeu",desc:"Règle le volume d'un jeu en cours",
-   params:[{key:"app",lbl:"Jeu (processus)",ph:"valorant.exe...",special:"audio_session_picker"}]},
-  {cat:"Audio",icon:"💬",action:"discord_volume",name:"Volume Discord",desc:"Règle le volume de Discord uniquement",params:[]},
-  {cat:"Audio",icon:"🎵",action:"spotify_volume",name:"Volume Spotify",desc:"Règle le volume de Spotify uniquement",params:[]},
-  {cat:"Audio",icon:"🎙",action:"mic_volume",name:"Volume micro (app)",desc:"Règle le volume micro d'une app (ex: Discord)",
-   params:[{key:"app",lbl:"Application",ph:"Discord",special:"audio_session_picker"}]},
-  {cat:"Écran",icon:"💡",action:"brightness",name:"Luminosité écran",desc:"Règle la luminosité de l'écran",params:[]},
-  {cat:"OBS",icon:"🎬",action:"obs_volume",name:"Volume source OBS",desc:"Règle le volume d'une source audio OBS",
-   params:[{key:"source",lbl:"Nom de la source",ph:"Mic/Aux, Desktop Audio..."}]},
-  {cat:"Navigation",icon:"⬇",action:"scroll",name:"Défilement (scroll)",desc:"Fait défiler la page en tournant le potard",params:[]},
-  {cat:"Navigation",icon:"🔍",action:"zoom_level",name:"Zoom (Ctrl+molette)",desc:"Zoom/dézoom dans le navigateur ou un éditeur",params:[]},
-  {cat:"Médias",icon:"⏩",action:"media_seek",name:"Avance/recul média",desc:"Avance ou recule la lecture en cours",params:[]},
-  {cat:"Médias",icon:"🐇",action:"playback_speed",name:"Vitesse de lecture",desc:"Change la vitesse de lecture (VLC/YouTube)",params:[]},
-  {cat:"Avancé",icon:"⚙",action:"custom",name:"Script Python custom",desc:"Exécute du code Python avec la variable 'value' (0-100)",
-   params:[{key:"script",lbl:"Code Python",ph:"# value = niveau du potard (0-100)\nprint(value)"}]},
-];
+let POT_ACTS = [{"cat":"Audio","icon":"volume-up","action":"volume_system","name":"Volume système","desc":"Règle le volume général du PC","params":[]},{"cat":"Audio","icon":"sliders","action":"volume_app","name":"Volume d'une application","desc":"Une ou plusieurs apps (séparées par |)","params":[{"key":"app","lbl":"Application","ph":"chrome.exe","special":"audio_session_picker"}]},{"cat":"Audio","icon":"monitor","action":"volume_active_app","name":"Volume de l'application active","desc":"L'app au premier plan, quelle qu'elle soit","params":[]},{"cat":"Audio","icon":"headphones","action":"volume_all_apps","name":"Volume de toutes les applications","desc":"Règle chaque application, sans toucher au volume général","params":[]},{"cat":"Audio","icon":"mic","action":"mic_volume","name":"Volume du micro","desc":"Micro par défaut de Windows","params":[]},{"cat":"Audio","icon":"gamepad","action":"game_volume","name":"Volume d'un jeu","desc":"","params":[{"key":"app","lbl":"Jeu (processus)","ph":"valorant.exe","special":"audio_session_picker"}]},{"cat":"Audio","icon":"discord","action":"discord_volume","name":"Volume de Discord","desc":"Tout Discord (sans l'API)","params":[]},{"cat":"Audio","icon":"spotify","action":"spotify_volume","name":"Volume de Spotify","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_chrome","name":"Volume Chrome","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_firefox","name":"Volume Firefox","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_edge","name":"Volume Edge","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_brave","name":"Volume Brave","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_opera","name":"Volume Opera","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_vlc","name":"Volume VLC","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_teams","name":"Volume Teams","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_zoom","name":"Volume Zoom","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_steam","name":"Volume Steam","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_telegram","name":"Volume Telegram","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_whatsapp","name":"Volume WhatsApp","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_obs","name":"Volume OBS","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_slack","name":"Volume Slack","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_tidal","name":"Volume Tidal","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_deezer","name":"Volume Deezer","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_foobar","name":"Volume foobar2000","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_itunes","name":"Volume iTunes / Apple Music","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_minecraft","name":"Volume Minecraft","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_cs2","name":"Volume Counter-Strike 2","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_valorant","name":"Volume Valorant","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_fortnite","name":"Volume Fortnite","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_apex","name":"Volume Apex Legends","desc":"","params":[]},{"cat":"Audio — applications","icon":"volume-up","action":"volume_app_rocketleague","name":"Volume Rocket League","desc":"","params":[]},{"cat":"Discord (API)","icon":"megaphone","action":"discord_rpc_output_volume","name":"Volume de sortie Discord","desc":"0 à 200 % (la moitié du potard = 100 %)","params":[]},{"cat":"Discord (API)","icon":"mic","action":"discord_rpc_input_volume","name":"Volume du micro Discord","desc":"0 à 100 %","params":[]},{"cat":"Discord (API)","icon":"user-volume","action":"discord_rpc_user_volume","name":"Volume d'un utilisateur","desc":"0 à 200 %, un participant à la fois","params":[{"key":"user","lbl":"Pseudo (vide = utilisateur sélectionné)","ph":"ex : Kevin"}]},{"cat":"Écran","icon":"sun","action":"brightness","name":"Luminosité de l'écran","desc":"Écrans externes (DDC/CI) et portables","params":[]},{"cat":"OBS","icon":"obs","action":"obs_volume","name":"Volume d'une source OBS","desc":"Courbe en dB, comme le fader d'OBS","params":[{"key":"source","lbl":"Nom de la source","ph":"Mic/Aux"}]},{"cat":"Maison","icon":"lightbulb","action":"ha_light_brightness","name":"Luminosité d'une lumière","desc":"Home Assistant","params":[{"key":"ha_url","lbl":"URL","ph":"http://homeassistant.local:8123"},{"key":"token","lbl":"Jeton d'accès","ph":""},{"key":"entity_id","lbl":"Entité","ph":"light.salon"}]},{"cat":"Navigation","icon":"arrows-ud","action":"scroll","name":"Défilement vertical","desc":"Horaire = vers le bas","params":[]},{"cat":"Navigation","icon":"arrows-lr","action":"scroll_horizontal","name":"Défilement horizontal","desc":"","params":[]},{"cat":"Navigation","icon":"zoom-in","action":"zoom_level","name":"Zoom (Ctrl + molette)","desc":"Navigateur, éditeur, images","params":[]},{"cat":"Navigation","icon":"chevrons-down","action":"page_scroll","name":"Page suivante / précédente","desc":"Touches Page ↑ / ↓","params":[]},{"cat":"Navigation","icon":"arrows-ud","action":"arrow_vertical","name":"Flèches haut / bas","desc":"Menus, listes","params":[]},{"cat":"Navigation","icon":"arrows-lr","action":"arrow_horizontal","name":"Flèches gauche / droite","desc":"Curseur, frise","params":[]},{"cat":"Navigation","icon":"tab-next","action":"tab_switch","name":"Changer d'onglet","desc":"Ctrl+Tab / Ctrl+Maj+Tab","params":[]},{"cat":"Navigation","icon":"desktop-next","action":"desktop_switch","name":"Changer de bureau virtuel","desc":"","params":[]},{"cat":"Navigation","icon":"pointer","action":"mouse_move_x","name":"Souris horizontale","desc":"","params":[]},{"cat":"Navigation","icon":"pointer","action":"mouse_move_y","name":"Souris verticale","desc":"","params":[]},{"cat":"Médias","icon":"forward","action":"media_seek","name":"Avance / recul (←/→)","desc":"Lecteurs et YouTube (5 s)","params":[]},{"cat":"Médias","icon":"rewind","action":"seek_10s","name":"Avance / recul 10 s (J/L)","desc":"YouTube","params":[]},{"cat":"Médias","icon":"gauge","action":"playback_speed","name":"Vitesse de lecture","desc":"YouTube (Maj+. / Maj+,)","params":[]},{"cat":"Médias","icon":"gauge","action":"vlc_speed","name":"Vitesse de lecture VLC","desc":"Touches ] et [","params":[]},{"cat":"Médias","icon":"skip-next","action":"media_track","name":"Piste suivante / précédente","desc":"","params":[]},{"cat":"Médias","icon":"volume-up","action":"volume_keys","name":"Volume (touches, avec affichage)","desc":"Montre l'indicateur Windows","params":[]},{"cat":"Création","icon":"undo","action":"undo_redo","name":"Annuler / rétablir","desc":"Ctrl+Z / Ctrl+Y","params":[]},{"cat":"Création","icon":"pencil","action":"brush_size","name":"Taille du pinceau","desc":"Touches [ et ]","params":[]},{"cat":"Création","icon":"film","action":"timeline_frame","name":"Image par image","desc":"Touches , et .","params":[]},{"cat":"Application","icon":"layers","action":"profile_cycle","name":"Changer de profil","desc":"Profil suivant / précédent","params":[]},{"cat":"Application","icon":"film","action":"obs_scene_cycle","name":"Changer de scène OBS","desc":"","params":[]},{"cat":"Avancé","icon":"zap","action":"led_strip_color","name":"Couleur d'une LED","desc":"Envoie le niveau à la LED choisie","params":[{"key":"strip","lbl":"Numéro de LED (0 à 3)","ph":"0"}]},{"cat":"Avancé","icon":"code","action":"custom","name":"Script Python","desc":"Variable « value » de 0 à 100","params":[{"key":"script","lbl":"Code Python","ph":"print(value)","area":true}]}];
 function potActDef(action){ return POT_ACTS.find(p=>p.action===action); }
 
 // Catalogue des métriques qu'une LED peut afficher. "pct" = la valeur est
@@ -1500,11 +1311,19 @@ function connectWS() {
       if(m.type==="update_available") { handleUpdateAvailable(m); }
       if(m.type==="update_progress") { handleUpdateProgress(m); }
       if(m.type==="serial_line") { addLog("rx","sys",`USB${m.slot} · ${m.line}`); }
+      if(m.type==="obs_status") handleObsStatus(m);
+      if(m.type==="discord_status") handleDiscordStatus(m);
+      if(m.type==="discord_users") handleDiscordUsers(m);
       if(m.type==="app_info") {
         appVersion = m.version || ""; renderAppVersion();
         if(!_updateChecked){ _updateChecked = true; setTimeout(()=>wsSend({type:"check_update",silent:true}), 2500); }
       }
-      if(m.type==="button_event") { flashBtn(m.button); addLog("rx",m.event||"press",`BTN${m.button+1}`); }
+      if(m.type==="button_event") {
+        const hb = document.getElementById("hwb-"+m.button);
+        if(m.event==="down"){ if(hb) hb.classList.add("pressed"); }
+        else if(m.event==="up"||m.event==="release"){ if(hb) hb.classList.remove("pressed"); }
+        else { flashBtn(m.button); addLog("rx",m.event||"press",`BTN${m.button+1}`); }
+      }
       if(m.type==="pot_event") { animatePot(m.pot,m.value); addLog("rx","pot",`POT${m.pot+1} ${m.value}%`); }
       if(m.type==="profile_changed") { activeProfile = m.profile; syncProfile(); toast("Profil : "+getProfileName(m.profile)); }
       if(m.type==="apps") { installedApps = m.data; appsLoaded = true; renderAppPicker(); }
@@ -1635,8 +1454,9 @@ function downloadPluginExample(){
 let _autosaveTimer = null;
 function markDirty() {
   clearTimeout(_autosaveTimer);
-  _autosaveTimer = setTimeout(() => {
+  _autosaveTimer = setTimeout(async () => {
     cfg.theme = theme; cfg.tint = tint;
+    try { await ensureIconRasters(); } catch(e) {}      // images des icônes pour la popup Windows
     wsSend({type:"save_config", data: cfg});
     localStorage.setItem("md_cfg", JSON.stringify(cfg));
     const dot = document.getElementById("autosaveDot");
@@ -1680,7 +1500,8 @@ function syncFromConfig() {
   syncProfile();
   buildLeds();
   renderProfiles();
-  loadSerialFields();
+  loadSerialFields(); loadIntegFields();
+  ensureIconRasters().then(c => { if(c) markDirty(); });
   // la teinte locale prime ; sinon on reprend celle de la config
   if(localStorage.getItem("md_tint")){ if(cfg.tint !== tint){ cfg.tint = tint; wsSend({type:"set_tint", tint}); } }
   else if(cfg.tint) applyTint(cfg.tint);
@@ -1718,7 +1539,7 @@ function buildBtns() {
       d.innerHTML=`<div class="btn-num">${i+1}</div>${acts?`<div class="btn-cnt">${acts}</div>`:""}<div class="btn-img-label"><div class="btn-nm">${b.label||"Btn "+(i+1)}</div></div>`;
     } else {
       d.style.backgroundImage = "";
-      d.innerHTML=`<div class="btn-num">${i+1}</div>${acts?`<div class="btn-cnt">${acts}</div>`:""}<div class="btn-chip"><div class="btn-ic">${b.icon||"⭐"}</div></div><div class="btn-nm">${b.label||"Btn "+(i+1)}</div><div class="btn-bar"></div>`;
+      d.innerHTML=`<div class="btn-num">${i+1}</div>${acts?`<div class="btn-cnt">${acts}</div>`:""}<div class="btn-chip"><div class="btn-ic">${keyIconHtml(b)}</div></div><div class="btn-nm">${b.label||"Btn "+(i+1)}</div><div class="btn-bar"></div>`;
     }
     d.onclick = () => { selBtnIdx=i; selPotIdx=null; buildBtns(); openBtnDrawer(i); };
     d.addEventListener("contextmenu",e=>{e.preventDefault();pressBtn(i,"double_click");});
@@ -1828,17 +1649,21 @@ function renderBtnDrawer(i) {
       <button class="d-tab ${evType==="press"?"active":""}" onclick="setEv('press',${i})">Simple</button>
       <button class="d-tab ${evType==="long_press"?"active":""}" onclick="setEv('long_press',${i})">Long</button>
       <button class="d-tab ${evType==="double_click"?"active":""}" onclick="setEv('double_click',${i})">Double</button>
+      <button class="d-tab ${evType==="down"?"active":""}" onclick="setEv('down',${i})">Enfoncé</button>
+      <button class="d-tab ${evType==="up"?"active":""}" onclick="setEv('up',${i})">Relâché</button>
     </div>
     <div class="grp">
       <div class="grp-lbl">Icône</div>
       <div style="display:flex;align-items:center;gap:8px">
-        ${b.iconImage
-          ? `<img src="${b.iconImage}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;border:1px solid var(--border)" alt="">`
-          : `<input class="inp" style="width:46px;font-size:16px;text-align:center" value="${b.icon||"⭐"}" oninput="setBtnField(${i},'icon',this.value)">`}
+        ${b.iconImage ? `<img src="${b.iconImage}" style="width:46px;height:46px;border-radius:12px;object-fit:cover;border:1px solid var(--border2)">` : `<div class="key-ic-prev">${keyIconHtml(b)}</div>`}
         <input type="file" accept="image/*" id="iconFileInput_${i}" style="display:none" onchange="onIconFileChosen(${i},this)">
         <button class="picker-load-btn" style="width:auto;padding:6px 10px" onclick="document.getElementById('iconFileInput_${i}').click()">Importer une image...</button>
-        ${b.iconImage?`<button class="picker-load-btn" style="width:auto;padding:6px 10px" onclick="setBtnField(${i},'iconImage',null);renderBtnDrawer(${i});buildBtns()">Revenir à l'emoji</button>`:""}
+        ${b.iconImage?`<button class="picker-load-btn" style="width:auto;padding:6px 10px" onclick="setBtnField(${i},'iconImage',null);renderBtnDrawer(${i});buildBtns()">Retirer l'image</button>`:""}
       </div>
+      ${!b.iconImage ? `<div class="icon-grid">
+        <button class="icon-opt ${!b.iconName?"active":""}" title="Automatique (selon l'action)" onclick="setKeyIcon(${i},'')">Auto</button>
+        ${KEY_ICONS.map(n=>`<button class="icon-opt ${b.iconName===n?"active":""}" title="${n}" onclick="setKeyIcon(${i},'${n}')">${iconSvg(n)}</button>`).join("")}
+      </div>` : ""}
       <div style="font-size:9px;color:var(--text3);margin-top:4px">PNG/JPG recommandé, carré, max 1 Mo</div>
     </div>
     <div class="grp">
@@ -1846,7 +1671,7 @@ function renderBtnDrawer(i) {
       <input class="inp" value="${b.label||""}" oninput="setBtnField(${i},'label',this.value)">
     </div>
     <div class="grp">
-      <div class="grp-lbl">Actions — ${evType}</div>
+      <div class="grp-lbl">Actions — ${({press:"appui simple",long_press:"appui long",double_click:"double appui",down:"dès l'appui (enfoncé)",up:"au relâchement"})[evType]||evType}</div>
       <div class="chips" id="chips-${i}">${acts.map((a,j)=>`<span class="chip">${actLabel(a)}<span class="chip-x" onclick="delAct(${i},${j})">✕</span></span>`).join("")}</div>
       <button class="add-btn" onclick="openModal(${i})">+ Ajouter une action</button>
     </div>
@@ -1877,7 +1702,7 @@ function renderPotDrawer(i) {
           <div class="pot-act-cat">${c}</div>
           ${POT_ACTS.filter(a=>a.cat===c).map(a=>`
             <div class="pot-act-item${p.action===a.action?" selected":""}" onclick="setPotAction(${i},'${a.action}')">
-              <span class="pot-act-ic">${a.icon}</span>
+              <span class="pot-act-ic">${iconHtml(a.icon)}</span>
               <div class="pot-act-info"><div class="n">${a.name}</div><div class="d">${a.desc}</div></div>
             </div>`).join("")}
         `).join("")}
@@ -1888,6 +1713,12 @@ function renderPotDrawer(i) {
       <div class="grp-lbl">Paramètres — ${def.name}</div>
       <div class="pot-params">${def.params.map(par=>renderPotParam(i,par,p)).join("")}</div>
     </div>` : ""}
+    <div class="grp">
+      <div class="grp-lbl">Sensibilité : <span id="sensVal_${i}">${fmtSens(p.sensitivity)}</span></div>
+      <input type="range" min="0" max="100" step="1" value="${sensToSlider(p.sensitivity)}" oninput="setPotSens(${i},this.value)">
+      <div class="hint">Multiplie l'effet de chaque cran : défilement, zoom, volume… À gauche : précis, à droite : rapide.</div>
+      <label class="chk"><input type="checkbox" ${p.invert?"checked":""} onchange="setPotField(${i},'invert',this.checked)"> Inverser le sens de rotation</label>
+    </div>
     <div class="grp">
       <div class="grp-lbl">Valeur actuelle — <span style="color:var(--accent);font-family:monospace">${pct}%</span></div>
       <div class="m-bar" style="height:4px;margin:6px 0"><div class="m-fill" style="width:${pct}%;background:var(--accent);height:4px"></div></div>
@@ -1908,7 +1739,10 @@ function renderPotParam(i,par,p){
       <div class="picker-list" id="potPicker_${i}_${par.key}"><button class="picker-load-btn" onclick="loadAudioSessionsForPot(${i},'${par.key}')">Choisir parmi les apps avec du son actif...</button></div>
     </div></div>`;
   }
-  if(par.key==="script"){
+  if(par.options){
+    return `<div class="p-row"><div class="p-lbl">${par.lbl}</div><select class="p-sel" onchange="setPotField(${i},'${par.key}',this.value)">${par.options.map(o=>`<option value="${o}" ${String(val)===o?"selected":""}>${o}</option>`).join("")}</select></div>`;
+  }
+  if(par.area||par.key==="script"){
     return `<div class="p-row"><div class="p-lbl">${par.lbl}</div>
       <textarea class="p-inp" style="min-height:70px;font-family:'JetBrains Mono',monospace" placeholder="${par.ph||""}" oninput="setPotField(${i},'${par.key}',this.value)">${val}</textarea></div>`;
   }
@@ -1972,6 +1806,15 @@ function onIconFileChosen(i, inputEl){
   inputEl.value = ""; // permet de réimporter le même fichier plus tard si besoin
 }
 
+function sensToSlider(v){ v = parseFloat(v); if(!(v > 0)) v = 1; return Math.round(50 + 50 * Math.log10(Math.max(0.1, Math.min(10, v)))); }
+function sliderToSens(x){ const v = Math.pow(10, (parseFloat(x) - 50) / 50); return Math.abs(v - 1) < 0.06 ? 1 : Math.round(v * 20) / 20; }
+function fmtSens(v){ v = parseFloat(v); if(!(v > 0)) v = 1; return "×" + (v >= 10 ? v.toFixed(0) : v.toFixed(v < 1 ? 2 : 1).replace(/\.?0+$/, "")); }
+function setPotSens(i, x){
+  const v = sliderToSens(x), el = document.getElementById("sensVal_" + i); if(el) el.textContent = fmtSens(v);
+  const pots = (cfg.profiles[activeProfile].pots = cfg.profiles[activeProfile].pots || {});
+  if(!pots[i]) pots[i] = {...getPotData(i)};
+  pots[i].sensitivity = v; markDirty();
+}
 function setPotField(i,field,val) {
   if(!cfg.profiles[activeProfile]) return;
   if(!cfg.profiles[activeProfile].pots) cfg.profiles[activeProfile].pots={};
@@ -2235,7 +2078,52 @@ function _speed(kbs){return kbs<1024?kbs.toFixed(1)+" KB/s":(kbs/1024).toFixed(1
 // ═══════════════════════════════════════════════════════════════
 // MODAL ACTION
 // ═══════════════════════════════════════════════════════════════
-function actLabel(a){const f=ACTS.find(x=>x.type===a.type);return f?f.icon+" "+f.name:a.type;}
+
+// ── Icône d'une touche : choisie > première action > générique ──
+const KEY_ICONS = ["play-pause","volume-up","volume-down","volume-mute","mic","mic-off","headphones","camera","video","screen-share","film","record","live","replay","monitor","gamepad","keyboard","mouse","terminal","code","folder","file","globe","link","mail","calendar","clock","timer","bell","lock","power","restart","moon","sun","zap","star","heart","home","search","sliders","image","music","spotify","discord","twitch","obs","steam","chrome","users","user","hand","chat","sparkles","rocket","coffee","lightbulb","shield","wrench","cloud","trash","copy","clipboard","save","pin","eye","bug","git-branch","box","server","chart"];
+function keyIconName(b){
+  if(b.iconName === "emoji") return null;
+  if(b.iconName && ICONS[b.iconName]) return b.iconName;
+  const first = (b.press && b.press[0]) || (b.long_press && b.long_press[0]) || (b.double_click && b.double_click[0]) || (b.down && b.down[0]) || (b.up && b.up[0]);
+  const f = first && ACTS.find(x => x.type === first.type);
+  return f && ICONS[f.icon] ? f.icon : "device";
+}
+function keyIconHtml(b){ const n = keyIconName(b); return n ? iconSvg(n, "ic ic-key") : `<span class="emo">${b.icon || ""}</span>`; }
+function setKeyIcon(i, name){ setBtnField(i, "iconName", name); renderBtnDrawer(i); }
+
+// ── Version image des icônes (la popup Windows ne sait pas lire le SVG) ──
+const RASTER_FG = {cuivre:"#f3eee4", marine:"#e8eefb", anthracite:"#eceef0"};
+function rasterIcon(name, color, size=128){
+  return new Promise(res => {
+    const inner = ICONS[name]; if(!inner) return res("");
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+    const img = new Image();
+    img.onload = () => { const c = document.createElement("canvas"); c.width = c.height = size; c.getContext("2d").drawImage(img, 0, 0, size, size); try{ res(c.toDataURL("image/png")); }catch(e){ res(""); } };
+    img.onerror = () => res("");
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  });
+}
+let _rasterBusy = false;
+async function ensureIconRasters(){
+  if(_rasterBusy || !cfg || !cfg.profiles) return false;
+  _rasterBusy = true; let changed = false;
+  try {
+    const color = RASTER_FG[tint] || RASTER_FG.cuivre, jobs = [];
+    for(const pk in cfg.profiles){
+      const bs = cfg.profiles[pk].buttons || {};
+      for(const k in bs){
+        const b = bs[k];
+        if(b.iconImage){ if(b.iconRaster){ delete b.iconRaster; delete b.iconRasterKey; changed = true; } continue; }
+        const n = keyIconName(b), key = n ? n + "|" + color : "";
+        if(!n){ if(b.iconRaster){ delete b.iconRaster; delete b.iconRasterKey; changed = true; } continue; }
+        if(b.iconRasterKey !== key) jobs.push(rasterIcon(n, color).then(u => { b.iconRaster = u; b.iconRasterKey = key; changed = true; }));
+      }
+    }
+    await Promise.all(jobs);
+  } finally { _rasterBusy = false; }
+  return changed;
+}
+function actLabel(a){const f=ACTS.find(x=>x.type===a.type);return f?iconHtml(f.icon)+" "+f.name:a.type;}
 
 function openModal(btnIdx) {
   modalBtnIdx=btnIdx; selActType=null; selActObj=null; activeCat="Tous";
@@ -2256,7 +2144,7 @@ function filterActs(q){
   const list=ACTS.filter(a=>(activeCat==="Tous"||a.cat===activeCat)&&(!s||a.name.toLowerCase().includes(s)||a.type.includes(s)));
   document.getElementById("actList").innerHTML=list.map(a=>`
     <div class="act-item ${selActType===a.type?"sel":""}" onclick="selectAct('${a.type}')">
-      <div class="ai-ic">${a.icon}</div>
+      <div class="ai-ic">${iconHtml(a.icon)}</div>
       <div><div class="ai-n">${a.name}</div><div class="ai-d">${a.desc} <span style="color:var(--text3);font-size:9px">[${a.cat}]</span></div></div>
     </div>`).join("");
 }
@@ -2295,7 +2183,8 @@ function selectAct(type){
         <input class="p-inp" style="flex:1" id="param_${p.key}" placeholder="${p.ph||""}" oninput="selActObj.params['${p.key}']=this.value">
         <button class="picker-load-btn" style="width:auto;padding:5px 10px" onclick="pickNativeFile('${p.key}')">Parcourir...</button>
       </div></div></div>`;
-    if(p.key==="script"||p.key==="code") return `<div class="p-row"><div class="p-lbl">${p.lbl}</div>
+    if(p.options) return `<div class="p-row"><div class="p-lbl">${p.lbl}</div><select class="p-sel" id="param_${p.key}" onchange="selActObj.params['${p.key}']=this.value">${p.options.map(o=>`<option value="${o}">${o}</option>`).join("")}</select></div>`;
+    if(p.area||p.key==="script"||p.key==="code") return `<div class="p-row"><div class="p-lbl">${p.lbl}</div>
       <textarea class="p-inp" style="min-height:70px;font-family:'JetBrains Mono',monospace" id="param_${p.key}" placeholder="${p.ph||""}" oninput="selActObj.params['${p.key}']=this.value"></textarea></div>`;
     return `<div class="p-row"><div class="p-lbl">${p.lbl}</div><input class="p-inp" id="param_${p.key}" placeholder="${p.ph||""}" oninput="selActObj.params['${p.key}']=this.value"></div>`;
   }).join("")}</div>`;
@@ -2441,7 +2330,7 @@ function switchView(id,btnEl) {
   if(id==="settings"){ setTimeout(initOverlayTab,0); }
 }
 function switchSettingsTab(tab) {
-  ["general","serial","proto","overlay"].forEach(t=>{
+  ["general","serial","integ","proto","overlay"].forEach(t=>{
     const c=document.getElementById("stab-content-"+t);
     const b=document.getElementById("stab-"+t);
     if(c) c.style.display=t===tab?"block":"none";
@@ -2536,6 +2425,28 @@ function renderPorts(ports){
   if(el3) el3.innerHTML = ports.length ? "Ports disponibles : " + ports.join(", ") : "Aucun port série détecté.";
 }
 
+
+// ═══ INTÉGRATIONS (OBS, Discord) ═══
+function integSet(k, v){ cfg[k] = v; markDirty(); }
+function loadIntegFields(){
+  const g = (id, v) => { const e = document.getElementById(id); if(e) e.value = v ?? ""; };
+  g("integ_obs_host", cfg.obs_host || "localhost"); g("integ_obs_port", cfg.obs_port || 4455); g("integ_obs_password", cfg.obs_password || "");
+  g("integ_discord_client_id", cfg.discord_client_id || ""); g("integ_discord_client_secret", cfg.discord_client_secret || "");
+}
+function _setStatus(id, cls, txt){ const e = document.getElementById(id); if(e){ e.className = "com-status " + cls; e.textContent = txt; } }
+function obsTest(){ _setStatus("obsStatus", "", "… test en cours"); wsSend({type:"save_config", data:cfg}); setTimeout(() => wsSend({type:"obs_test"}), 150); }
+function discordConnect(){
+  _setStatus("discordStatus", "seen", "… valide dans Discord"); wsSend({type:"save_config", data:cfg});
+  setTimeout(() => wsSend({type:"discord_connect"}), 150);
+}
+function discordUsers(){ wsSend({type:"discord_users"}); }
+function handleObsStatus(m){ m.ok ? _setStatus("obsStatus", "on", "● Connecté (obs-websocket v" + m.version + ")") : _setStatus("obsStatus", "", "○ " + (m.error || "Injoignable")); }
+function handleDiscordStatus(m){ m.ok ? _setStatus("discordStatus", "on", "● Connecté" + (m.user ? " · " + m.user : "")) : _setStatus("discordStatus", "", "○ " + (m.error || "Non connecté")); }
+function handleDiscordUsers(m){
+  const el = document.getElementById("discordUsers"); if(!el) return;
+  el.textContent = m.ok ? (m.data.length ? "Dans l'appel : " + m.data.map(u => `${u.name} (${u.volume} %${u.mute ? ", muet" : ""})`).join(" · ") : "Personne d'autre dans le salon vocal.") : "⚠ " + m.error;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // TRAMES ESP32 — format fixe : B0:1 / B0:0 / P0:75   (PC → ESP32 : L0:42)
 // ═══════════════════════════════════════════════════════════════
@@ -2573,6 +2484,7 @@ function initOverlayTab() {
   const dl=document.getElementById("ov_delay"); if(dl) dl.value = ov.delay||3;
   const po=document.getElementById("ov_position"); if(po) po.value = ov.position||"br";
   const al=document.getElementById("ov_alpha"); if(al) al.value = ov.alpha||97;
+  const lg=document.getElementById("ov_legacy"); if(lg) lg.checked = !!ov.legacy;
   renderOverlayPotsEditor();
 }
 function renderOverlayPotsEditor() {
@@ -2639,6 +2551,7 @@ function saveOverlayCfg() {
   cfg.overlay.delay     = parseInt(document.getElementById("ov_delay")?.value)||3;
   cfg.overlay.position  = document.getElementById("ov_position")?.value||"br";
   cfg.overlay.alpha     = parseInt(document.getElementById("ov_alpha")?.value)||97;
+  cfg.overlay.legacy    = !!document.getElementById("ov_legacy")?.checked;
   if(!cfg.overlay.pots) cfg.overlay.pots={};
   wsSend({type:"save_config",data:cfg});
   const msg = document.getElementById("ovSaveMsg");
