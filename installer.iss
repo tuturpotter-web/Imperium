@@ -54,13 +54,11 @@ Source: "dist\Imperium\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 [Icons]
 ; Menu Démarrer
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"; Tasks: startmenuicon
-
-; Désinstallation
-Name: "{group}\Désinstaller {#MyAppName}"; Filename: "{uninstallexe}"; Tasks: startmenuicon
-
+Name: "{group}\{#MyAppName}";            Filename: "{app}\{#MyAppExeName}"; Tasks: startmenuicon
+Name: "{group}\Désinstaller {#MyAppName}"; Filename: "{uninstallexe}";          Tasks: startmenuicon
 ; Bureau
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName}";      Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+
 [Registry]
 ; Lancement automatique au démarrage Windows (HKCU — pas besoin d'admin)
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; \
