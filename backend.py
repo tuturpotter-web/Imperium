@@ -968,7 +968,7 @@ DEFAULT_CONFIG = {
     "led_strips": {str(i):{"metric":["cpu","ram","gpu_usage","ssd_usage"][i]} for i in range(4)},
     "serial_port": "AUTO", "theme": "dark", "tint": "cuivre",
     "obs_host": "localhost", "obs_port": 4455, "obs_password": "", "discord_client_id": "", "discord_client_secret": "",
-    "serial_port2": "", "serial_port3": "", "baud_rate": 115200, "baud_rate2": 115200, "baud_rate3": 115200
+    "baud_rate": 115200
 }
 
 # ── TRAMES ESP32 ─────────────────────────────────────────────────────────────
@@ -997,8 +997,9 @@ def parse_frame(raw: str):
 
 class ConfigManager:
     def __init__(self):
-        self.data = DEFAULT_CONFIG.copy()
+        self.data = DEFAULT_CONFIG.copy(); self._dirty = False; self._writer = None; self._wlock = threading.Lock()
         self.load()
+        import atexit; atexit.register(self.flush)
 
     def load(self):
         if CONFIG_PATH.exists():
@@ -1008,8 +1009,32 @@ class ConfigManager:
             except: pass
 
     def save(self):
-        with open(CONFIG_PATH,"w",encoding="utf-8") as f:
-            json.dump(self.data, f, indent=2, ensure_ascii=False)
+        """Programme l'écriture en arrière-plan. Avant, chaque changement de profil écrivait toute la config
+        (images comprises, parfois plusieurs Mo) AVANT d'afficher la popup : c'était la source du retard."""
+        self._dirty = True
+        with self._wlock:
+            if self._writer and self._writer.is_alive(): return
+            self._writer = threading.Thread(target=self._write_loop, daemon=True); self._writer.start()
+
+    def _write_loop(self):
+        while self._dirty:
+            self._dirty = False; time.sleep(0.15)       # regroupe les sauvegardes rapprochées
+            self._write_now()
+
+    def _write_now(self):
+        for _ in range(3):
+            try: raw = json.dumps(self.data, ensure_ascii=False)
+            except RuntimeError: time.sleep(0.02); continue     # config modifiée pendant la sérialisation : on réessaie
+            tmp = str(CONFIG_PATH) + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f: f.write(raw)
+            os.replace(tmp, CONFIG_PATH); return
+
+    def flush(self):
+        """Écrit tout de suite si une sauvegarde est en attente (fermeture, mise à jour)."""
+        if self._dirty or (self._writer and self._writer.is_alive()):
+            self._dirty = False
+            try: self._write_now()
+            except Exception as e: log.error(f"Sauvegarde : {e}")
 
     def active(self):
         name = self.data.get("active_profile","default")
@@ -1080,8 +1105,8 @@ DELTA_ACTIONS = {
 }
 
 class ActionEngine:
-    def __init__(self, cfg: ConfigManager, broadcast_fn, plugins=None):
-        self.cfg = cfg; self.broadcast = broadcast_fn; self.plugins = plugins
+    def __init__(self, cfg: ConfigManager, broadcast_fn):
+        self.cfg = cfg; self.broadcast = broadcast_fn
         self._pot_state = {}; self._autoclick = None
         self.obs = OBSClient(lambda: self.cfg.data)
         self.discord = DiscordRPC(lambda: self.cfg.data, lambda m: self.broadcast({"type": "toast", "message": m}))
@@ -1133,9 +1158,6 @@ class ActionEngine:
         if a == "led_strip_color": return (None, lambda v: self.broadcast({"type": "led_strip_set", "strip": int(c.get("strip", 0) or 0), "value": v}), 5)
         if a == "custom":
             code = c.get("script", ""); return (None, (lambda v: exec(code, {"value": v})) if code else (lambda v: None), 2)
-        if self.plugins and a in self.plugins.actions:
-            params = {k: x for k, x in c.items() if not k.startswith("_") and k != "action"}
-            return (None, lambda v: self.plugins.run(a, params, value=v), 2)
         return None
 
     def pot_event(self, idx, cfg, kind, v):
@@ -1197,8 +1219,8 @@ class ActionEngine:
             else:                       name = keys[(keys.index(cur)-1) % len(keys)] if cur in keys else keys[0]
             if name in self.cfg.data["profiles"]:
                 self.cfg.data["active_profile"] = name
-                self.cfg.save()
-                self.broadcast({"type":"profile_changed","profile":name})
+                self.broadcast({"type":"profile_changed","profile":name})     # popup + interface immédiatement
+                self.cfg.save()                                                # écriture en arrière-plan
 
         # PC
         elif t == "open_app":     run_hidden(a.get("path",""), shell=True, creationflags=CREATE_NO_WINDOW)
@@ -1345,10 +1367,7 @@ class ActionEngine:
         # OBS (suite)
 
         elif self._v2(t, a): pass
-        elif self.plugins and t in self.plugins.actions:
-            self.plugins.run(t, {k:v for k,v in a.items() if k != "type"})
-        else:
-            log.warning(f"Action inconnue : {t}")
+
 
     def _toast(self, msg): self.broadcast({"type": "toast", "message": msg})
 
@@ -1829,13 +1848,22 @@ def get_overlay_image(profile, ov):
         _ov_cache[sig] = r
     return r
 
-def _layered_present(hwnd, im, x, y, alpha):
-    """Affiche une image RGBA (alpha par pixel) dans une fenêtre en couches ; retourne True si OK."""
-    from ctypes import wintypes
-    w, h = im.size
-    r, g, b, a = im.convert("RGBa").split()     # RGBa = alpha prémultiplié, requis par Windows
+_raw_cache = {}     # id(image) -> (image, octets BGRA prémultipliés, largeur, hauteur) : calculés AVANT l'affichage
+
+def _layered_prepare(im):
+    """Convertit une image RGBA au format attendu par Windows (BGRA, alpha prémultiplié) — fait une seule fois par image."""
+    hit = _raw_cache.get(id(im))
+    if hit and hit[0] is im: return hit[1]
     from PIL import Image as PI
-    raw = PI.merge("RGBA", (b, g, r, a)).tobytes()
+    r, g, b, a = im.convert("RGBa").split()
+    prep = (PI.merge("RGBA", (b, g, r, a)).tobytes(), im.size[0], im.size[1])
+    if len(_raw_cache) > 24: _raw_cache.clear()
+    _raw_cache[id(im)] = (im, prep); return prep
+
+def _layered_blit(hwnd, prep, x, y, alpha):
+    """Affiche l'image préparée dans une fenêtre en couches (alpha par pixel) ; retourne True si OK."""
+    from ctypes import wintypes
+    raw, w, h = prep
     class BIH(ctypes.Structure): _fields_ = [("biSize", wintypes.DWORD), ("biWidth", wintypes.LONG), ("biHeight", wintypes.LONG), ("biPlanes", wintypes.WORD),
         ("biBitCount", wintypes.WORD), ("biCompression", wintypes.DWORD), ("biSizeImage", wintypes.DWORD), ("a", wintypes.LONG), ("b", wintypes.LONG), ("c", wintypes.DWORD), ("d", wintypes.DWORD)]
     class BLEND(ctypes.Structure): _fields_ = [("op", ctypes.c_ubyte), ("fl", ctypes.c_ubyte), ("sca", ctypes.c_ubyte), ("af", ctypes.c_ubyte)]
@@ -1857,10 +1885,11 @@ def _layered_present(hwnd, im, x, y, alpha):
         g32.DeleteObject(ctypes.c_void_p(bmp)); g32.DeleteDC(ctypes.c_void_p(mem)); u32.ReleaseDC(None, ctypes.c_void_p(screen))
 
 class ProfileOverlayWindow:
-    """Popup de profil. Rendu : pré-calculé en arrière-plan puis simplement affiché (aucune latence)."""
+    """Popup de profil. Tout est préparé à l'avance (image rendue + conversion Windows) : à l'affichage il ne reste
+    qu'à copier l'image, sans animation d'entrée. Seule la disparition est adoucie."""
     def __init__(self):
-        self._queue = None; self._root = None; self._win = None; self._label = None; self._timer = None; self._fade = None
-        self._ready = threading.Event(); self._job = None; self._jcv = threading.Condition(); self._layered_ok = sys.platform == "win32"
+        self._queue = None; self._root = None; self._win = None; self._label = None; self._timer = None; self._fade = None; self._hwnd = None
+        self._ready = threading.Event(); self._job = None; self._jcv = threading.Condition(); self._layered_ok = sys.platform == "win32"; self._styled = False
         threading.Thread(target=self._run, daemon=True).start()
         threading.Thread(target=self._render_loop, daemon=True).start()
         self._ready.wait(timeout=5)
@@ -1870,7 +1899,7 @@ class ProfileOverlayWindow:
         with self._jcv: self._job = ("show", profile, ov_cfg or {}); self._jcv.notify()
 
     def prewarm(self, profiles: dict, ov_cfg: dict = None):
-        """Pré-rend les popups de tous les profils (appelé au démarrage et à chaque sauvegarde)."""
+        """Pré-rend les popups de tous les profils (au démarrage et à chaque sauvegarde)."""
         with self._jcv: self._job = ("warm", profiles, ov_cfg or {}); self._jcv.notify()
 
     # ── thread de rendu (jamais le thread d'interface) ─────────────────────────
@@ -1881,10 +1910,13 @@ class ProfileOverlayWindow:
                 kind, data, ov = self._job; self._job = None
             try:
                 if kind == "warm":
-                    for p in list(data.values()): get_overlay_image(p, ov)
+                    for p in list(data.values()):
+                        im = get_overlay_image(p, ov)[0]
+                        if self._layered_ok: _layered_prepare(im)
                 else:
                     im, cw, ch, m = get_overlay_image(data, ov)
-                    if self._queue is not None: self._queue.put_nowait((im, cw, ch, m, ov))
+                    prep = _layered_prepare(im) if self._layered_ok and not ov.get("legacy") else None
+                    if self._queue is not None: self._queue.put_nowait((im, cw, ch, m, ov, prep))
             except Exception as e: log.warning(f"Popup : rendu impossible ({e})")
 
     # ── thread Tk ──────────────────────────────────────────────────────────────
@@ -1897,7 +1929,10 @@ class ProfileOverlayWindow:
         try: root = tk.Tk(); root.withdraw()
         except Exception as e:
             log.warning(f"Tkinter init échoué: {e}"); self._queue = None; self._ready.set(); return
-        self._root = root; self._ready.set()
+        self._root = root
+        try: self._ensure_window()          # fenêtre créée dès le départ : aucun coût au premier affichage
+        except Exception as e: log.warning(f"Popup : fenêtre non préparée ({e})")
+        self._ready.set()
         def poll():
             try:
                 item = None
@@ -1906,8 +1941,8 @@ class ProfileOverlayWindow:
             if item:
                 try: self._display(*item)
                 except Exception as e: log.warning(f"Popup affichage : {e}")
-            root.after(15, poll)
-        root.after(15, poll); root.mainloop()
+            root.after(4, poll)
+        root.after(4, poll); root.mainloop()
 
     def _ensure_window(self):
         import tkinter as tk
@@ -1916,10 +1951,9 @@ class ProfileOverlayWindow:
                 if self._win.winfo_exists(): return
             except Exception: pass
         win = tk.Toplevel(self._root); win.withdraw(); win.overrideredirect(True); win.attributes("-topmost", True)
-        self._win = win; self._label = tk.Label(win, bd=0, highlightthickness=0); self._label.pack()
-        self._hwnd = None
+        self._win = win; self._label = tk.Label(win, bd=0, highlightthickness=0); self._label.pack(); self._hwnd = None; self._styled = False
 
-    def _display(self, im, cw, ch, m, ov):
+    def _display(self, im, cw, ch, m, ov, prep):
         from PIL import ImageTk, Image as PI
         root = self._root; self._ensure_window(); win = self._win
         for t in (self._timer, self._fade):
@@ -1932,24 +1966,22 @@ class ProfileOverlayWindow:
         W, H = im.size; sw, sh = root.winfo_screenwidth(), root.winfo_screenheight(); mg = 20
         X, Y = {"br": (sw - cw - mg, sh - ch - 60), "bl": (mg, sh - ch - 60), "tr": (sw - cw - mg, mg + 40)}.get(ov.get("position", "br"), (mg, mg + 40))
         X, Y = X - m, Y - m
-        layered = self._layered_ok and not ov.get("legacy")
-        if layered:
+        if prep is not None and self._layered_ok and not ov.get("legacy"):
             try:
-                win.update_idletasks(); hwnd = ctypes.windll.user32.GetParent(win.winfo_id()) or win.winfo_id()
-                ex = ctypes.windll.user32.GetWindowLongW(hwnd, -20)
-                # en couches + fenêtre outil + sans activation + laisse passer les clics
-                ctypes.windll.user32.SetWindowLongW(hwnd, -20, ex | 0x00080000 | 0x00000080 | 0x08000000 | 0x00000020)
-                if not _layered_present(hwnd, im, X, Y, 0): raise OSError("UpdateLayeredWindow a échoué")
-                ctypes.windll.user32.ShowWindow(hwnd, 4)             # SW_SHOWNOACTIVATE
-                ctypes.windll.user32.SetWindowPos(hwnd, -1, X, Y, W, H, 0x0010)   # toujours au-dessus, sans prendre le focus
-                steps = 5
-                def fade(i=0, up=True):
-                    a = ALPHA * 255 * (i / steps if up else 1 - i / steps)
-                    _layered_present(hwnd, im, X, Y, a)
-                    if i < steps: self._fade = root.after(14, lambda: fade(i + 1, up))
-                    elif not up: ctypes.windll.user32.ShowWindow(hwnd, 0)
-                fade(1, True)
-                self._timer = root.after(DELAY, lambda: fade(0, False)); return
+                u32 = ctypes.windll.user32
+                if self._hwnd is None or not self._styled:
+                    win.update_idletasks(); self._hwnd = u32.GetParent(win.winfo_id()) or win.winfo_id()
+                    ex = u32.GetWindowLongW(self._hwnd, -20)
+                    # en couches + fenêtre outil + sans activation + laisse passer les clics (une seule fois)
+                    u32.SetWindowLongW(self._hwnd, -20, ex | 0x00080000 | 0x00000080 | 0x08000000 | 0x00000020); self._styled = True
+                hwnd = self._hwnd; full = ALPHA * 255
+                if not _layered_blit(hwnd, prep, X, Y, full): raise OSError("UpdateLayeredWindow a échoué")
+                u32.ShowWindow(hwnd, 4)                                              # SW_SHOWNOACTIVATE
+                u32.SetWindowPos(hwnd, -1, X, Y, W, H, 0x0010)                       # toujours au-dessus, sans prendre le focus
+                def fade_out(i=0, steps=5):
+                    if i >= steps: u32.ShowWindow(hwnd, 0); return
+                    _layered_blit(hwnd, prep, X, Y, full * (1 - (i + 1) / steps)); self._fade = root.after(16, lambda: fade_out(i + 1, steps))
+                self._timer = root.after(DELAY, fade_out); return
             except Exception as e:
                 log.warning(f"Popup : mode transparent indisponible ({e}) -> mode compatibilité"); self._layered_ok = False
         # Mode compatibilité : image sur fond uni, coins arrondis par région Windows
@@ -1987,24 +2019,16 @@ class AppWatcher:
 
 # ── SERIAL ────────────────────────────────────────────────────────────────────
 class Transport:
-    """
-    3 périphériques COM :
-      slot 0 = ESP32  (macropad : trames de boutons/potards, envoi des LEDs)
-      slot 1 = port USB 1, slot 2 = port USB 2
-    Un slot 1/2 sans port configuré reste en surveillance passive (détection seule).
-    Un slot 1/2 avec un port configuré ouvre vraiment la liaison COM.
-    """
-    LONG_MS=400; DOUBLE_MS=300
-    N_SLOTS = 3
+    """Liaison série avec l'ESP32 (macropad : trames de boutons / potards, envoi des LEDs)."""
+    LONG_MS=400; DOUBLE_MS=350
+    N_SLOTS = 1
 
     def __init__(self, on_msg):
         self._cb       = on_msg
         self._slots    = [None] * self.N_SLOTS
         self._port_names = [None] * self.N_SLOTS
-        self._btn_state  = {}
+        self._btn_state  = {}; self._tlock = threading.RLock()
         self._baud       = [115200] * self.N_SLOTS
-        # Démarrer le monitoring passif des ports USB 1 et 2
-        threading.Thread(target=self._usb_monitor_loop, daemon=True).start()
 
     # ── Slot 0 (ESP32) ────────────────────────────────────────────────────────
     def start(self, port="AUTO", baud=115200, slot=0):
@@ -2033,7 +2057,6 @@ class Transport:
             log.info(f"Serial slot {slot}: {port} @ {baud}")
         except Exception as e:
             log.error(f"Serial slot {slot}: {e}")
-        self._refresh_passive()
 
     def stop(self, slot):
         """Ferme la liaison COM d'un slot (sans toucher à la configuration)."""
@@ -2042,7 +2065,6 @@ class Transport:
         if ser:
             try: ser.close()
             except: pass
-        self._refresh_passive()
 
     def is_connected(self, slot=0):
         s = self._slots[slot]; return bool(s and s.is_open)
@@ -2078,120 +2100,44 @@ class Transport:
             try: ser.write((line + "\n").encode())
             except: pass
 
-    # ── Slots 1 & 2 (USB passifs) ────────────────────────────────────────────
-    def _usb_monitor_loop(self):
-        """Détecte les ports COM présents et attribue les ports libres aux slots 1 et 2
-        qui ne sont pas ouverts. Ne lit aucune trame et ne bloque pas."""
-        if not SERIAL_OK: return
-        while True:
-            self._refresh_passive()
-            time.sleep(2)
-
-    def _refresh_passive(self):
-        try:
-            present = [p.device for p in serial.tools.list_ports.comports()]
-            used    = {self._port_names[i] for i in range(self.N_SLOTS) if self._slots[i] is not None}
-            free    = [d for d in present if d not in used]
-            for k, slot in enumerate([x for x in (1, 2) if self._slots[x] is None]):
-                self._port_names[slot] = free[k] if k < len(free) else None
-        except: pass
-
-    def usb_info(self, slot):
-        """Infos du port USB 1 ou 2 : détecté (passif) ou liaison COM ouverte."""
-        empty = {"connected": False, "opened": False, "port": None, "description": "", "speed": "", "baud": 0}
-        if not SERIAL_OK or slot not in (1, 2): return empty
-        port = self._port_names[slot]
-        if not port: return empty
-        opened = self.is_connected(slot)
-        desc = ""; speed = ""
-        try:
-            info = next((p for p in serial.tools.list_ports.comports() if p.device == port), None)
-            if info:
-                desc = info.description or ""
-                dl = desc.lower()
-                if   "super" in dl or "3.0" in dl or "3.1" in dl or "3.2" in dl: speed = "SuperSpeed (5-20 Gb/s)"
-                elif "hi"   in dl or "2.0" in dl:                               speed = "Hi-Speed (480 Mb/s)"
-                elif "full" in dl or "1.1" in dl:                               speed = "Full-Speed (12 Mb/s)"
-                elif "low"  in dl or "1.0" in dl:                               speed = "Low-Speed (1.5 Mb/s)"
-        except: pass
-        return {"connected": True, "opened": opened, "port": port, "description": desc, "speed": speed,
-                "baud": self._baud[slot] if opened else 0}
-
-    # ── Timing boutons (slot 0 uniquement) ───────────────────────────────────
-    def _handle_timing(self, btn_idx, event, on_msg_fn):
-        now = time.time(); st = self._btn_state.setdefault(btn_idx, {})
-        if event == "on":
-            last_on = st.get("last_on"); st["on_t"] = now; st["last_on"] = now
-            if last_on and (now-last_on)*1000 < self.DOUBLE_MS:
-                st["last_on"] = None; on_msg_fn(btn_idx, "double_click")
-        elif event == "off":
+    # ── Timing des boutons : appui simple / long / double ─────────────────────
+    def _handle_timing(self, btn_idx, event, on_msg_fn, has_double=False):
+        """event = "on" (enfoncé) ou "off" (relâché).
+        - Appui long : la touche reste enfoncée au moins LONG_MS -> « long_press » seul.
+        - Double appui : deux appuis courts à moins de DOUBLE_MS d'écart -> « double_click » SEUL
+          (les deux appuis simples ne sont plus déclenchés).
+        - Pour pouvoir distinguer, l'appui simple d'un bouton qui a une action « double appui » n'est exécuté
+          qu'après DOUBLE_MS sans second appui. Sans action double appui, il reste instantané."""
+        now = time.time()
+        with self._tlock:
+            st = self._btn_state.setdefault(btn_idx, {})
+            if event == "on":
+                st["on_t"] = now
+                t = st.pop("pending", None)
+                if t is not None: t.cancel(); st["armed"] = True        # second appui : le simple en attente est annulé
+                else: st["armed"] = False
+                return
             on_t = st.get("on_t")
             if on_t is None: return
-            st["on_t"] = None
-            on_msg_fn(btn_idx, "long_press" if (now-on_t)*1000 >= self.LONG_MS else "press")
+            st["on_t"] = None; armed = st.pop("armed", False); long_ = (now - on_t) * 1000 >= self.LONG_MS
+            if long_:
+                fire = ["press", "long_press"] if armed else ["long_press"]    # le 1er appui, resté en attente, n'est pas perdu
+            elif armed: fire = ["double_click"]
+            elif has_double:
+                def late(idx=btn_idx):
+                    with self._tlock:
+                        if self._btn_state.get(idx, {}).pop("pending", None) is None: return
+                    on_msg_fn(idx, "press")
+                tm = threading.Timer(self.DOUBLE_MS / 1000.0, late); tm.daemon = True; st["pending"] = tm; tm.start(); return
+            else: fire = ["press"]
+        for e in fire: on_msg_fn(btn_idx, e)
 
-# ── PLUGINS ────────────────────────────────────────────────────────────────────
-class PluginManager:
-    def __init__(self):
-        self.plugins=[]; self.actions={}; self.reload()
-
-    def _plugins_dir(self):
-        d=Path(_app_dir_persistent())/"plugins"; d.mkdir(exist_ok=True); return d
-
-    def reload(self):
-        self.plugins=[]; self.actions={}
-        for f in sorted(self._plugins_dir().glob("*.json")):
-            try:
-                with open(f,"r",encoding="utf-8") as fp: manifest=json.load(fp)
-                manifest["_file"]=f.name; self.plugins.append(manifest)
-                for act in manifest.get("actions",[]):
-                    if act.get("type"): self.actions[act["type"]]=act
-                log.info(f"Plugin: {manifest.get('name',f.name)}")
-            except Exception as e: log.error(f"Plugin {f.name}: {e}")
-
-    def catalog(self):
-        out=[]
-        for p in self.plugins:
-            for act in p.get("actions",[]):
-                out.append({"cat":"Plugins","icon":act.get("icon","🧩"),"type":act.get("type"),
-                    "name":act.get("name","Action plugin"),"desc":act.get("desc",p.get("name","")),
-                    "params":act.get("params",[]),"plugin":p.get("name",p.get("_file",""))})
-        return out
-
-    def run(self, action_type, params, value=None):
-        act=self.actions.get(action_type)
-        if not act: return
-        run_def=act.get("run",{}); kind=run_def.get("kind","shell")
-        def _sub(s):
-            if not isinstance(s,str): return s
-            for k,v in params.items(): s=s.replace("{"+k+"}",str(v))
-            if value is not None: s=s.replace("{value}",str(value))
-            return s
-        try:
-            if kind=="shell":
-                cmd=_sub(run_def.get("command",""))
-                if cmd: run_silent(cmd)
-            elif kind=="powershell":
-                cmd=_sub(run_def.get("command",""))
-                if cmd: run_hidden(["powershell","-NoProfile","-Command",cmd],creationflags=CREATE_NO_WINDOW)
-            elif kind=="http":
-                import urllib.request
-                url=_sub(run_def.get("url","")); body=run_def.get("body")
-                req=urllib.request.Request(url,method=run_def.get("method","GET"))
-                if body:
-                    req.data=json.dumps(json.loads(_sub(json.dumps(body)))).encode()
-                    req.add_header("Content-Type","application/json")
-                with urllib.request.urlopen(req,timeout=10) as r: log.info(f"Plugin HTTP {r.status}")
-        except Exception as e: log.error(f"Plugin '{action_type}': {e}")
-
-# ── MACRODECK CORE ────────────────────────────────────────────────────────────
-SERIAL_KEYS = (("serial_port","baud_rate"), ("serial_port2","baud_rate2"), ("serial_port3","baud_rate3"))
+SERIAL_KEYS = (("serial_port","baud_rate"),)
 
 class MacroDeck:
     def __init__(self):
         self.cfg=ConfigManager(); self.ws_clients=set(); self._loop=None; self._pot_disp={}
-        self.plugins=PluginManager()
-        self.engine=ActionEngine(self.cfg,self._broadcast,self.plugins)
+        self.engine=ActionEngine(self.cfg,self._broadcast)
         self.metrics=Metrics(); self.transport=Transport(self._on_esp32)
         self.watcher=AppWatcher(self._on_app); self.overlay=ProfileOverlayWindow()
 
@@ -2229,11 +2175,11 @@ class MacroDeck:
         self._broadcast({"type": "button_event", "button": idx, "event": ev})
 
     def _on_esp32(self, raw: str, slot: int = 0):
-        if slot: self._broadcast({"type": "serial_line", "slot": slot, "line": raw})
         fr = parse_frame(raw)
         if not fr: return
         kind, idx, val = fr
         pot_cfg = self.cfg.active()["pots"].get(str(idx), {})
+        has_dbl = bool(self.cfg.active()["buttons"].get(str(idx), {}).get("double_click"))     # le simple attend-il un éventuel double ?
         if kind == "pot":
             self.engine.pot_push(idx, pot_cfg, "abs", val)
             self._broadcast({"type": "pot_event", "pot": idx, "value": val})
@@ -2243,10 +2189,10 @@ class MacroDeck:
             self._broadcast({"type": "pot_event", "pot": idx, "value": disp})
         elif val:   # bouton enfoncé
             self._dispatch_button(idx, "down")
-            self.transport._handle_timing(idx, "on", self._dispatch_button)
+            self.transport._handle_timing(idx, "on", self._dispatch_button, has_dbl)
         else:       # bouton relâché
             self._dispatch_button(idx, "up")
-            self.transport._handle_timing(idx, "off", self._dispatch_button)
+            self.transport._handle_timing(idx, "off", self._dispatch_button, has_dbl)
             self._broadcast({"type": "button_event", "button": idx, "event": "release"})
 
     async def _metrics_loop(self):
@@ -2278,14 +2224,7 @@ class MacroDeck:
             "connected": self.transport.is_connected(0),
             "port":      self.transport._port_names[0],
             "baud":      self.transport._baud[0] if self.transport.is_connected(0) else 0,
-            # Slots 1 & 2 — USB passifs (clés USB, hubs…)
-            "usb1": self.transport.usb_info(1),
-            "usb2": self.transport.usb_info(2),
         }
-
-    def _plugins_msg(self):
-        return {"type":"plugins","data":self.plugins.catalog(),
-            "meta":[{"name":p.get("name"),"file":p.get("_file"),"version":p.get("version","")} for p in self.plugins.plugins]}
 
     # ── Mise à jour ─────────────────────────────────────────────────────────
     def _check_update(self, silent=False):
@@ -2331,7 +2270,7 @@ class MacroDeck:
             os.replace(part, dest)
             prog("launching", 100)
             launch_installer(dest)
-            time.sleep(1.5); os._exit(0)
+            time.sleep(1.5); self.cfg.flush(); os._exit(0)
         except Exception as e:
             log.error(f"Mise à jour: {e}")
             self._updating = False
@@ -2375,11 +2314,6 @@ class MacroDeck:
                 apps=await asyncio.get_event_loop().run_in_executor(None,get_installed_apps)
                 await ws.send(json.dumps({"type":"apps","data":apps}))
             asyncio.ensure_future(_do())
-        elif t=="get_plugins":
-            await ws.send(json.dumps(self._plugins_msg()))
-        elif t=="reload_plugins":
-            self.plugins.reload(); await ws.send(json.dumps(self._plugins_msg()))
-            self._broadcast({"type":"toast","message":f"✓ {len(self.plugins.plugins)} plugin(s) chargé(s)"})
         elif t=="get_processes":
             seen=set(); procs=[]
             for p in psutil.process_iter(["name"]):
@@ -2397,7 +2331,7 @@ class MacroDeck:
                 await ws.send(json.dumps({"type":"picked_path","field":field,"path":path}))
             asyncio.ensure_future(_do())
         elif t=="connect_serial":
-            slot=max(0,min(2,int(msg.get("slot",0))))
+            slot=0
             pk,bk=SERIAL_KEYS[slot]
             port=msg.get("port","AUTO" if slot==0 else ""); baud=int(msg.get("baud",115200))
             self.cfg.data[pk]=port; self.cfg.data[bk]=baud; self.cfg.save()
@@ -2405,7 +2339,7 @@ class MacroDeck:
             await asyncio.sleep(0.3)
             await ws.send(json.dumps(self._serial_status()))
         elif t=="disconnect_serial":
-            self.transport.stop(max(0,min(2,int(msg.get("slot",0)))))
+            self.transport.stop(0)
             await ws.send(json.dumps(self._serial_status()))
         elif t=="get_serial_status":
             await ws.send(json.dumps(self._serial_status()))
