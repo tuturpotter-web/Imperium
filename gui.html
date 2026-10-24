@@ -212,13 +212,6 @@ html,body{height:100%;background:var(--bg0);color:var(--text);font-family:'Inter
 .led-strip .led-lbl,.led-strip .led-pct{position:relative;z-index:1}
 .led-lbl{font-size:9px;color:#fff;letter-spacing:.5px;text-transform:uppercase;font-weight:700;text-shadow:0 1px 3px #00000080}
 .led-pct{font-size:10px;font-weight:700;margin-left:auto;font-family:'JetBrains Mono',monospace;transition:color .4s;color:#fff;text-shadow:0 1px 3px #00000080}
-.usb-c{width:18px;height:100%;align-self:stretch;background:linear-gradient(160deg,#1a1c24,#0a0b0e);border-radius:4px;border:1px solid var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;position:relative;box-shadow:inset 0 1px 0 #ffffff08,inset 0 -1px 2px #00000060}
-.usb-c:hover{border-color:var(--accent-glow);box-shadow:inset 0 1px 0 #ffffff10,inset 0 -1px 2px #00000060,0 0 0 1px var(--accent-glow)}
-.usb-c.active{border-color:#22c55e60}
-.usb-c .usb-status{position:absolute;top:4px;width:5px;height:5px;border-radius:50%;background:#3a3f4d;transition:all .3s}
-.usb-c.active .usb-status{background:var(--green);box-shadow:0 0 5px var(--green)}
-.usb-c i{display:block;width:7px;height:60%;max-height:26px;background:linear-gradient(180deg,#4a4f5e,#2a2d36);border-radius:1px;border:1px solid #00000080;box-shadow:inset 1px 0 0 #ffffff20}
-.usb-c.active i{background:linear-gradient(180deg,#34d37e,#16a34a);box-shadow:inset 1px 0 0 #ffffff30,0 0 8px #22c55e50}
 
 /* Knobs */
 .pots-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -408,15 +401,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 .picker-row:last-child{border:none}
 .picker-row:hover{background:var(--accent-dim)}
 
-.plugin-card{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:12px}
-.plugin-card-h{display:flex;align-items:center;gap:10px}
-.plugin-ic{font-size:18px;flex-shrink:0}
-.plugin-name{font-size:12px;font-weight:600;color:var(--text)}
-.plugin-file{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace}
-.plugin-count{margin-left:auto;font-size:10px;color:var(--accent);background:var(--accent-dim);padding:2px 8px;border-radius:10px;flex-shrink:0}
-.plugin-acts{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
-.plugin-act-chip{font-size:10px;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);padding:3px 8px;border-radius:5px}
-
 /* ── TOAST ── */
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:7px 14px;border-radius:9px;font-size:12px;z-index:9999;pointer-events:none;white-space:nowrap;opacity:0;transition:opacity .18s,transform .18s;box-shadow:0 6px 20px #00000040}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -520,24 +504,6 @@ button:active:not(:disabled){transform:scale(.98)}
 .led-lbl{font-size:10px;font-weight:700}
 .led-pct{font-size:11px}
 
-/* Ports USB-C (métal brossé mat) */
-.usb-c{position:relative;display:block;width:100%;height:auto;aspect-ratio:1/2.6;align-self:center;justify-self:center;border-radius:999px;border:none;padding:0;cursor:pointer;
-  background:linear-gradient(90deg,#6f6a60 0%,#d9d3c6 24%,#a39d90 52%,#e2ddd0 76%,#6c675d 100%);
-  box-shadow:0 0 0 1px #00000080,0 4px 8px -4px #00000099,inset 0 1px 0 #ffffffb0;
-  transition:box-shadow .25s var(--ease),transform .16s var(--ease)}
-.usb-c:hover{transform:translateY(-1px)}
-.usb-c::before{content:"";position:absolute;inset:3px;border-radius:999px;background:#0e0d0b;box-shadow:inset 0 3px 6px #000000e6}
-.usb-c i{position:absolute;left:50%;top:20%;bottom:14%;width:34%;height:auto;max-height:none;margin-left:-17%;border-radius:2px;border:none;
-  background:linear-gradient(90deg,#2e2c27,#47443c 50%,#2e2c27);box-shadow:0 0 0 1px #000}
-.usb-c i::before,.usb-c i::after{content:"";position:absolute;top:6%;bottom:6%;width:2px;border-radius:1px;background:repeating-linear-gradient(180deg,#c9a45e 0 3px,transparent 3px 6px)}
-.usb-c i::before{left:2px}.usb-c i::after{right:2px}
-.usb-c .usb-status{top:8%;left:50%;margin-left:-2px;width:4px;height:4px;z-index:1;background:#4a463d}
-.usb-c.active{box-shadow:0 0 0 1px #00000080,0 0 0 2px color-mix(in srgb,var(--green) 55%,transparent),0 4px 8px -4px #00000099,inset 0 1px 0 #ffffffb0}
-.usb-c.active i{background:linear-gradient(90deg,#2e2c27,#47443c 50%,#2e2c27)}
-.usb-c.active i::before,.usb-c.active i::after{background:repeating-linear-gradient(180deg,var(--green) 0 3px,transparent 3px 6px)}
-.usb-c.opened{box-shadow:0 0 0 1px #00000080,0 0 0 2px var(--accent),0 0 16px -2px var(--accent-glow),inset 0 1px 0 #ffffffb0}
-.usb-c.opened .usb-status{background:var(--accent);box-shadow:0 0 5px var(--accent)}
-
 /* Potards */
 .pots-row{gap:10px}
 .hw-pot{--knob:clamp(54px,14cqw,84px);padding:10px 4px 8px;border-radius:12px;background:var(--bg1);border:1px solid var(--border);
@@ -594,14 +560,14 @@ input[type=range]{accent-color:var(--accent)}
 .settings-inner{max-width:min(900px,100%);margin:0 auto}
 .settings-title{font-size:22px;font-weight:700;letter-spacing:-.6px}
 .settings-subtitle{color:var(--text2)}
-.s-section,.mc,.profile-card,.plugin-card{border:1px solid var(--border2);border-radius:14px;background:var(--card);box-shadow:0 4px 18px #00000014}
+.s-section,.mc,.profile-card{border:1px solid var(--border2);border-radius:14px;background:var(--card);box-shadow:0 4px 18px #00000014}
 .s-section{padding:22px 24px}
 .s-section-ic{width:36px;height:36px;border-radius:10px;font-size:16px}
 .s-section-title{font-size:13.5px;font-weight:700}
 .s-section-desc{color:var(--text3)}
 .mc-grid,.mc-grid2,.profiles-grid{gap:14px}
-.mc,.profile-card,.plugin-card{transition:border-color .16s,transform .16s var(--ease)}
-.mc:hover,.profile-card:hover,.plugin-card:hover{border-color:var(--accent-glow);transform:translateY(-1px)}
+.mc,.profile-card{transition:border-color .16s,transform .16s var(--ease)}
+.mc:hover,.profile-card:hover{border-color:var(--accent-glow);transform:translateY(-1px)}
 .profile-card{padding:18px}
 .profile-card.active{border-color:var(--accent);background:linear-gradient(160deg,var(--accent-dim),transparent 70%),var(--card)}
 .pc-name{font-weight:700}
@@ -658,7 +624,6 @@ input[type=range]{accent-color:var(--accent)}
 .ic-btn .ic{width:16px;height:16px}
 .s-section-ic{display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .s-section-ic .ic{width:18px;height:18px}
-.plugin-ic .ic{width:20px;height:20px}
 .pc-btn .ic{width:13px;height:13px}
 
 /* Sélecteur de teinte */
@@ -728,6 +693,15 @@ input[type=range]{accent-color:var(--accent)}
 .picker-load-btn.on{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
 @media(max-height:620px){.device-view{padding:12px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Deux ports USB-C en façade (décor, métal brossé mat) */
+.usb-c{position:relative;display:block;width:100%;height:auto;aspect-ratio:1/2.6;align-self:center;justify-self:center;border-radius:999px;pointer-events:none;
+  background:linear-gradient(90deg,#6f6a60 0%,#d9d3c6 24%,#a39d90 52%,#e2ddd0 76%,#6c675d 100%);
+  box-shadow:0 0 0 1px #00000080,0 4px 8px -4px #00000099,inset 0 1px 0 #ffffffb0}
+.usb-c::before{content:"";position:absolute;inset:3px;border-radius:999px;background:#0e0d0b;box-shadow:inset 0 3px 6px #000000e6}
+.usb-c i{position:absolute;left:50%;top:20%;bottom:14%;width:34%;margin-left:-17%;border-radius:2px;background:linear-gradient(90deg,#2e2c27,#47443c 50%,#2e2c27);box-shadow:0 0 0 1px #000}
+.usb-c i::before,.usb-c i::after{content:"";position:absolute;top:6%;bottom:6%;width:2px;border-radius:1px;background:repeating-linear-gradient(180deg,#c9a45e 0 3px,transparent 3px 6px)}
+.usb-c i::before{left:2px}.usb-c i::after{right:2px}
 </style>
 </head>
 <body data-theme="dark">
@@ -755,7 +729,6 @@ input[type=range]{accent-color:var(--accent)}
     <button class="sb-btn active" title="Device" onclick="switchView('device',null);sbActive(this)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><rect x="7" y="7" width="3.6" height="3.6" rx="1"/><rect x="13.4" y="7" width="3.6" height="3.6" rx="1"/><rect x="7" y="13.4" width="3.6" height="3.6" rx="1"/><rect x="13.4" y="13.4" width="3.6" height="3.6" rx="1"/></svg></button>
     <button class="sb-btn" title="Métriques" onclick="switchView('metrics',null);sbActive(this)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></button>
     <button class="sb-btn" title="Profils" onclick="switchView('profiles',null);sbActive(this)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 13 9 5 9-5"/></svg></button>
-    <button class="sb-btn" title="Plugins" onclick="switchView('plugins',null);sbActive(this)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3v5M15 3v5M6 8h12v4a6 6 0 0 1-12 0V8ZM12 18v3"/></svg></button>
     <div class="sb-sep"></div>
     <button class="sb-btn" title="Serial" onclick="switchView('serial',null);sbActive(this)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 10 3 2-3 2M13 15h4"/></svg></button>
     <button class="sb-btn" title="Paramètres" onclick="switchView('settings',null);sbActive(this)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
@@ -863,11 +836,7 @@ input[type=range]{accent-color:var(--accent)}
     </div>
 
     <!-- ── VIEW PLUGINS ── -->
-    <div class="view" id="v-plugins">
-      <div class="profiles-view" id="pluginsBody" style="max-width:680px;margin:0 auto;padding:24px"></div>
-    </div>
-
-    <!-- ── VIEW SERIAL ── -->
+        <!-- ── VIEW SERIAL ── -->
     <div class="view" id="v-serial">
       <div class="serial-view">
         <div class="serial-bar">
@@ -972,59 +941,7 @@ input[type=range]{accent-color:var(--accent)}
                 </select>
               </div>
             </div>
-            <div class="s-section">
-              <div class="s-section-hdr">
-                <div class="s-section-ic" style="background:var(--green-dim);color:var(--green)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v13"/><circle cx="12" cy="19" r="2"/><path d="m12 9 3-2v-1.5M12 12l-3-2V8"/></svg></div>
-                <div style="flex:1"><div class="s-section-title">Port USB 1</div><div class="s-section-desc">Périphérique COM · laisse vide pour la simple détection</div></div>
-                <div class="com-status" id="comStatus1">○ Non connecté</div>
-              </div>
-              <div class="grp">
-                <div class="grp-lbl">Port COM</div>
-                <div style="display:flex;gap:6px;flex-wrap:wrap">
-                  <input class="inp" id="serialPortInput2" value="" placeholder="ex : COM5" style="flex:1;min-width:140px">
-                  <button class="tbtn" onclick="refreshPorts()">Détecter</button>
-                  <button class="tbtn pr" onclick="connectSerial(1)">Connecter</button>
-                  <button class="tbtn" onclick="disconnectSerial(1)">⏏ Déconnecter</button>
-                </div>
-                <div id="portsList2" style="margin-top:6px;font-size:10px;color:var(--text3)"></div>
-              </div>
-              <div class="grp" style="margin-bottom:0">
-                <div class="grp-lbl">Vitesse (bauds)</div>
-                <select class="sel" id="baudRate2" style="max-width:150px">
-                  <option value="9600">9600</option>
-                  <option value="57600">57600</option>
-                  <option value="115200" selected>115200</option>
-                  <option value="230400">230400</option>
-                </select>
-              </div>
-            </div>
-            <div class="s-section">
-              <div class="s-section-hdr">
-                <div class="s-section-ic" style="background:var(--purple-dim);color:var(--purple)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v13"/><circle cx="12" cy="19" r="2"/><path d="m12 9 3-2v-1.5M12 12l-3-2V8"/></svg></div>
-                <div style="flex:1"><div class="s-section-title">Port USB 2</div><div class="s-section-desc">Périphérique COM · laisse vide pour la simple détection</div></div>
-                <div class="com-status" id="comStatus2">○ Non connecté</div>
-              </div>
-              <div class="grp">
-                <div class="grp-lbl">Port COM</div>
-                <div style="display:flex;gap:6px;flex-wrap:wrap">
-                  <input class="inp" id="serialPortInput3" value="" placeholder="ex : COM6" style="flex:1;min-width:140px">
-                  <button class="tbtn" onclick="refreshPorts()">Détecter</button>
-                  <button class="tbtn pr" onclick="connectSerial(2)">Connecter</button>
-                  <button class="tbtn" onclick="disconnectSerial(2)">⏏ Déconnecter</button>
-                </div>
-                <div id="portsList3" style="margin-top:6px;font-size:10px;color:var(--text3)"></div>
-              </div>
-              <div class="grp" style="margin-bottom:0">
-                <div class="grp-lbl">Vitesse (bauds)</div>
-                <select class="sel" id="baudRate3" style="max-width:150px">
-                  <option value="9600">9600</option>
-                  <option value="57600">57600</option>
-                  <option value="115200" selected>115200</option>
-                  <option value="230400">230400</option>
-                </select>
-              </div>
-            </div>
-          </div>
+                      </div>
 
           <!-- TAB: PROTOCOLE -->
           <div id="stab-content-integ" style="display:none">
@@ -1228,13 +1145,8 @@ let metrics = {};
 let logs = [], logFilter = "all";
 let ws = null, theme = "dark";
 let serialConnected = false, serialPortName = null;
-let _lastUsbSlot = 0;
-// Slots 1 & 2 — USB passifs (clés USB, hubs)
-let usb1Info = {connected:false,port:null,description:"",speed:""};
-let usb2Info = {connected:false,port:null,description:"",speed:""};
 let installedApps = [], appsLoaded = false;
 let modalBtnIdx = null, selActType = null, selActObj = null, activeCat = "Tous";
-let pluginCatalog = [], pluginMeta = [];
 
 // Données par défaut des boutons/pots
 const DEFAULT_BTNS = [
@@ -1339,7 +1251,6 @@ function connectWS() {
       if(m.type==="metrics") { metrics = m.data; updateMetrics(); updateMetricsView(); }
       if(m.type==="update_available") { handleUpdateAvailable(m); }
       if(m.type==="update_progress") { handleUpdateProgress(m); }
-      if(m.type==="serial_line") { addLog("rx","sys",`USB${m.slot} · ${m.line}`); }
       if(m.type==="obs_status") handleObsStatus(m);
       if(m.type==="discord_status") handleDiscordStatus(m);
       if(m.type==="discord_users") handleDiscordUsers(m);
@@ -1360,14 +1271,10 @@ function connectWS() {
       if(m.type==="processes") { renderProcessPicker(m.data); }
       if(m.type==="audio_sessions") { renderAudioPicker(m.data); }
       if(m.type==="picked_path") { applyPickedPath(m.field, m.path); }
-      if(m.type==="plugins") { pluginCatalog = m.data; pluginMeta = m.meta||[]; mergePluginActions(); renderPlugins(); }
       if(m.type==="toast") { toast(m.message); }
       if(m.type==="serial_status") {
         serialConnected = m.connected; serialPortName = m.port;
-        if(m.usb1) usb1Info = m.usb1;
-        if(m.usb2) usb2Info = m.usb2;
-        updateUsbStatus(); renderComStatus();
-        if(document.getElementById("usbInfoModal")?.classList.contains("open")){ openUsbInfo(_lastUsbSlot||1); }
+        renderComStatus();
       }
       if(m.type==="protocol_test_result") { handleProtocolTestResult(m); }
     };
@@ -1381,97 +1288,8 @@ function setWS(ok) {
 }
 function wsSend(obj) { if(ws&&ws.readyState===1) ws.send(JSON.stringify(obj)); }
 connectWS();
-setTimeout(()=>wsSend({type:"get_plugins"}), 500);
 setTimeout(()=>wsSend({type:"get_apps"}), 800); // préchargement en arrière-plan
 setTimeout(()=>wsSend({type:"get_serial_status"}), 300);
-setInterval(()=>wsSend({type:"get_serial_status"}), 3000); // les ports USB s'allument dès qu'un périphérique est branché
-
-// ═══════════════════════════════════════════════════════════════
-// PLUGINS — actions ajoutées dynamiquement sans recompiler l'app.
-// Chaque plugin (fichier .json dans le dossier "plugins/" du backend)
-// déclare des actions custom qui apparaissent automatiquement ici,
-// dans le catalogue d'actions des boutons (catégorie "Plugins").
-// ═══════════════════════════════════════════════════════════════
-const ACTS_BASE_COUNT = ACTS.length;
-function mergePluginActions(){
-  // On retire les anciennes actions plugin avant de réinjecter (en cas de reload)
-  ACTS = ACTS.slice(0, ACTS_BASE_COUNT).concat(
-    pluginCatalog.map(a=>({cat:"Plugins",icon:a.icon||"🧩",type:a.type,name:a.name,desc:a.desc,params:a.params||[]}))
-  );
-}
-function renderPlugins(){
-  const el=document.getElementById("pluginsBody");
-  if(!el) return;
-  el.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:600">Plugins installés (${pluginMeta.length})</div>
-      <button class="tbtn" onclick="reloadPlugins()">Recharger les plugins</button>
-    </div>
-    ${pluginMeta.length===0?`
-      <div style="text-align:center;padding:40px 20px;color:var(--text3)">
-        <div style="margin-bottom:10px;color:var(--text3)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:40px;height:40px"><path d="M9 3v5M15 3v5M6 8h12v4a6 6 0 0 1-12 0V8ZM12 18v3"/></svg></div>
-        <div style="font-size:12px;margin-bottom:6px">Aucun plugin installé</div>
-        <div style="font-size:11px;max-width:420px;margin:0 auto;line-height:1.6">
-          Pose un fichier <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">.json</code> dans le dossier
-          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">plugins/</code> à côté de MacroDeck.exe, puis clique sur "Recharger".
-        </div>
-      </div>
-    `:`
-      <div style="display:flex;flex-direction:column;gap:8px">
-        ${pluginMeta.map(p=>{
-          const actsForPlugin=pluginCatalog.filter(a=>a.plugin===p.name||a.plugin===p.file);
-          return `<div class="plugin-card">
-            <div class="plugin-card-h">
-              <span class="plugin-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3v5M15 3v5M6 8h12v4a6 6 0 0 1-12 0V8ZM12 18v3"/></svg></span>
-              <div><div class="plugin-name">${p.name||p.file}</div><div class="plugin-file">${p.file}${p.version?` · v${p.version}`:""}</div></div>
-              <span class="plugin-count">${actsForPlugin.length} action${actsForPlugin.length>1?"s":""}</span>
-            </div>
-            ${actsForPlugin.length?`<div class="plugin-acts">${actsForPlugin.map(a=>`<span class="plugin-act-chip">${a.icon} ${a.name}</span>`).join("")}</div>`:""}
-          </div>`;
-        }).join("")}
-      </div>
-    `}
-    <div class="sep" style="margin:20px 0"></div>
-    <div class="grp-lbl" style="margin-bottom:8px">Créer un plugin</div>
-    <div style="font-size:11px;color:var(--text2);line-height:1.7;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px">
-      Un plugin est un simple fichier <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">.json</code> qui déclare une ou plusieurs actions.
-      Pas besoin de recompiler MacroDeck : pose le fichier dans <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">plugins/</code> et clique sur "Recharger".
-      <br><br>
-      <b>3 types d'exécution possibles :</b><br>
-      • <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">shell</code> — commande Windows (fenêtre toujours cachée)<br>
-      • <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">powershell</code> — script PowerShell (fenêtre cachée)<br>
-      • <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">http</code> — appel API/webhook (parfait pour Discord, Home Assistant, n8n...)<br><br>
-      Les paramètres saisis dans la GUI (ex: <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">{message}</code>) et la valeur d'un potard
-      (<code style="background:var(--bg3);padding:1px 5px;border-radius:4px">{value}</code>) sont automatiquement substitués dans la commande.
-      <button class="tbtn" style="margin-top:10px" onclick="downloadPluginExample()">Télécharger un exemple de plugin</button>
-    </div>`;
-}
-function reloadPlugins(){
-  wsSend({type:"reload_plugins"});
-  toast("Rechargement des plugins...");
-}
-function downloadPluginExample(){
-  const example = {
-    name: "Discord Webhook",
-    version: "1.0",
-    actions: [{
-      type: "plugin_discord_say",
-      name: "Discord : Envoyer un message",
-      icon: "💬",
-      desc: "Poste un message dans un salon via un webhook",
-      params: [
-        {key:"webhook_url", lbl:"URL Webhook", ph:"https://discord.com/api/webhooks/..."},
-        {key:"message", lbl:"Message", ph:"Bonjour !"}
-      ],
-      run: { kind:"http", method:"POST", url:"{webhook_url}", body:{content:"{message}"} }
-    }]
-  };
-  const blob = new Blob([JSON.stringify(example,null,2)], {type:"application/json"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="exemple_plugin_discord.json";
-  a.click();
-}
 
 // ═══════════════════════════════════════════════════════════════
 // AUTOSAVE — sauvegarde automatiquement la config côté backend
@@ -1964,11 +1782,10 @@ function buildLeds(){
   };
   zone.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:5px">${col(0)}${col(1)}</div>
-    <div class="usb-c" id="usb-1" onclick="openUsbInfo(1)" title="Port USB 1"><div class="usb-status"></div><i></i></div>
-    <div class="usb-c" id="usb-2" onclick="openUsbInfo(2)" title="Port USB 2"><div class="usb-status"></div><i></i></div>
+    <div class="usb-c" aria-hidden="true"><i></i></div>
+    <div class="usb-c" aria-hidden="true"><i></i></div>
     <div style="display:flex;flex-direction:column;gap:5px">${col(2)}${col(3)}</div>`;
   updateLeds();
-  updateUsbStatus();
 }
 function updateLeds(){
   const strips=getLedStrips();
@@ -2033,54 +1850,6 @@ function pickLedMetric(i,key){
   toast("✓ LED "+(i+1)+" → "+ledMetricDef(key).name);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// PORTS USB — infos de connexion au clic
-// ═══════════════════════════════════════════════════════════════
-function updateUsbStatus(){
-  const u1 = document.getElementById("usb-1");
-  if(u1){ u1.classList.toggle("active", !!usb1Info.connected); u1.classList.toggle("opened", !!usb1Info.opened); }
-  const u2 = document.getElementById("usb-2");
-  if(u2){ u2.classList.toggle("active", !!usb2Info.connected); u2.classList.toggle("opened", !!usb2Info.opened); }
-}
-function openUsbInfo(slot){
-  _lastUsbSlot = slot;
-  let modal = document.getElementById("usbInfoModal");
-  if(!modal){
-    modal = document.createElement("div");
-    modal.id = "usbInfoModal";
-    modal.className = "modal-ov";
-    modal.innerHTML = `<div class="modal" style="max-width:400px">
-      <div class="modal-hdr"><span class="modal-t" id="usbInfoTitle">Port USB</span><button class="modal-x" onclick="closeUsbInfo()">✕</button></div>
-      <div class="modal-body" id="usbInfoBody"></div>
-    </div>`;
-    document.body.appendChild(modal);
-    modal.addEventListener("click",e=>{if(e.target===modal) closeUsbInfo();});
-  }
-  document.getElementById("usbInfoTitle").textContent = "Port USB "+slot;
-  const info = slot===1 ? usb1Info : usb2Info;   // slot 1 = port USB 1, slot 2 = port USB 2
-  const connected   = info.connected;
-  const portName    = info.port || "—";
-  const speed       = info.speed || (connected ? "Détecté" : "—");
-  const description = info.description || (connected ? "Périphérique USB" : "Aucun périphérique");
-  document.getElementById("usbInfoBody").innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
-      <div class="p-row"><div class="p-lbl">État</div><div style="flex:1;font-weight:600;color:${connected?'var(--green)':'var(--text3)'}">${connected?'● Connecté':'○ Non connecté'}</div></div>
-      <div class="p-row"><div class="p-lbl">Port</div><div style="flex:1;font-family:'JetBrains Mono',monospace">${portName}</div></div>
-      <div class="p-row"><div class="p-lbl">Liaison COM</div><div style="flex:1;font-family:'JetBrains Mono',monospace;color:${info.opened?'var(--green)':'var(--text3)'}">${info.opened?'● Ouverte @ '+info.baud+' bauds':'○ Détection seule'}</div></div>
-      <div class="p-row"><div class="p-lbl">Vitesse USB</div><div style="flex:1;font-family:'JetBrains Mono',monospace">${speed}</div></div>
-      <div class="p-row"><div class="p-lbl">Périphérique</div><div style="flex:1;color:var(--text2)">${description}</div></div>
-    </div>
-    <div class="sep" style="margin:12px 0"></div>
-    <div style="display:flex;gap:6px">
-      <button class="tbtn" style="flex:1" onclick="refreshPorts()">Actualiser</button>
-      <button class="tbtn pr" style="flex:1" onclick="closeUsbInfo();goToComSettings()">Configurer</button>
-    </div>
-    <div id="usbPortsList" style="margin-top:10px;font-size:10px;color:var(--text3)"></div>`;
-  modal.classList.add("open");
-  refreshPorts();
-}
-function closeUsbInfo(){ const m=document.getElementById("usbInfoModal"); if(m) m.classList.remove("open"); }
-
 function updateMetrics() {
   updateLeds();
 }
@@ -2123,7 +1892,7 @@ function keyIconName(b){
 function keyIconHtml(b){ const n = keyIconName(b); return n ? iconSvg(n, "ic ic-key") : `<span class="emo">${b.icon || ""}</span>`; }
 let iconPickerOpen = false;
 const EVENTS = [["press","Appui simple"],["long_press","Appui long"],["double_click","Double appui"],["down","Enfoncé"],["up","Relâché"]];
-const EV_HELP = {press:"Un appui court sur la touche.", long_press:"Maintenir la touche appuyée.", double_click:"Deux appuis rapprochés.",
+const EV_HELP = {press:"Un appui court. Si une action « Double appui » existe aussi, l'appui simple attend 0,35 s pour ne pas se déclencher en plus.", long_press:"Maintenir la touche appuyée (0,4 s).", double_click:"Deux appuis rapprochés : seule cette action s'exécute (pas les deux appuis simples).",
   down:"S'exécute dès que tu appuies (push-to-talk, touche maintenue…).", up:"S'exécute quand tu relâches la touche."};
 function toggleIconPicker(i){ iconPickerOpen = !iconPickerOpen; renderBtnDrawer(i); }
 function setKeyIcon(i, name){ iconPickerOpen = false; setBtnField(i, "iconName", name); renderBtnDrawer(i); }
@@ -2192,6 +1961,11 @@ function filterActs(q){
 }
 
 function selectAct(type){
+  if(selActType===type){            // nouveau clic sur l'action déjà sélectionnée : on la désélectionne
+    selActType=null; selActObj=null;
+    const pd0=document.getElementById("actParams"); if(pd0){ pd0.style.display="none"; pd0.innerHTML=""; }
+    filterActs(document.getElementById("actSearch").value); return;
+  }
   selActType=type;
   const act=ACTS.find(a=>a.type===type);
   selActObj={type,params:{}}; if(act) openCats.add(act.cat);
@@ -2365,10 +2139,9 @@ function exportLog(){
 function switchView(id,btnEl) {
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   const v=document.getElementById("v-"+id); if(v) v.classList.add("active");
-  const titles={device:"Device",metrics:"Métriques",profiles:"Profils",plugins:"Plugins",serial:"Serial Monitor",settings:"Paramètres"};
+  const titles={device:"Device",metrics:"Métriques",profiles:"Profils",serial:"Serial Monitor",settings:"Paramètres"};
   const t=document.getElementById("viewTitle"); if(t) t.textContent=titles[id]||id;
   if(id==="profiles") renderProfiles();
-  if(id==="plugins") renderPlugins();
   if(id==="settings"){ setTimeout(initOverlayTab,0); }
 }
 function switchSettingsTab(tab) {
@@ -2418,9 +2191,7 @@ function saveConfig(){
 }
 function refreshPorts(){wsSend({type:"get_ports"});}
 const COM_SLOTS = [
-  {inp:"serialPortInput",  baud:"baudRate1", list:"portsList",  cfgPort:"serial_port",  cfgBaud:"baud_rate"},
-  {inp:"serialPortInput2", baud:"baudRate2", list:"portsList2", cfgPort:"serial_port2", cfgBaud:"baud_rate2"},
-  {inp:"serialPortInput3", baud:"baudRate3", list:"portsList3", cfgPort:"serial_port3", cfgBaud:"baud_rate3"},
+  {inp:"serialPortInput", baud:"baudRate1", list:"portsList", cfgPort:"serial_port", cfgBaud:"baud_rate"},
 ];
 function connectSerial(slot=0){
   const c = COM_SLOTS[slot];
@@ -2440,21 +2211,9 @@ function loadSerialFields(){
   renderComStatus();
 }
 function renderComStatus(){
-  const states = [
-    {opened:serialConnected, detected:serialConnected, port:serialPortName},
-    {opened:usb1Info.opened, detected:usb1Info.connected, port:usb1Info.port},
-    {opened:usb2Info.opened, detected:usb2Info.connected, port:usb2Info.port},
-  ];
-  states.forEach((st, i) => {
-    const el = document.getElementById("comStatus" + i); if(!el) return;
-    el.className = "com-status" + (st.opened ? " on" : st.detected ? " seen" : "");
-    el.textContent = st.opened ? "● Connecté · " + st.port : st.detected ? "◐ Détecté · " + st.port : "○ Non connecté";
-  });
-}
-function goToComSettings(){
-  switchView("settings", null);
-  const b = document.querySelector('.sb-btn[title="Paramètres"]'); if(b) sbActive(b);
-  switchSettingsTab("serial");
+  const el = document.getElementById("comStatus0"); if(!el) return;
+  el.className = "com-status" + (serialConnected ? " on" : "");
+  el.textContent = serialConnected ? "● Connecté · " + serialPortName : "○ Non connecté";
 }
 function renderPorts(ports){
   COM_SLOTS.forEach(c => {
@@ -2463,8 +2222,6 @@ function renderPorts(ports){
       ? ports.map(p => `<span style="cursor:pointer;color:var(--accent);text-decoration:underline;margin-right:8px" onclick="document.getElementById('${c.inp}').value='${p}'">${p}</span>`).join("")
       : "Aucun port détecté";
   });
-  const el3 = document.getElementById("usbPortsList");
-  if(el3) el3.innerHTML = ports.length ? "Ports disponibles : " + ports.join(", ") : "Aucun port série détecté.";
 }
 
 
